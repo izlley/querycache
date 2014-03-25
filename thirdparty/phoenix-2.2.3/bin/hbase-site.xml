@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+/**
+ * Copyright 2010 The Apache Software Foundation
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<configuration>
+	<!--property>
+    	<name>hbase.rootdir</name>
+	    <value>hdfs://10.200.116.148:9000/hbase</value>
+	</property-->
+	<property>
+    	<name>hbase.rootdir</name>
+	    <value>hdfs://BDB/hbase</value>
+	</property>
+	<!--property>
+    	<name>hbase.rootdir</name>
+	    <value>file:///data/hadoopdata/hbase</value>
+	</property-->
+	<property>
+		<name>hbase.cluster.distributed</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>hbase.zookeeper.property.dataDir</name>
+		<value>/data1/hadoop121/zk_data</value>
+	</property>
+	<!--property>
+		<name>hbase.master</name>
+		<value>10.200.116.148:60000</value>
+	</property-->
+	<property>
+		<name>hbase.cluster.distributed</name>
+		<value>true</value>
+	</property>
+	<property>
+		<name>hbase.zookeeper.quorum</name>
+		<value>BDB00,BDB01,BDB02</value>
+	</property>
+	<!--property>
+		<name>hfile.block.cache.size</name>
+		<value>0.4</value>
+	</property>
+	<property>
+		<name>hbase.regionserver.global.memstore.upperLimit</name>
+		<value>0.4</value>
+	</property>
+	<property>
+		<name>hbase.metrics.showTableName</name>
+		<value>false</value>
+	</property-->
+	<!--property>
+		<name>io.compression.codecs</name>
+		<value>org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.SnappyCodec</value>
+	</property-->
+
+	<property>
+		<name>hbase.client.scanner.timeout.period</name>
+		<value>6000000</value>
+		<description>lease period in milliseconds
+			default 60000
+		</description>
+	</property>
+	<property>
+		<name>hbase.hregion.memstore.block.multiplier</name>
+		<value>4</value>
+		<description>2</description>
+	</property>
+	<property>
+		<name>hbase.hstore.blockingStoreFiles</name>
+		<value>100</value>
+		<description>default 7</description>
+	</property>
+	<property>
+		<name>hbase.regionserver.handler.count</name>
+		<value>100</value>
+		<description>default 10</description>
+	</property>
+	<property>
+		<name>hbase.client.scanner.caching</name>
+		<value>1000</value>
+		<description>default 1 </description>
+	</property>
+	<property>
+		<name>hbase.lease.recovery.timeout</name>
+		<value>9000000</value>
+		<description>default 900000
+		</description>
+	</property>
+	<property>
+		<name>hbase.lease.recovery.dfs.timeout</name>
+		<value>640000</value>
+		<description>default 64000
+		</description>
+	</property>
+
+	<property>
+		<name>hbase.regionserver.lease.period</name>
+		<value>6000000</value>
+		<description>default 60000
+		</description>
+	</property>
+	<property>
+		<name>hbase.rpc.timeout</name>
+		<value>60000</value>
+		<description>default 60000
+		</description>
+	</property>
+	<property>
+		<name>hbase.regionserver.checksum.verify</name>
+		<value>false</value>
+		<description>
+		</description>
+	</property>
+	<property>
+		<name>hbase.ipc.client.tcpnodelay</name>
+		<value>true</value>
+		<description>
+		</description>
+	</property>
+
+
+
+
+<!--phoenix-->
+	<property>
+		<name>hbase.regionserver.wal.codec</name>
+		<value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value>
+	</property>
+	<!--property>
+		<name>phoenix.query.timeoutMs</name>
+		<value>6000000</value>
+	</property>
+	<property>
+		<name>phoenix.query.maxIntraRegionParallelization</name>
+		<value>128</value>
+	</property-->
+	<property>
+		<name>phoenix.query.timeoutMs</name>
+		<value>6000000</value>
+	</property>
+
+
+</configuration>
