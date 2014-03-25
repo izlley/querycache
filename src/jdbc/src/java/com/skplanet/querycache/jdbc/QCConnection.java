@@ -258,7 +258,7 @@ public class QCConnection implements java.sql.Connection {
 
     try {
       // LJY
-      openReq.url = connParams.getProtocol() + connParams.getService();
+      openReq.url = connParams.getProtocol() + ":" + connParams.getService();
       TOpenSessionResp openResp = client.OpenSession(openReq);
       // validate connection
       Utils.verifySuccess(openResp.getStatus());

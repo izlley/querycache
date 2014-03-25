@@ -13,6 +13,7 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
   private final List<String> columnTypes;
   
   enum SQLType {
+    CHAR_TYPE_NAME("char"),
     STRING_TYPE_NAME("string"),
     VOID_TYPE_NAME("void"),
     BOOLEAN_TYPE_NAME("boolean"),
@@ -98,6 +99,8 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
     String type = columnTypes.get(column - 1);
     if ("string".equalsIgnoreCase(type)) {
       return SQLType.STRING_TYPE_NAME.name();
+    } else if ("char".equalsIgnoreCase(type)) {
+      return SQLType.CHAR_TYPE_NAME.name();
     } else if ("float".equalsIgnoreCase(type)) {
       return SQLType.FLOAT_TYPE_NAME.name();
     } else if ("double".equalsIgnoreCase(type)) {

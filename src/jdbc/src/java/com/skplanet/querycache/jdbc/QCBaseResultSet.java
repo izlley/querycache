@@ -453,6 +453,8 @@ public abstract class QCBaseResultSet implements ResultSet {
     Type columnType = getSchema().getColumnDescriptorAt(columnIndex - 1).getType();
 
     switch (columnType) {
+    case CHAR_TYPE:
+      return getStringValue(tColumnValue.getStringVal());
     case BOOLEAN_TYPE:
       return tColumnValue.getBoolVal();
     case TINYINT_TYPE:

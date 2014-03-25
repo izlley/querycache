@@ -44,9 +44,12 @@ public class CLIHandler implements TCLIService.Iface {
   static private ConnMgr gConnMgr = new ConnMgr();
 
   public CLIHandler() {
-    gConnMgr.initialize(Configure.gConnPoolFreeInitSize,
+    if (gConnMgr.initialize(Configure.gConnPoolFreeInitSize,
                         Configure.gConnPoolFreeResizingF,
-                        ConnType.PHOENIX_JDBC);
+                        ConnType.PHOENIX_JDBC) == CORE_RESULT.CORE_FAILURE) {
+      LOG.error("Server start failed.");
+      System.exit(1);
+    }
   }
   
   /*
@@ -476,22 +479,21 @@ struct TGetResultSetMetadataResp {
       
       int sColCnt = sMeta.getColumnCount();
       for (int i = 1; i <= sColCnt; i++) {
-        TColumnDesc sColDesc = new TColumnDesc();
+        TColumnDesc sColDesc = new TColumnDesc(sMeta.getColumnName(i),
+                                               new TTypeDesc(), i);
         TTypeEntry sColType = TTypeEntry.primitiveEntry(new TPrimitiveTypeEntry());
-        sColDesc.position = i;
-        sColDesc.columnName = sMeta.getColumnName(i);
         TTypeId sQCType = mapSQL2QCType(sMeta.getColumnType(i));
         switch (sQCType) {
           case CHAR:
-            sColType.getPrimitiveEntry().setType(sQCType);
+            sColType.getPrimitiveEntry().setLen(sMeta.getPrecision(i));
             break;
           case DECIMAL:
-            sColType.getPrimitiveEntry().setType(sQCType);
+            sColType.getPrimitiveEntry().setScale(sMeta.getScale(i));
             break;
           default:
             break;
         }
-        sColType.getPrimitiveEntry().setScale(sMeta.getScale(i));
+        sColType.getPrimitiveEntry().setType(sQCType);
         // The "top" type is always the first element of the list.
         // If the top type is an ARRAY, MAP, STRUCT, or UNIONTYPE
         // type, then subsequent elements represent nested types.
@@ -597,6 +599,14 @@ struct TGetResultSetMetadataResp {
     try {
       ResultSet sRS = sStmt.sRS;
       ResultSetMetaData sMeta = sRS.getMetaData();
+      /*
+      if ( sRS.isAfterLast() == true ) {
+        LOG.error("FetchResults error : The statement has no ResultSet." +
+            " (id:" + sStmtId + ")");
+          sResp.status.statusCode = TStatusCode.ERROR_STATUS;
+          sResp.status.errorMessage = "FetchResults error : The statement has no ResultSet.";
+          return sResp;
+      }*/
       
       TRowSet sRowSet = new TRowSet();
       // 0-based
@@ -605,7 +615,9 @@ struct TGetResultSetMetadataResp {
       
       int sColCnt = sMeta.getColumnCount();
       // TODO: Below code block should be more optimized for performance
+      long sRowCount = 0;
       while (sRS.next()) {
+        ++sRowCount;
         TRow sRow = new TRow();
         for (int i = 1; i <= sColCnt; i++) {
           TColumnValue sCell = new TColumnValue();
@@ -655,7 +667,7 @@ struct TGetResultSetMetadataResp {
         }
         sRowSet.addToRows(sRow);
       }
-      
+
       sResp.hasMoreRows = false;
       sResp.results = sRowSet;
       sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;

@@ -17,7 +17,7 @@ public class Utils {
     * The required prefix for the connection URL.
     */
   public static final String[] URL_PREFIX = {
-    "jdbc:bdb://", "jdbc:impala://", "thrift:impala://", "cli:hbase://"
+    "jdbc:bdb://", "jdbc:impala://", "thrift:impala://", "cli:hbase://", "jdbc:hive2://"
   };
 
   /**
@@ -114,6 +114,8 @@ public class Utils {
   public static int hiveTypeToSqlType(String type) throws SQLException {
     if ("string".equalsIgnoreCase(type)) {
       return Types.VARCHAR;
+    } else if ("char".equalsIgnoreCase(type)) {
+      return Types.CHAR;
     } else if ("float".equalsIgnoreCase(type)) {
       return Types.FLOAT;
     } else if ("double".equalsIgnoreCase(type)) {
@@ -183,7 +185,7 @@ public class Utils {
 
     boolean isMatch = false;
     int i = 0;
-    for (; i > URL_PREFIX.length; i++) {
+    for (; i < URL_PREFIX.length; i++) {
       if (Pattern.matches(URL_PREFIX[i] + ".*", uri)) {
         isMatch = true;
         break;

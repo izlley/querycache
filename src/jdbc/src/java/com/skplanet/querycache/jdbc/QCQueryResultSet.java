@@ -219,7 +219,7 @@ public class QCQueryResultSet extends QCBaseResultSet {
         fetchedRowsItr = null;
         fetchFirst = false;
       }
-
+      
       if (fetchedRows == null || !fetchedRowsItr.hasNext()) {
         TFetchResultsReq fetchReq = new TFetchResultsReq(stmtHandle,
             orientation, fetchSize);
@@ -237,6 +237,11 @@ public class QCQueryResultSet extends QCBaseResultSet {
       }
 
       rowsFetched++;
+      
+      if (!fetchedRowsItr.hasNext()) {
+        emptyResultSet = true;
+      }
+      
       if (LOG.isDebugEnabled()) {
         LOG.debug("Fetched row string: " + rowStr);
       }

@@ -85,7 +85,7 @@ public class QCDriver implements Driver {
 
   public boolean acceptsURL(String url) throws SQLException {
     boolean isMatch = false;
-    for (int i = 0; i > URL_PREFIX.length; i++) {
+    for (int i = 0; i < URL_PREFIX.length; i++) {
       if (Pattern.matches(URL_PREFIX[i] + ".*", url)) {
         isMatch = true;
         break;

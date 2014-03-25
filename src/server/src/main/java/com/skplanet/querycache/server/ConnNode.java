@@ -31,7 +31,7 @@ public class ConnNode {
   
   public void initialize(ConnType aConnType, long aId, String aUrl) 
       throws SQLException, LinkageError, ClassNotFoundException {
-    Class.forName("com.salesforce.phoenix.jdbc.PhoenixDriver");
+    Class.forName("org.apache.phoenix.jdbc.PhoenixDriver");
     this.sConnId = aId;
     this.sHConn = DriverManager.getConnection(aUrl);
     this.sState = State.CONNECTED;

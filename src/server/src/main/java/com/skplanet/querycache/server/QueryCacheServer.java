@@ -68,6 +68,7 @@ public class QueryCacheServer {
       //new Thread(secure).start();
     } catch (Exception e) {
       LOG.error("FATAL error : ", e);
+      System.exit(1);
     }
   }
 
@@ -89,6 +90,7 @@ public class QueryCacheServer {
       server.serve();
     } catch (Exception e) {
       LOG.error("FATAL error : ", e);
+      System.exit(1);
     }
   }
 
@@ -122,6 +124,7 @@ public class QueryCacheServer {
       server.serve();
     } catch (Exception e) {
       e.printStackTrace();
+      System.exit(1);
     }
   }
 }
