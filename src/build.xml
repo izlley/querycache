@@ -1,0 +1,354 @@
+<?xml version="1.0" ?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+
+<project name="querycache" default="jar" 
+         xmlns:ivy="antlib:org.apache.ivy.ant"
+         xmlns:artifact="urn:maven-artifact-ant"
+         xmlns:rat="antlib:org.apache.rat.anttasks" >
+
+  <!-- Load all the default properties, and any the user wants -->
+  <property name="querycache.root" location="${basedir}"/>
+
+  <!-- load ant-contrib tasks to get the "if" task. -->
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <classpath>
+      <pathelement location="${querycache.root}/../thirdparty/lib/ant-contrib-0.6.jar"/>
+    </classpath>
+  </taskdef>
+
+  <!-- ForTask is not defined in net/sf/antcontrib/antcontrib.properties! -->
+  <!--taskdef name="for" classname="net/sf/antcontrib/antlib.xml">
+    <classpath>
+      <pathelement location="${querycache.root}/../thirdparty/lib/ant-contrib-0.6.jar"/>
+    </classpath>
+  </taskdef-->
+
+  <property file="${querycache.root}/build.properties"/>
+
+  <property environment="env"/>
+
+  <property name="target.dir" location="${build.dir.querycache}/dist"/>
+  <property name="target.lib.dir" location="${target.dir}/lib"/>
+  <property name="target.conf.dir" location="${target.dir}/conf"/>
+  <property name="target.bin.dir" location="${target.dir}/bin"/>
+  <property name="target.example.dir" location="${target.dir}/examples"/>
+  <property name="test.build.dir" value="${build.dir.querycache}/test"/>
+  <property name="test.continue.on.failure" value="true"/>
+  <property name="build.docs" value="${target.dir}/docs"/>
+  <property name="build.javadoc" value="${build.docs}/api"/>
+  <property name="docs.src" value="${querycache.root}/docs"/>
+  <property name="javadoc.link.java"
+            value="http://java.sun.com/javase/6/docs/api/"/>
+  <property name="sourceJavaVersion" value="${javac.version}" />
+  <property name="targetJavaVersion" value="${javac.version}" />
+  <property name="javaBootClasspath" value="${env.JAVA_HOME}/jre/lib/rt.jar" />
+  <property name="final.name" value="${name}-${version}"/>
+  <property name="tar.final.name" value="${final.name}"/>
+  <property name="bin.final.name" value="${final.name}-bin"/>
+  <property name="vcs.excludes" value="**/.svn,**/.svn/**,**/.git,**/.git/**"/>
+
+  <!-- ====================================================== -->
+  <!-- Macro definitions                                      -->
+  <!-- ====================================================== -->
+  <macrodef name="macro_tar" description="Worker Macro for tar">
+    <attribute name="param.destfile"/>
+    <element name="param.listofitems"/>
+    <sequential>
+      <tar compression="gzip" longfile="gnu" destfile="@{param.destfile}">
+      <param.listofitems/>
+      </tar>
+      <checksum file="@{param.destfile}" algorithm="md5" pattern="${md5sum.format}"/>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="iterate-test">
+    <attribute name="target"/>
+    <sequential>
+      <subant target="@{target}">
+        <property name="thrift.home" value="${thrift.home}"/>
+        <property name="build.dir.querycache" location="${build.dir.querycache}"/>
+        <property name="sourceJavaVersion" value="${sourceJavaVersion}" />
+        <property name="targetJavaVersion" value="${targetJavaVersion}" />
+        <property name="javaBootClasspath" value="${javaBootClasspath}" />
+        <filelist dir="." files="server/build.xml,jdbc/build.xml"/>
+      </subant>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="iterate-thriftif">
+    <attribute name="target"/>
+    <sequential>
+      <subant target="@{target}">
+        <property name="thrift.home" value="${thrift.home}"/>
+        <property name="build.dir.querycache" location="${build.dir.querycache}"/>
+        <filelist dir="." files="server/build.xml,jdbc/build.xml"/>
+      </subant>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="iterate-all">
+    <attribute name="target"/>
+    <sequential>
+      <subant target="@{target}">
+        <property name="build.dir.querycache" location="${build.dir.querycache}"/>
+        <property name="is-offline" value="${is-offline}"/>
+        <filelist dir="." files="server/build.xml,jdbc/build.xml"/>
+      </subant>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="iterate">
+    <attribute name="target"/>
+    <sequential>
+      <subant target="@{target}">
+        <property name="build.dir.querycache" location="${build.dir.querycache}"/>
+        <property name="is-offline" value="${is-offline}"/>
+        <property name="sourceJavaVersion" value="${sourceJavaVersion}" />
+        <property name="targetJavaVersion" value="${targetJavaVersion}" />
+        <property name="javaBootClasspath" value="${javaBootClasspath}" />
+        <filelist dir="." files="server/build.xml,jdbc/build.xml"/>
+      </subant>
+    </sequential>
+  </macrodef>
+
+  <path id="classpath">
+    <pathelement location="${build.dir.querycache}/classes"/>
+    <fileset dir="${thirdparty.dir}" includes="lib/*.jar"/>
+  </path>
+
+  <!-- JVM version validation -->
+  <target name="jvm-check">
+      <property name="javaVersion" value="1.6"/>
+
+      <property name="requiredJavaVersion" value="xx${javaVersion}"/>
+      <property name="currentJavaVersion" value="xx${java.version}"/>
+      <condition property="jvm.fail">
+          <not>
+              <contains string="${currentJavaVersion}" substring="${requiredJavaVersion}"/>
+          </not>
+      </condition>
+      <fail if="jvm.fail">
+          Incorrect JVM, current = ${java.version}, required ${javaVersion}.
+      </fail>
+  </target>
+
+  <target name="init" depends="jvm-check">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate-all target="init"/>
+  </target>
+
+  <target name="test-init">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate-all target="test-init"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate target="compile"/>
+  </target>
+
+  <target name="thriftif">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate-thriftif target="thriftif"/>
+  </target>
+
+  <target name="jar"
+          depends="init"
+          description="Build JAR artifacts">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate target="jar"/>
+  </target>
+
+  <target name="gen-test" depends="jar" description="Generate tests">
+    <iterate-test target="gen-test"/>
+  </target>
+
+  <target name="jar-test" depends="gen-test"
+          description="Build Java test artifacts">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate-test target="compile-test"/>
+  </target>
+
+  <!-- create an html report from junit output files -->
+  <target name="testreport"
+          description="Generate JUnit HTML test report">
+    <echo message="Project: ${ant.project.name}"/>
+    <mkdir dir="${test.build.dir}"/>
+    <junitreport todir="${test.build.dir}">
+      <fileset dir="${build.dir.querycache}">
+        <include name="**/TEST-*.xml"/>
+      </fileset>
+      <report format="noframes" todir="${test.build.dir}"/>
+    </junitreport>
+  </target>
+
+  <target name="clean-test"
+          description="Clean test results">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate target="clean-test"/>
+    <delete dir="${build.dir.querycache}/test"/>
+    <delete dir="${querycache.root}/ql/TempStatsStore"/>
+  </target>
+
+  <target name="clean" depends="jvm-check"
+          description="Clean build artifacts">
+    <echo message="Project: ${ant.project.name}"/>
+    <iterate-all target="clean"/>
+    <delete dir="${target.dir}"/>
+  </target>
+
+
+  <target name="package"
+          depends="jar"
+          description="Deploy JAR artifacts">
+    <echo message="Project: ${ant.project.name}"/>
+    <echo message="Deploying Hive jars to ${target.dir}"/>
+    <mkdir dir="${target.dir}"/>
+    <mkdir dir="${target.lib.dir}"/>
+    <mkdir dir="${target.conf.dir}"/>
+    <mkdir dir="${target.bin.dir}"/>
+    <mkdir dir="${target.example.dir}"/>
+    <copy file="${querycache.root}/../bin/querycached" todir="${target.bin.dir}"/>
+    <copy todir="${target.bin.dir}">
+      <fileset dir="${querycache.root}/../bin"/>
+    </copy>
+    <copy file="${basedir}/../conf/querycache-default.xml.template" todir="${target.conf.dir}">
+      <filterset>
+        <filter token="VERSION" value="${version}"/>
+      </filterset>
+    </copy>
+
+    <copy file="${basedir}/../conf/querycache-log4j.properties.template"
+          tofile="${target.conf.dir}/querycache-log4j.properties.template"/>
+
+    <!-- copy jar files -->
+    <copy todir="${target.lib.dir}" preservelastmodified="true" flatten="true">
+      <fileset dir="${querycache.root}"  >
+        <include name="*/*.jar"/>
+        <include name="*/*/*.jar"/>
+      </fileset>
+      <fileset file="${build.dir.querycache}/server/querycache-server-${version}.jar"/>
+      <fileset file="${build.dir.querycache}/jdbc/querycache-jdbc-${version}.jar"/>
+    </copy>
+    <copy file="${basedir}/README.txt" todir="${target.dir}">
+      <filterset>
+        <filter token="VERSION" value="${version}"/>
+      </filterset>
+    </copy>
+    <copy file="${basedir}/NOTICE" todir="${target.dir}"/>
+    <copy file="${basedir}/LICENSE" todir="${target.dir}"/>
+    <copy file="${basedir}/RELEASE_NOTES.txt" todir="${target.dir}"/>
+    <chmod perm="ugo+x" type="file" parallel="false">
+      <fileset dir="${target.bin.dir}"/>
+    </chmod>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Documentation                                                      -->
+  <!-- ================================================================== -->
+
+  <target name="javadoc" depends="package" description="Generate Javadoc">
+    <echo message="Project: ${ant.project.name}"/>
+    <mkdir dir="${build.javadoc}"/>
+    <javadoc
+      maxmemory="1024m"
+      packagenames="com.skplanet.querycache.*"
+      destdir="${build.javadoc}"
+      author="true"
+      version="true"
+      use="true"
+      windowtitle="${Name} ${version} API"
+      doctitle="${Name} ${version} API"
+      bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+      >
+
+      <packageset dir="server/src"/>
+      <packageset dir="server/test"/>
+      <packageset dir="jdbc/src"/>
+      <packageset dir="jdbc/test"/>
+
+      <link href="${javadoc.link.java}"/>
+
+      <classpath >
+        <path refid="classpath" />
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+
+      <group title="Querycache" packages="com.skplanet.*"/>
+  </javadoc>
+
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Make release tarball                                               -->
+  <!-- ================================================================== -->
+
+  <target name="tar" depends="package, javadoc" description="Make release tarball">
+    <echo message="Project: ${ant.project.name}"/>
+    <macro_tar param.destfile="${build.dir.querycache}/${tar.final.name}.tar.gz">
+      <param.listofitems>
+        <tarfileset dir="${build.dir.querycache}/dist" mode="755" prefix="${tar.final.name}"
+                    excludes="${vcs.excludes}">
+          <include name="bin/**"/>
+        </tarfileset>
+        <tarfileset dir="${build.dir.querycache}/dist" mode="664" prefix="${tar.final.name}"
+                    excludes="${vcs.excludes}">
+          <include name="**"/>
+          <exclude name="bin/**"/>
+        </tarfileset>
+        <tarfileset dir="${querycache.root}" mode="664" prefix="${tar.final.name}/src"
+                    excludes="${vcs.excludes}">
+          <exclude name="build/**" />
+          <exclude name="bin/**" />
+        </tarfileset>
+        <tarfileset dir="${querycache.root}" mode="755" prefix="${tar.final.name}/src"
+                    excludes="${vcs.excludes}">
+          <exclude name="build/**" />
+          <include name="bin/**" />
+        </tarfileset>
+      </param.listofitems>
+    </macro_tar>
+  </target>
+
+  <target name="binary" depends="package, javadoc"
+          description="Make release tarball without source and documentation">
+    <echo message="Project: ${ant.project.name}"/>
+    <macro_tar param.destfile="${build.dir.querycache}/${bin.final.name}.tar.gz">
+      <param.listofitems>
+        <tarfileset dir="${build.dir.querycache}/dist" mode="755" prefix="${bin.final.name}"
+                    excludes="${vcs.excludes}">
+          <include name="bin/**"/>
+        </tarfileset>
+        <tarfileset dir="${build.dir.querycache}/dist" mode="664" prefix="${bin.final.name}"
+                    excludes="${vcs.excludes}">
+          <include name="**"/>
+          <exclude name="bin/**"/>
+          <exclude name="docs/**"/>
+        </tarfileset>
+      </param.listofitems>
+    </macro_tar>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- Checkstyle                                                         -->
+  <!-- ================================================================== -->
+
+</project>
+
