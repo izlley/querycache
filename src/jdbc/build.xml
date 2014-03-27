@@ -22,12 +22,12 @@
 
   <import file="../build-common.xml"/>
 
-  <target name="compile" depends="init">
+  <target name="compile" depends="init,thriftif">
     <echo message="Project: ${ant.project.name}"/>
     <echo message="JDK source: ${sourceJavaVersion}, target: ${targetJavaVersion}, bootclasspath: ${javaBootClasspath}"/>
     <javac
         encoding="${build.encoding}"
-        srcdir="${src.dir}/java"
+        srcdir="${src.dir}/java:${basedir}/generated-sources/thrift-java"
         includes="**/*.java"
         destdir="${build.classes}"
         debug="${javac.debug}"
@@ -39,6 +39,27 @@
         >
       <classpath refid="classpath"/>
     </javac>
+  </target>
+
+  <target name="jar" depends="compile">
+    <echo message="Project: ${ant.project.name}" />
+    <jar
+      jarfile="${build.dir}/querycache-${ant.project.name}-${version}.jar"
+      basedir="${build.classes}">
+      <zipgroupfileset dir="${thirdparty.dir}">
+        <include name="thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
+        <include name="log/commons-logging-${commons-logging.version}.jar"/>
+        <include name="log/slf4j-api-${slf4j-api.version}.jar"/>
+      </zipgroupfileset>
+      <manifest>
+        <!-- Not putting these in their own manifest section, since that inserts
+        a new-line, which breaks the reading of the attributes. -->
+        <attribute name="Implementation-Title" value="Querycache"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Implementation-Vendor" value="Apache"/>
+      </manifest>
+      <metainf dir="${querycache.root}" includes="LICENSE,NOTICE"/>
+    </jar>
   </target>
 
   <target name="clean">

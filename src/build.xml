@@ -29,16 +29,9 @@
   <!-- load ant-contrib tasks to get the "if" task. -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
     <classpath>
-      <pathelement location="${querycache.root}/../thirdparty/lib/ant-contrib-0.6.jar"/>
+      <pathelement location="${querycache.root}/../thirdparty/ant-contrib-0.6/lib/ant-contrib-0.6.jar"/>
     </classpath>
   </taskdef>
-
-  <!-- ForTask is not defined in net/sf/antcontrib/antcontrib.properties! -->
-  <!--taskdef name="for" classname="net/sf/antcontrib/antlib.xml">
-    <classpath>
-      <pathelement location="${querycache.root}/../thirdparty/lib/ant-contrib-0.6.jar"/>
-    </classpath>
-  </taskdef-->
 
   <property file="${querycache.root}/build.properties"/>
 
@@ -130,7 +123,7 @@
 
   <path id="classpath">
     <pathelement location="${build.dir.querycache}/classes"/>
-    <fileset dir="${thirdparty.dir}" includes="lib/*.jar"/>
+    <fileset dir="${thirdparty.dir}" includes="**/*.jar"/>
   </path>
 
   <!-- JVM version validation -->

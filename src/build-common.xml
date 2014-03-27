@@ -27,11 +27,14 @@
   <!-- load ant-contrib tasks to get the "if" task. -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
     <classpath>
-      <pathelement location="${querycache.root}/../thirdparty/lib/ant-contrib-0.6.jar"/>
+      <pathelement location="${querycache.root}/../thirdparty/ant-contrib-0.6/lib/ant-contrib-0.6.jar"/>
     </classpath>
   </taskdef>
 
   <property file="${querycache.root}/build.properties"/>
+  <property name="sourceJavaVersion" value="${javac.version}" />
+  <property name="targetJavaVersion" value="${javac.version}" />
+  <property name="javaBootClasspath" value="${env.JAVA_HOME}/jre/lib/rt.jar" />
 
   <property environment="env"/>
 
@@ -46,7 +49,7 @@
 
   <!-- Thrift codegen properties -->
   <property name="common.dir" value="${basedir}/../../common"/>
-  <property name="thrift.home" value="${thirdparty.dir}/thrift-${thrift.version}/install"/>
+  <property name="thrift.home" value="${thirdparty.dir}/thrift-${thrift.version}"/>
   <property name="thrift.args" value="-I ${thrift.home} --gen java:hashcode"/>
   <property name="thrift.gen.dir" value="${basedir}/generated-sources/thrift-java"/>
 
@@ -71,7 +74,7 @@
   <path id="classpath">
     <pathelement location="${build.dir.querycache}/server/classes"/>
     <pathelement location="${build.dir.querycache}/jdbc/classes"/>
-    <fileset dir="${thirdparty.dir}" includes="lib/*.jar"/>
+    <fileset dir="${thirdparty.dir}" includes="**/*.jar"/>
   </path>
 
   <target name="create-dirs">
@@ -248,26 +251,6 @@
       </or>
     </condition>
   </target>
-
-  <!--target name="thriftif" depends="check-thrift-home">
-    <echo message="Project: ${ant.project.name} debug: ${thrift.gen.dir}, ${common.dir}"/>
-    <delete dir="${thrift.gen.dir}"/>
-    <mkdir dir="${thrift.gen.dir}"/>
-    <foreach target="thriftgen" param="thrift.file">
-      <fileset dir="${common.dir}/thrift" casesensitive="yes">
-        <include name="**/*.thrift"/>
-      </fileset>
-    </foreach>
-  </target-->
-
-  <!--target name="thriftgen">
-    <sequential>
-      <echo message="Generating Thrift code for @{thrift.file}"/>
-      <exec executable="${thrift.home}/bin/thrift"  failonerror="true" dir=".">
-        <arg line="${thrift.args} -o ${thrift.gen.dir} @{thrift.file} " />
-      </exec>
-    </sequential>
-  </target-->
 
   <target name="thriftif" depends="check-thrift-home">
     <echo message="Project: ${ant.project.name} debug: ${thrift.gen.dir}, ${common.dir}"/>
