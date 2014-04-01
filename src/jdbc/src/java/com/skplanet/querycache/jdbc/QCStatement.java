@@ -19,7 +19,7 @@ import com.skplanet.querycache.cli.thrift.TSessionHandle;
 import com.skplanet.querycache.cli.thrift.TStatusCode;
 
 /**
- * HiveStatement.
+ * QCStatement.
  *
  */
 public class QCStatement implements java.sql.Statement {

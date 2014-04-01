@@ -9,13 +9,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.jar.Attributes;
 
-//import org.apache.hadoop.hive.metastore.TableType;
 import com.skplanet.querycache.cli.thrift.TGetCatalogsReq;
 import com.skplanet.querycache.cli.thrift.TGetCatalogsResp;
 import com.skplanet.querycache.cli.thrift.TGetColumnsReq;
 import com.skplanet.querycache.cli.thrift.TGetColumnsResp;
-//import com.skplanet.querycache.cli.thrift.TGetFunctionsReq;
-//import com.skplanet.querycache.cli.thrift.TGetFunctionsResp;
 import com.skplanet.querycache.cli.thrift.TGetSchemasReq;
 import com.skplanet.querycache.cli.thrift.TGetSchemasResp;
 import com.skplanet.querycache.cli.thrift.TGetTableTypesReq;
@@ -29,7 +26,7 @@ import com.skplanet.querycache.cli.thrift.TSessionHandle;
 import org.apache.thrift.TException;
 
 /**
- * HiveDatabaseMetaData.
+ * QCDatabaseMetaData.
  *
  */
 public class QCDatabaseMetaData implements DatabaseMetaData {
@@ -238,12 +235,12 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
   }
 
   public String getDatabaseProductName() throws SQLException {
-    return "Hive";
+    return "QueryCache";
   }
 
   public String getDatabaseProductVersion() throws SQLException {
     // TODO: Fetch this from the server side
-    return "0.10.0";
+    return "0.01.0";
   }
 
   public int getDefaultTransactionIsolation() throws SQLException {
@@ -285,27 +282,6 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getFunctions(String catalogName, String schemaPattern, String functionNamePattern)
       throws SQLException {
     throw new SQLException("Method not supported");
-    /*
-    TGetFunctionsResp funcResp;
-    TGetFunctionsReq getFunctionsReq = new TGetFunctionsReq();
-    getFunctionsReq.setSessionHandle(sessHandle);
-    getFunctionsReq.setCatalogName(catalogName);
-    getFunctionsReq.setSchemaName(schemaPattern);
-    getFunctionsReq.setFunctionName(functionNamePattern);
-
-    try {
-      funcResp = client.GetFunctions(getFunctionsReq);
-    } catch (TException e) {
-      throw new SQLException(e.getMessage(), "08S01", e);
-    }
-    Utils.verifySuccess(funcResp.getStatus());
-
-    return new HiveQueryResultSet.Builder()
-    .setClient(client)
-    .setSessionHandle(sessHandle)
-    .setStmtHandle(funcResp.getOperationHandle())
-    .build();
-    */
   }
 
 
@@ -455,7 +431,7 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
 
   public ResultSet getPrimaryKeys(String catalog, String schema, String table)
       throws SQLException {
-    // Hive doesn't support primary keys
+    // no primary keys
     // using local schema with empty resultset
     return new QCQueryResultSet.Builder().setClient(client).setEmptyResultSet(true).
         setSchema(Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "KEY_SEQ", "PK_NAME" ),
@@ -466,7 +442,7 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getProcedureColumns(String catalog, String schemaPattern,
       String procedureNamePattern, String columnNamePattern)
       throws SQLException {
-    // Hive doesn't support primary keys
+    // no primary keys
     // using local schema with empty resultset
     return new QCQueryResultSet.Builder().setClient(client).setEmptyResultSet(true).
                   setSchema(
@@ -487,7 +463,7 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
 
   public ResultSet getProcedures(String catalog, String schemaPattern,
       String procedureNamePattern) throws SQLException {
-    // Hive doesn't support primary keys
+    // no primary keys
     // using local schema with empty resultset
     return new QCQueryResultSet.Builder().setClient(client).setEmptyResultSet(true).
                   setSchema(
@@ -642,28 +618,6 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
       }
     }
   }
-
-  
-  /**
-   * Translate hive table types into jdbc table types.
-   * @param hivetabletype
-   * @return the type of the table
-   */
-  /*
-  public static String toJdbcTableType(String hivetabletype) {
-    if (hivetabletype==null) {
-      return null;
-    } else if (hivetabletype.equals(TableType.MANAGED_TABLE.toString())) {
-      return "TABLE";
-    } else if (hivetabletype.equals(TableType.VIRTUAL_VIEW.toString())) {
-      return "VIEW";
-    } else if (hivetabletype.equals(TableType.EXTERNAL_TABLE.toString())) {
-      return "EXTERNAL TABLE";
-    } else {
-      return hivetabletype;
-    }
-  }
-  */
 
   public String getTimeDateFunctions() throws SQLException {
     return "";

@@ -62,6 +62,12 @@ public class CLIHandler implements TCLIService.Iface {
 
   public TOpenSessionResp OpenSession(TOpenSessionReq aReq) {
     LOG.info("OpenSession is requested.");
+    long startTime;
+    long endTime;
+    
+    if (Configure.gQueryProfile) {
+      startTime = System.currentTimeMillis();
+    }
     
     TOpenSessionResp sResp = new TOpenSessionResp();
     sResp.setStatus(new TStatus());
@@ -126,6 +132,11 @@ public class CLIHandler implements TCLIService.Iface {
         new THandleIdentifier().setConnid(sConn.sConnId));
     sResp.setSessionHandle(sSH);
     
+    if (Configure.gQueryProfile) {
+      endTime = System.currentTimeMillis();
+      LOG.info("PROFILE: Connection time elapsed : " + (endTime-startTime) + "ms");
+    }
+    
     return sResp;
   }
   
@@ -148,6 +159,12 @@ public class CLIHandler implements TCLIService.Iface {
    */
   public TCloseSessionResp CloseSession(TCloseSessionReq aReq) {
     LOG.info("CloseSession is requested.");
+    long startTime;
+    long endTime;
+    
+    if (Configure.gQueryProfile) {
+      startTime = System.currentTimeMillis();
+    }
     // 1. find the specific ConnNode by ConnId
     if (gConnMgr.closeConn(aReq.sessionHandle.sessionId.connid) == 
         CORE_RESULT.CORE_FAILURE) {
@@ -157,6 +174,11 @@ public class CLIHandler implements TCLIService.Iface {
     
     TCloseSessionResp sResp = new TCloseSessionResp();
     sResp.setStatus(new TStatus().setStatusCode(TStatusCode.SUCCESS_STATUS));
+    
+    if (Configure.gQueryProfile) {
+      endTime = System.currentTimeMillis();
+      LOG.info("PROFILE: Close time elapsed : " + (endTime-startTime) + "ms");
+    }
     
     return sResp;
   }
@@ -195,6 +217,12 @@ public class CLIHandler implements TCLIService.Iface {
 
   public TExecuteStatementResp ExecuteStatement(TExecuteStatementReq aReq) {
     LOG.info("ExecuteStatement is requested.");
+    long startTime;
+    long endTime;
+    
+    if (Configure.gQueryProfile) {
+      startTime = System.currentTimeMillis();
+    }
     // 1. get connection from pool
     long sConnId = aReq.sessionHandle.sessionId.connid;
     long sStmtId = 0;
@@ -252,6 +280,11 @@ public class CLIHandler implements TCLIService.Iface {
       return sResp;
     }
 
+    if (Configure.gQueryProfile) {
+      endTime = System.currentTimeMillis();
+      LOG.info("PROFILE: Execute time elapsed : " + (endTime-startTime) + "ms");
+    }
+    
     return sResp;
   }
 
@@ -351,6 +384,12 @@ public class CLIHandler implements TCLIService.Iface {
    */
   public TCloseOperationResp CloseOperation(TCloseOperationReq aReq) {
     LOG.info("CloseOperation is requested.");
+    long startTime;
+    long endTime;
+    
+    if (Configure.gQueryProfile) {
+      startTime = System.currentTimeMillis();
+    }
     TCloseOperationResp sResp = new TCloseOperationResp();
     sResp.setStatus(new TStatus());
     
@@ -379,6 +418,10 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
       return sResp;
+    }
+    if (Configure.gQueryProfile) {
+      endTime = System.currentTimeMillis();
+      LOG.info("PROFILE: CloseOp time elapsed : " + (endTime-startTime) + "ms");
     }
     return sResp;
   }
@@ -430,6 +473,12 @@ struct TGetResultSetMetadataResp {
    */
   public TGetResultSetMetadataResp GetResultSetMetadata(TGetResultSetMetadataReq aReq) {
     LOG.info("GetResultSetMetadata is requested.");
+    long startTime;
+    long endTime;
+    
+    if (Configure.gQueryProfile) {
+      startTime = System.currentTimeMillis();
+    }
     TGetResultSetMetadataResp sResp = new TGetResultSetMetadataResp();
     sResp.setStatus(new TStatus());
     
@@ -512,6 +561,10 @@ struct TGetResultSetMetadataResp {
       return sResp;
     }
 
+    if (Configure.gQueryProfile) {
+      endTime = System.currentTimeMillis();
+      LOG.info("PROFILE: GetResultSetMetadata time elapsed : " + (endTime-startTime) + "ms");
+    }
     return sResp;
   }
 
@@ -556,6 +609,13 @@ struct TGetResultSetMetadataResp {
 
   public TFetchResultsResp FetchResults(TFetchResultsReq aReq) {
     LOG.info("FetchResults is requested.");
+    long startTime;
+    long endTime;
+    
+    if (Configure.gQueryProfile) {
+      startTime = System.currentTimeMillis();
+    }
+    
     TFetchResultsResp sResp = new TFetchResultsResp();
     sResp.setStatus(new TStatus());
     
@@ -678,6 +738,10 @@ struct TGetResultSetMetadataResp {
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
       return sResp;
+    }
+    if (Configure.gQueryProfile) {
+      endTime = System.currentTimeMillis();
+      LOG.info("PROFILE: Fetch time elapsed : " + (endTime-startTime) + "ms");
     }
     return sResp;
   }

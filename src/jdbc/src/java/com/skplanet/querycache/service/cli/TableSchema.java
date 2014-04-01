@@ -3,8 +3,6 @@ package com.skplanet.querycache.service.cli;
 import java.util.ArrayList;
 import java.util.List;
 
-//import org.apache.hadoop.hive.metastore.api.FieldSchema;
-//import org.apache.hadoop.hive.metastore.api.Schema;
 import com.skplanet.querycache.thrift.TColumnDesc;
 import com.skplanet.querycache.thrift.TTableSchema;
 

@@ -26,7 +26,7 @@ public class Utils {
   public static final String DEFAULT_PORT = "8282";
 
   /**
-   * Hive's default database name
+   * QC's default database name
    */
   public static final String DEFAULT_DATABASE = "default";
 
@@ -39,8 +39,8 @@ public class Utils {
     private String service = null;
     private String protocol = null;
     private String dbName = DEFAULT_DATABASE;
-    private Map<String,String> hiveConfs = new HashMap<String,String>();
-    private Map<String,String> hiveVars = new HashMap<String,String>();
+    private Map<String,String> qcConfs = new HashMap<String,String>();
+    private Map<String,String> qcVars = new HashMap<String,String>();
     private Map<String,String> sessionVars = new HashMap<String,String>();
     private boolean isEmbeddedMode = false;
 
@@ -62,11 +62,11 @@ public class Utils {
     public String getDbName() {
       return dbName;
     }
-    public Map<String, String> getHiveConfs() {
-      return hiveConfs;
+    public Map<String, String> getQCConfs() {
+      return qcConfs;
     }
-    public Map<String,String> getHiveVars() {
-      return hiveVars;
+    public Map<String,String> getQCVars() {
+      return qcVars;
     }
     public boolean isEmbeddedMode() {
       return isEmbeddedMode;
@@ -90,11 +90,11 @@ public class Utils {
     public void setDbName(String dbName) {
       this.dbName = dbName;
     }
-    public void setHiveConfs(Map<String, String> hiveConfs) {
-      this.hiveConfs = hiveConfs;
+    public void setQCConfs(Map<String, String> qcConfs) {
+      this.qcConfs = qcConfs;
     }
-    public void setHiveVars(Map<String,String> hiveVars) {
-      this.hiveVars = hiveVars;
+    public void setQCVars(Map<String,String> qcVars) {
+      this.qcVars = qcVars;
     }
     public void setEmbeddedMode(boolean embeddedMode) {
       this.isEmbeddedMode = embeddedMode;
@@ -106,12 +106,12 @@ public class Utils {
 
 
   /**
-   * Convert hive types to sql types.
+   * Convert QC types to sql types.
    * @param type
    * @return Integer java.sql.Types values
    * @throws SQLException
    */
-  public static int hiveTypeToSqlType(String type) throws SQLException {
+  public static int qcTypeToSqlType(String type) throws SQLException {
     if ("string".equalsIgnoreCase(type)) {
       return Types.VARCHAR;
     } else if ("char".equalsIgnoreCase(type)) {
@@ -167,13 +167,11 @@ public class Utils {
 
   /**
    * Parse JDBC connection URL
-   * The new format of the URL is jdbc:hive://<host>:<port>/dbName;sess_var_list?hive_conf_list#hive_var_list
-   * where the optional sess, conf and var lists are semicolon separated <key>=<val> pairs. As before, if the
-   * host/port is not specified, it the driver runs an embedded hive.
+   * The format of the URL is jdbc:<servicename>://<host>:<port>/dbName;sess_var_list?qc_conf_list#qc_var_list
+   * where the optional sess, conf and var lists are semicolon separated <key>=<val> pairs.
    * examples -
-   *  jdbc:hive://ubuntu:11000/db2?hive.cli.conf.printheader=true;hive.exec.mode.local.auto.inputbytes.max=9999#stab=salesTable;icol=customerID
-   *  jdbc:hive://?hive.cli.conf.printheader=true;hive.exec.mode.local.auto.inputbytes.max=9999#stab=salesTable;icol=customerID
-   *  jdbc:hive://ubuntu:11000/db2;user=foo;password=bar
+   *  jdbc:bdb://ubuntu:11000/db2?qc.cli.conf.printheader=true;qc.exec.mode.local.auto.inputbytes.max=9999#stab=salesTable;icol=customerID
+   *  jdbc:impala://ubuntu:11000/db2;user=foo;password=bar
    *
    * Note that currently the session properties are not used.
    *
@@ -211,10 +209,6 @@ public class Utils {
     connParams.setService(service);
     URI jdbcURI = URI.create(uri.substring(indCol + 1));
 
-    //Check to prevent unintentional use of embedded mode. A missing "/" can
-    // to separate the 'path' portion of URI can result in this.
-    //The missing "/" common typo while using secure mode, eg of such url -
-    // jdbc:hive2://localhost:10000;principal=hive/HiveServer2Host@YOUR-REALM.COM
     if((jdbcURI.getAuthority() != null) && (jdbcURI.getHost()==null)){
        throw new IllegalArgumentException("Bad URL format. Hostname not found "
            + " in authority part of the url: " + jdbcURI.getAuthority()
@@ -260,21 +254,21 @@ public class Utils {
       }
     }
 
-    // parse hive conf settings
+    // parse qc conf settings
     String confStr = jdbcURI.getQuery();
     if (confStr != null) {
       Matcher confMatcher = pattern.matcher(confStr);
       while (confMatcher.find()) {
-        connParams.getHiveConfs().put(confMatcher.group(1), confMatcher.group(2));
+        connParams.getQCConfs().put(confMatcher.group(1), confMatcher.group(2));
       }
     }
 
-    // parse hive var settings
+    // parse qc var settings
     String varStr = jdbcURI.getFragment();
     if (varStr != null) {
       Matcher varMatcher = pattern.matcher(varStr);
       while (varMatcher.find()) {
-        connParams.getHiveVars().put(varMatcher.group(1), varMatcher.group(2));
+        connParams.getQCVars().put(varMatcher.group(1), varMatcher.group(2));
       }
     }
 

@@ -27,7 +27,7 @@
     <echo message="JDK source: ${sourceJavaVersion}, target: ${targetJavaVersion}, bootclasspath: ${javaBootClasspath}"/>
     <javac
         encoding="${build.encoding}"
-        srcdir="${src.dir}/java:${basedir}/generated-sources/thrift-java"
+        srcdir="${src.dir}/java:${basedir}/generated-sources"
         includes="**/*.java"
         destdir="${build.classes}"
         debug="${javac.debug}"

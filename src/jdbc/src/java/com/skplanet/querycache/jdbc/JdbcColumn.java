@@ -42,16 +42,16 @@ public class JdbcColumn {
   }
 
   public Integer getSqlType() throws SQLException {
-    return Utils.hiveTypeToSqlType(type);
+    return Utils.qcTypeToSqlType(type);
   }
 
   static int columnDisplaySize(int columnType) throws SQLException {
-    // according to hiveTypeToSqlType possible options are:
+    // according to qcTypeToSqlType possible options are:
     switch(columnType) {
     case Types.BOOLEAN:
       return columnPrecision(columnType);
     case Types.VARCHAR:
-      return Integer.MAX_VALUE; // hive has no max limit for strings
+      return Integer.MAX_VALUE; // qc has no max limit for strings
     case Types.TINYINT:
     case Types.SMALLINT:
     case Types.INTEGER:
@@ -74,12 +74,12 @@ public class JdbcColumn {
   }
 
   static int columnPrecision(int columnType) throws SQLException {
-    // according to hiveTypeToSqlType possible options are:
+    // according to qcTypeToSqlType possible options are:
     switch(columnType) {
     case Types.BOOLEAN:
       return 1;
     case Types.VARCHAR:
-      return Integer.MAX_VALUE; // hive has no max limit for strings
+      return Integer.MAX_VALUE; // qc has no max limit for strings
     case Types.TINYINT:
       return 3;
     case Types.SMALLINT:
@@ -102,7 +102,7 @@ public class JdbcColumn {
   }
 
   static int columnScale(int columnType) throws SQLException {
-    // according to hiveTypeToSqlType possible options are:
+    // according to qcTypeToSqlType possible options are:
     switch(columnType) {
     case Types.BOOLEAN:
     case Types.VARCHAR:
@@ -125,13 +125,13 @@ public class JdbcColumn {
   }
 
   public Integer getColumnSize() throws SQLException {
-    int precision = columnPrecision(Utils.hiveTypeToSqlType(type));
+    int precision = columnPrecision(Utils.qcTypeToSqlType(type));
 
     return precision == 0 ? null : precision;
   }
 
   public Integer getDecimalDigits() throws SQLException {
-    return columnScale(Utils.hiveTypeToSqlType(type));
+    return columnScale(Utils.qcTypeToSqlType(type));
   }
 
   public Integer getNumPrecRadix() {

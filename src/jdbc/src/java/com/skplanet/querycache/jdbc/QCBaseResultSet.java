@@ -39,7 +39,7 @@ import com.skplanet.querycache.thrift.TStringValue;
 
 /**
  * Data independent base class which implements the common part of
- * all Hive result sets.
+ * all QC result sets.
  */
 public abstract class QCBaseResultSet implements ResultSet {
   protected SQLWarning warningChain = null;

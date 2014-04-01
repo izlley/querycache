@@ -56,6 +56,8 @@
   <property name="tar.final.name" value="${final.name}"/>
   <property name="bin.final.name" value="${final.name}-bin"/>
   <property name="vcs.excludes" value="**/.svn,**/.svn/**,**/.git,**/.git/**"/>
+  <property name="thirdparty.dir" value="${querycache.root}/../thirdparty"/>
+  <property name="md5sum.format" value="{0}  {1}"/>
 
   <!-- ====================================================== -->
   <!-- Macro definitions                                      -->
@@ -101,7 +103,7 @@
     <sequential>
       <subant target="@{target}">
         <property name="build.dir.querycache" location="${build.dir.querycache}"/>
-        <property name="is-offline" value="${is-offline}"/>
+        <!--property name="is-offline" value="${is-offline}"/-->
         <filelist dir="." files="server/build.xml,jdbc/build.xml"/>
       </subant>
     </sequential>
@@ -112,7 +114,7 @@
     <sequential>
       <subant target="@{target}">
         <property name="build.dir.querycache" location="${build.dir.querycache}"/>
-        <property name="is-offline" value="${is-offline}"/>
+        <!--property name="is-offline" value="${is-offline}"/-->
         <property name="sourceJavaVersion" value="${sourceJavaVersion}" />
         <property name="targetJavaVersion" value="${targetJavaVersion}" />
         <property name="javaBootClasspath" value="${javaBootClasspath}" />
@@ -217,8 +219,9 @@
     <mkdir dir="${target.lib.dir}"/>
     <mkdir dir="${target.conf.dir}"/>
     <mkdir dir="${target.bin.dir}"/>
+    <mkdir dir="${target.dir}/log"/>
     <mkdir dir="${target.example.dir}"/>
-    <copy file="${querycache.root}/../bin/querycached" todir="${target.bin.dir}"/>
+    <!--copy file="${querycache.root}/../bin/querycached" todir="${target.bin.dir}"/-->
     <copy todir="${target.bin.dir}">
       <fileset dir="${querycache.root}/../bin"/>
     </copy>
@@ -230,6 +233,8 @@
 
     <copy file="${basedir}/../conf/querycache-log4j.properties.template"
           tofile="${target.conf.dir}/querycache-log4j.properties.template"/>
+    <copy file="${basedir}/../conf/log4j.properties"
+          tofile="${target.conf.dir}/log4j.properties"/>
 
     <!-- copy jar files -->
     <copy todir="${target.lib.dir}" preservelastmodified="true" flatten="true">
@@ -239,6 +244,10 @@
       </fileset>
       <fileset file="${build.dir.querycache}/server/querycache-server-${version}.jar"/>
       <fileset file="${build.dir.querycache}/jdbc/querycache-jdbc-${version}.jar"/>
+      <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
+      <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/lib/commons-lang3-${commons-lang3.version}.jar"/>
+      <fileset file="${thirdparty.dir}/log/*.jar"/>
+      <fileset file="${thirdparty.dir}/phoenix-${phoenix.version}/phoenix-${phoenix.version}-client.jar"/>
     </copy>
     <copy file="${basedir}/README.txt" todir="${target.dir}">
       <filterset>

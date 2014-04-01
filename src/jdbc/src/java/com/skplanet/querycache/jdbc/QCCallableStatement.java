@@ -24,7 +24,7 @@ import java.util.Calendar;
 import java.util.Map;
 
 /**
- * HiveCallableStatement.
+ * QCCallableStatement.
  *
  */
 public class QCCallableStatement implements java.sql.CallableStatement {

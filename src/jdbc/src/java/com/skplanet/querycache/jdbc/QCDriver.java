@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
- * QueryCacheDriver.
+ * QCDriver.
  *
  */
 public class QCDriver implements Driver {

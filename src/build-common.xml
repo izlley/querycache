@@ -31,12 +31,12 @@
     </classpath>
   </taskdef>
 
+  <property environment="env"/>
+
   <property file="${querycache.root}/build.properties"/>
   <property name="sourceJavaVersion" value="${javac.version}" />
   <property name="targetJavaVersion" value="${javac.version}" />
   <property name="javaBootClasspath" value="${env.JAVA_HOME}/jre/lib/rt.jar" />
-
-  <property environment="env"/>
 
   <property name="querycache.conf.dir" value="${querycache.root}/conf"/>
   <property name="dist.dir" location="${querycache.root}"/>
@@ -51,7 +51,7 @@
   <property name="common.dir" value="${basedir}/../../common"/>
   <property name="thrift.home" value="${thirdparty.dir}/thrift-${thrift.version}"/>
   <property name="thrift.args" value="-I ${thrift.home} --gen java:hashcode"/>
-  <property name="thrift.gen.dir" value="${basedir}/generated-sources/thrift-java"/>
+  <property name="thrift.gen.dir" value="${basedir}/generated-sources"/>
 
   <!-- configuration needed for tests -->
   <property name="test.src.dir" value="${basedir}/src/test"/>

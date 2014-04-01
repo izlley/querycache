@@ -1,6 +1,5 @@
 package com.skplanet.querycache.service.cli;
 
-//import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import com.skplanet.querycache.thrift.TColumnDesc;
 
 

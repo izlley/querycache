@@ -81,7 +81,7 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
     String type = columnTypes.get(column - 1);
 
     // we need to convert the thrift type to the SQL type
-    return Utils.hiveTypeToSqlType(type);
+    return Utils.qcTypeToSqlType(type);
   }
 
   public String getColumnTypeName(int column) throws SQLException {
@@ -94,7 +94,7 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
       throw new SQLException("Invalid column value: " + column);
     }
 
-    // we need to convert the Hive type to the SQL type name
+    // we need to convert the QC type to the SQL type name
     // TODO: this would be better handled in an enum
     String type = columnTypes.get(column - 1);
     if ("string".equalsIgnoreCase(type)) {
@@ -153,7 +153,7 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
   }
 
   public boolean isAutoIncrement(int column) throws SQLException {
-    // Hive doesn't have an auto-increment concept
+    // QC doesn't have an auto-increment concept
     return false;
   }
 
@@ -162,7 +162,7 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
   }
 
   public boolean isCurrency(int column) throws SQLException {
-    // Hive doesn't support a currency type
+    // QC doesn't support a currency type
     return false;
   }
 
@@ -171,7 +171,7 @@ public class QCResultSetMetaData implements java.sql.ResultSetMetaData {
   }
 
   public int isNullable(int column) throws SQLException {
-    // Hive doesn't have the concept of not-null
+    // QC doesn't have the concept of not-null
     return ResultSetMetaData.columnNullable;
   }
 

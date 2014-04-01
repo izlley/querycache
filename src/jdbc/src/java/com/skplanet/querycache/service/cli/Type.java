@@ -271,7 +271,7 @@ public enum Type {
    * DatabaseMetaData.typeNullableUnknown - nullability unknown
    */
   public Short getNullable() {
-    // All Hive types are nullable
+    // All QC types are nullable
     return DatabaseMetaData.typeNullable;
   }
 

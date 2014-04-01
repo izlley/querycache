@@ -63,6 +63,15 @@ public class QueryCacheServer {
         }
       };
       */
+      
+      // Add shutdown hook.
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          String shutdownMsg = "Shutting down hive querycache.";
+          LOG.info(shutdownMsg);
+        }
+      });
 
       new Thread(sThriftServer).start();
       //new Thread(secure).start();
@@ -74,16 +83,21 @@ public class QueryCacheServer {
 
   public static void createServer(TCLIService.Processor processor) {
     try {
-      TServerTransport serverTransport = new TServerSocket(Configure.gServerPort);
+      boolean tcpKeepAlive = true;
+      
+      TServerTransport serverTransport = tcpKeepAlive ?
+        new TServerSocketKeepAlive(Configure.gServerPort) : new TServerSocket(Configure.gServerPort);
+      
       // Use this for a multithreaded server
       // Use CompactProtocol
       TThreadPoolServer.Args sArgs = new TThreadPoolServer.Args(serverTransport).
           processor(processor);
       sArgs.inputProtocolFactory(new TCompactProtocol.Factory());
       sArgs.outputProtocolFactory(new TCompactProtocol.Factory());
+      sArgs.minWorkerThreads(Configure.gMinWorkerThreads);
+      sArgs.maxWorkerThreads(Configure.gMinWorkerThreads);
+      
       TServer server = new TThreadPoolServer(sArgs);
-      //TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).
-      //  processor(processor));
 
       System.out.println("Starting the QueryCache server...");
       LOG.info("Starting the QueryCache server...");

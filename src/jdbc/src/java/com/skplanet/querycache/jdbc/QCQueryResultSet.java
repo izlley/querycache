@@ -25,7 +25,7 @@ import com.skplanet.querycache.cli.thrift.TSessionHandle;
 import com.skplanet.querycache.thrift.TTableSchema;
 
 /**
- * HiveQueryResultSet.
+ * QCQueryResultSet.
  *
  */
 public class QCQueryResultSet extends QCBaseResultSet {

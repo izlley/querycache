@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
- * HiveDataSource.
+ * QCDataSource.
  *
  */
 public class QCDataSource implements DataSource {
@@ -42,7 +42,7 @@ public class QCDataSource implements DataSource {
     try {
       return new QCConnection("", null);
     } catch (Exception ex) {
-      throw new SQLException("Error in getting HiveConnection",ex);
+      throw new SQLException("Error in getting QCConnection",ex);
     }
   }
 
