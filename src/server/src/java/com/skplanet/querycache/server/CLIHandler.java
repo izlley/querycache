@@ -37,11 +37,17 @@ import com.skplanet.querycache.server.StmtNode;
 import com.skplanet.querycache.server.common.*;
 import com.skplanet.querycache.server.common.Types.CORE_RESULT;
 import com.skplanet.querycache.server.common.Types.ConnType;
+import com.skplanet.querycache.server.util.ObjectPool;
+import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 
 public class CLIHandler implements TCLIService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
   
   static private ConnMgr gConnMgr = new ConnMgr();
+  
+  static private ObjectPool gObjPool = new ObjectPool(Configure.gMaxPoolSize,
+                                                      Configure.gReloadCycle,
+                                                      Configure.gObjPoolResizingF);
 
   public CLIHandler() {
     if (gConnMgr.initialize(Configure.gConnPoolFreeInitSize,
@@ -668,7 +674,7 @@ struct TGetResultSetMetadataResp {
           return sResp;
       }*/
       
-      TRowSet sRowSet = new TRowSet();
+      TRowSet sRowSet = (TRowSet)gObjPool.getObject(TargetObjs.TROWSET);
       // 0-based
       sRowSet.startRowOffset = 0;
       sStmt.sState = StmtNode.State.FETCHING;
@@ -678,9 +684,9 @@ struct TGetResultSetMetadataResp {
       long sRowCount = 0;
       while (sRS.next()) {
         ++sRowCount;
-        TRow sRow = new TRow();
+        TRow sRow = (TRow)gObjPool.getObject(TargetObjs.TROW);
         for (int i = 1; i <= sColCnt; i++) {
-          TColumnValue sCell = new TColumnValue();
+          TColumnValue sCell = (TColumnValue)gObjPool.getObject(TargetObjs.TCOLUMNVALUE);
           TTypeId sQCType = mapSQL2QCType(sMeta.getColumnType(i));
           switch (sQCType) {
             case CHAR:
@@ -689,7 +695,8 @@ struct TGetResultSetMetadataResp {
             case DECIMAL:
               String value = sRS.getString(i);
               if (value != null) {
-                sCell.setStringVal(new TStringValue().setValue(value));
+                sCell.setStringVal(((TStringValue)gObjPool.getObject(TargetObjs.TSTRINGVALUE))
+                    .setValue(value));
               }
               break;
             case BIGINT:

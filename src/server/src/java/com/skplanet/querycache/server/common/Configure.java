@@ -20,7 +20,7 @@ public class Configure {
   static public final boolean gQueryProfile = true;
   
   // ObjectPool
-  static public final int gMaxPoolSize = 1024;
-  static public final long gReloadCycle = 30 * 1000; //ms
+  static public final int gMaxPoolSize = 1024 * 1024;
+  static public final long gReloadCycle = 15 * 1000; //ms
   static public final float gObjPoolResizingF = 0.2f;
 }
