@@ -260,6 +260,11 @@
         <filter token="VERSION" value="${version}"/>
       </filterset>
     </copy>
+    <copy file="${basedir}/README.md" todir="${basedir}/..">
+      <filterset>
+        <filter token="VERSION" value="${version}"/>
+      </filterset>
+    </copy>
     <copy file="${basedir}/NOTICE" todir="${target.dir}"/>
     <copy file="${basedir}/LICENSE" todir="${target.dir}"/>
     <copy file="${basedir}/RELEASE_NOTES.txt" todir="${target.dir}"/>
