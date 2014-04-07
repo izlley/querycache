@@ -1,0 +1,97 @@
+Starting Hive Metastore Server
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/home/leejy/work/hadoop-2.0.0-cdh4.2.0/share/hadoop/common/lib/slf4j-log4j12-1.6.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/leejy/work/hive-0.10.0-cdh4.2.0/lib/slf4j-log4j12-1.6.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/leejy/work/impala_0.6_ori/fe/target/impala-frontend-0.1-SNAPSHOT-jar-with-dependencies.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+Starting Hive Thrift Server
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/home/leejy/work/hadoop-2.0.0-cdh4.2.0/share/hadoop/common/lib/slf4j-log4j12-1.6.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/leejy/work/hive-0.10.0-cdh4.2.0/lib/slf4j-log4j12-1.6.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/leejy/work/impala_0.65_ori/fe/target/impala-frontend-0.1-SNAPSHOT-jar-with-dependencies.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+Starting Hive Metastore Server
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/home/leejy/work/hadoop-2.0.0-cdh4.2.0/share/hadoop/common/lib/slf4j-log4j12-1.6.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/leejy/work/hive-0.10.0-cdh4.2.0/lib/slf4j-log4j12-1.6.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+Starting Hive Metastore Server
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/util/ClassUtil
+	at org.apache.hadoop.mapred.JobConf.setJarByClass(JobConf.java:455)
+	at org.apache.hadoop.mapred.JobConf.<init>(JobConf.java:352)
+	at org.apache.hadoop.hive.conf.HiveConf.initialize(HiveConf.java:1029)
+	at org.apache.hadoop.hive.conf.HiveConf.<init>(HiveConf.java:996)
+	at org.apache.hadoop.hive.metastore.HiveMetaStore.main(HiveMetaStore.java:4128)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.hadoop.util.RunJar.main(RunJar.java:208)
+Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.util.ClassUtil
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	... 10 more
+Starting Hive Metastore Server
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/util/ClassUtil
+	at org.apache.hadoop.mapred.JobConf.setJarByClass(JobConf.java:455)
+	at org.apache.hadoop.mapred.JobConf.<init>(JobConf.java:352)
+	at org.apache.hadoop.hive.conf.HiveConf.initialize(HiveConf.java:1029)
+	at org.apache.hadoop.hive.conf.HiveConf.<init>(HiveConf.java:996)
+	at org.apache.hadoop.hive.metastore.HiveMetaStore.main(HiveMetaStore.java:4128)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.hadoop.util.RunJar.main(RunJar.java:208)
+Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.util.ClassUtil
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	... 10 more
+Starting Hive Metastore Server
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/util/ClassUtil
+	at org.apache.hadoop.mapred.JobConf.setJarByClass(JobConf.java:455)
+	at org.apache.hadoop.mapred.JobConf.<init>(JobConf.java:352)
+	at org.apache.hadoop.hive.conf.HiveConf.initialize(HiveConf.java:1029)
+	at org.apache.hadoop.hive.conf.HiveConf.<init>(HiveConf.java:996)
+	at org.apache.hadoop.hive.metastore.HiveMetaStore.main(HiveMetaStore.java:4128)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.hadoop.util.RunJar.main(RunJar.java:208)
+Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.util.ClassUtil
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	... 10 more
+Starting Hive Metastore Server
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/util/ClassUtil
+	at org.apache.hadoop.mapred.JobConf.setJarByClass(JobConf.java:455)
+	at org.apache.hadoop.mapred.JobConf.<init>(JobConf.java:352)
+	at org.apache.hadoop.hive.conf.HiveConf.initialize(HiveConf.java:1029)
+	at org.apache.hadoop.hive.conf.HiveConf.<init>(HiveConf.java:996)
+	at org.apache.hadoop.hive.metastore.HiveMetaStore.main(HiveMetaStore.java:4128)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.hadoop.util.RunJar.main(RunJar.java:208)
+Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.util.ClassUtil
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+	at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+	... 10 more

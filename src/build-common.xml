@@ -74,7 +74,11 @@
   <path id="classpath">
     <pathelement location="${build.dir.querycache}/server/classes"/>
     <pathelement location="${build.dir.querycache}/jdbc/classes"/>
-    <fileset dir="${thirdparty.dir}" includes="**/*.jar"/>
+    <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
+    <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/lib/commons-lang3-${commons-lang3.version}.jar"/>
+    <fileset file="${thirdparty.dir}/log/*.jar"/>
+    <!--fileset file="${thirdparty.dir}/phoenix-${phoenix.version}/phoenix-${phoenix.version}-client.jar"/-->
+    <!--fileset dir="${thirdparty.dir}" includes="**/*.jar"/-->
   </path>
 
   <target name="create-dirs">
@@ -238,6 +242,7 @@
   <target name="clean">
     <echo message="Project: ${ant.project.name}"/>
     <delete dir="${build.dir}"/>
+    <delete dir="${thrift.gen.dir}"/>
   </target>
 
   <target name="check-thrift-home">

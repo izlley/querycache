@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.skplanet.querycache.server.common.Types.ConnType;
-
 public class ConnNode {
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
   
@@ -31,7 +29,7 @@ public class ConnNode {
   
   public void initialize(ConnType aConnType, long aId, String aUrl) 
       throws SQLException, LinkageError, ClassNotFoundException {
-    Class.forName("org.apache.phoenix.jdbc.PhoenixDriver");
+    Class.forName(aConnType.getPackgePath());
     this.sConnId = aId;
     this.sHConn = DriverManager.getConnection(aUrl);
     this.sState = State.CONNECTED;

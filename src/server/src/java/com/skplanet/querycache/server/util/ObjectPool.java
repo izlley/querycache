@@ -40,7 +40,9 @@ public class ObjectPool {
         while (true) {
           try {
             Thread.sleep(sReloadCycle);
+            LOG.debug("ObjectPool: checking each object count.");
             for (int i = 0; i < sObjCnt; i++) {
+              LOG.debug("  ObjList[" + i + "].size()=" + sObjList.get(i).size());
               if (i == TargetObjs.TCOLUMNVALUE || i == TargetObjs.TSTRINGVALUE) {
                 if (sObjList.get(i).size() < (int)((sMaxPoolSize*sCellCoeff) *
                     sReloadingThreshhold)) {

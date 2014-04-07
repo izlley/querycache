@@ -65,5 +65,6 @@
   <target name="clean">
     <echo message="Project: ${ant.project.name}"/>
     <delete dir="${build.classes}/../"/>
+    <delete dir="${thrift.gen.dir}"/>
   </target>
 </project>

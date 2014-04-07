@@ -8,9 +8,19 @@ public class Configure {
   static public final int gMaxWorkerThreads = 16;
   
   // HBase ZK ip/port
-  //static public final String gPhoenixZkqIp = "211.234.235.55";
-  static public final String gPhoenixZkqIp = "DICm001";
+  static public final String gPhoenixZkqIp = "211.234.235.55";
+  //static public final String gPhoenixZkqIp = "DICm001";
   static public final String gPhoenixZkPort = "2181";
+  
+  // Impala cluster ip/port
+  //static public final String gImpalaIp = "DICn010";
+  static public final String gImpalaIp = "localhost";
+  static public final String gImpalaPort = "21050";
+  
+  // Hive server ip/port
+  //static public final String gHiveIp = "DICm003";
+  static public final String gHiveIp = "localhost";
+  static public final String gHivePort = "10000";
   
   // ConMgr properties
   static public final int gConnPoolFreeInitSize = 16;

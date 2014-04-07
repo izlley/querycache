@@ -56,9 +56,25 @@ enum TOperationType {
   UNKNOWN,
 }
 
+enum TSessionType {
+  SESS_IMPALA_JDBC,
+  SESS_HIVE_JDBC,
+  SESS_PHOENIX_JDBC,
+  SESS_IMPALA_THRIFT,
+  SESS_HBASE,
+  SESS_MYSQL_JDBC,
+  SESS_SPARK_JDBC,
+  SESS_ORACLE_JDBC,
+  SESS_DB2_JDBC,
+  SESS_BERKELEY_JDBC,
+  SESS_OTHERS,
+}
+
 struct THandleIdentifier {
   1: required i64 connid = 0
   2: required i64 stmtid = 0
+  // Heterogeneous storage system can be supported for QC
+  3: required TSessionType driverType
 }
 
 struct TSessionHandle {

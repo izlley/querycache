@@ -1,7 +1,6 @@
 package com.skplanet.querycache.server;
 
 import java.sql.*;
-import com.skplanet.querycache.cli.thrift.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

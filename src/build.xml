@@ -125,7 +125,10 @@
 
   <path id="classpath">
     <pathelement location="${build.dir.querycache}/classes"/>
-    <fileset dir="${thirdparty.dir}" includes="**/*.jar"/>
+    <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
+    <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/lib/commons-lang3-${commons-lang3.version}.jar"/>
+    <fileset file="${thirdparty.dir}/log/*.jar"/>
+    <!--fileset dir="${thirdparty.dir}" includes="**/*.jar"/-->
   </path>
 
   <!-- JVM version validation -->
@@ -238,16 +241,19 @@
 
     <!-- copy jar files -->
     <copy todir="${target.lib.dir}" preservelastmodified="true" flatten="true">
-      <fileset dir="${querycache.root}"  >
+      <!--fileset dir="${querycache.root}"  >
         <include name="*/*.jar"/>
         <include name="*/*/*.jar"/>
-      </fileset>
+      </fileset-->
       <fileset file="${build.dir.querycache}/server/querycache-server-${version}.jar"/>
       <fileset file="${build.dir.querycache}/jdbc/querycache-jdbc-${version}.jar"/>
       <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
       <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/lib/commons-lang3-${commons-lang3.version}.jar"/>
       <fileset file="${thirdparty.dir}/log/*.jar"/>
       <fileset file="${thirdparty.dir}/phoenix-${phoenix.version}/phoenix-${phoenix.version}-client.jar"/>
+      <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-jdbc-${hive.version}.jar"/>
+      <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-metastore-${hive.version}.jar"/>
+      <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-service-${hive.version}.jar"/>
     </copy>
     <copy file="${basedir}/README.txt" todir="${target.dir}">
       <filterset>

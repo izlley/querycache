@@ -27,16 +27,12 @@ import org.apache.thrift.TException;
 // Generated code
 import com.skplanet.querycache.thrift.*;
 import com.skplanet.querycache.cli.thrift.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import com.skplanet.querycache.server.ConnMgr;
-import com.skplanet.querycache.server.ConnNode;
-import com.skplanet.querycache.server.StmtNode;
 import com.skplanet.querycache.server.common.*;
-import com.skplanet.querycache.server.common.Types.CORE_RESULT;
-import com.skplanet.querycache.server.common.Types.ConnType;
+import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
 import com.skplanet.querycache.server.util.ObjectPool;
 import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 
@@ -51,8 +47,8 @@ public class CLIHandler implements TCLIService.Iface {
 
   public CLIHandler() {
     if (gConnMgr.initialize(Configure.gConnPoolFreeInitSize,
-                        Configure.gConnPoolFreeResizingF,
-                        ConnType.PHOENIX_JDBC) == CORE_RESULT.CORE_FAILURE) {
+                        Configure.gConnPoolFreeResizingF)
+        == CORE_RESULT.CORE_FAILURE) {
       LOG.error("Server start failed.");
       System.exit(1);
     }
@@ -85,7 +81,8 @@ public class CLIHandler implements TCLIService.Iface {
     
     // 1. check the connection string
     String sUrl = aReq.url;
-    ConnType sSType = ConnType.UNKNOWN;
+    ConnType sSType;
+    TSessionType sSessType;
     int sInd = sUrl.indexOf(':');
     if (sInd == -1) {
       LOG.error("Connection string syntax error :" + sUrl);
@@ -95,8 +92,23 @@ public class CLIHandler implements TCLIService.Iface {
     }
     String sProtocol = sUrl.substring(0, sInd);
     String sService = sUrl.substring(sInd + 1);
-    if (sProtocol.equals("jdbc") && sService.equals("bdb")) {
-      sSType = ConnType.PHOENIX_JDBC;
+    if (sProtocol.equals("jdbc")) {
+      if (sService.equals("bdb")) {
+        sSType = ConnType.PHOENIX_JDBC;
+        sSessType = TSessionType.SESS_PHOENIX_JDBC;
+      } else if (sService.equals("impala")) {
+        sSType = ConnType.IMPALA_JDBC;
+        sSessType = TSessionType.SESS_IMPALA_JDBC;
+      } else if (sService.equals("hive")) {
+        sSType = ConnType.HIVE_JDBC;
+        sSessType = TSessionType.SESS_HIVE_JDBC;
+      } else {
+        // unsupported yet
+        LOG.error("Unsupported storage type error :" + sUrl);
+        sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+        sResp.status.setErrorMessage("Unsupported storage type error :" + sUrl);
+        return sResp;
+      }
     } else {
       // unsupported yet
       LOG.error("Unsupported storage type error :" + sUrl);
@@ -135,7 +147,7 @@ public class CLIHandler implements TCLIService.Iface {
     buildHostInfo(sHI);
     sResp.setHostInfo(sHI);
     TSessionHandle sSH = new TSessionHandle(
-        new THandleIdentifier().setConnid(sConn.sConnId));
+        new THandleIdentifier(sConn.sConnId, 0, sSessType));
     sResp.setSessionHandle(sSH);
     
     if (Configure.gQueryProfile) {
@@ -171,8 +183,10 @@ public class CLIHandler implements TCLIService.Iface {
     if (Configure.gQueryProfile) {
       startTime = System.currentTimeMillis();
     }
+    
+    ConnType sConnType = convertSesstypeToConntype(aReq.sessionHandle.sessionId.driverType);
     // 1. find the specific ConnNode by ConnId
-    if (gConnMgr.closeConn(aReq.sessionHandle.sessionId.connid) == 
+    if (gConnMgr.closeConn(sConnType, aReq.sessionHandle.sessionId.connid) == 
         CORE_RESULT.CORE_FAILURE) {
       // just ignoring the failure, client don't need to handle this failure.
       LOG.error("CloseSession failed.");
@@ -232,10 +246,12 @@ public class CLIHandler implements TCLIService.Iface {
     // 1. get connection from pool
     long sConnId = aReq.sessionHandle.sessionId.connid;
     long sStmtId = 0;
+    ConnType sConnType = convertSesstypeToConntype(aReq.sessionHandle.sessionId.driverType);
+    
     TExecuteStatementResp sResp = new TExecuteStatementResp();
     sResp.setStatus(new TStatus());
 
-    ConnNode sConn = gConnMgr.getConn(sConnId);
+    ConnNode sConn = gConnMgr.getConn(sConnType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
       LOG.error("ExecuteStatement error : the connection doesn't exist." +
@@ -257,9 +273,8 @@ public class CLIHandler implements TCLIService.Iface {
       sStmt.sState = StmtNode.State.RUNNING;
       
       // 5. build TExecuteStatementResp
-      THandleIdentifier sHI = new THandleIdentifier();
-      sHI.setConnid(sConnId);
-      sHI.setStmtid(sStmtId);
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
       TOperationHandle sOH = new TOperationHandle();
       sOH.setOperationId(sHI);
       sOH.setOperationType(TOperationType.EXECUTE_STATEMENT);
@@ -402,8 +417,9 @@ public class CLIHandler implements TCLIService.Iface {
     // 1. find statement and remove from statement UsingMap
     long sConnId = aReq.operationHandle.operationId.connid;
     long sStmtId = aReq.operationHandle.operationId.stmtid;
+    ConnType sConnType = convertSesstypeToConntype(aReq.operationHandle.operationId.driverType);
     
-    ConnNode sConn = gConnMgr.getConn(sConnId);
+    ConnNode sConn = gConnMgr.getConn(sConnType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
       LOG.error("CloseOperation error : the connection doesn't exist." +
@@ -493,8 +509,9 @@ struct TGetResultSetMetadataResp {
     //
     long sConnId = aReq.operationHandle.operationId.connid;
     long sStmtId = aReq.operationHandle.operationId.stmtid;
+    ConnType sConnType = convertSesstypeToConntype(aReq.operationHandle.operationId.driverType);
     
-    ConnNode sConn = gConnMgr.getConn(sConnId);
+    ConnNode sConn = gConnMgr.getConn(sConnType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
       LOG.error("GetResultSetMetadata error : the connection doesn't exist." +
@@ -630,8 +647,9 @@ struct TGetResultSetMetadataResp {
     //
     long sConnId = aReq.operationHandle.operationId.connid;
     long sStmtId = aReq.operationHandle.operationId.stmtid;
+    ConnType sConnType = convertSesstypeToConntype(aReq.operationHandle.operationId.driverType);
     
-    ConnNode sConn = gConnMgr.getConn(sConnId);
+    ConnNode sConn = gConnMgr.getConn(sConnType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
       LOG.error("FetchResults error : the connection doesn't exist." +
@@ -675,6 +693,9 @@ struct TGetResultSetMetadataResp {
       }*/
       
       TRowSet sRowSet = (TRowSet)gObjPool.getObject(TargetObjs.TROWSET);
+      if (sRowSet == null) {
+        sRowSet = new TRowSet();
+      }
       // 0-based
       sRowSet.startRowOffset = 0;
       sStmt.sState = StmtNode.State.FETCHING;
@@ -685,8 +706,14 @@ struct TGetResultSetMetadataResp {
       while (sRS.next()) {
         ++sRowCount;
         TRow sRow = (TRow)gObjPool.getObject(TargetObjs.TROW);
+        if (sRow == null) {
+          sRow = new TRow();
+        }
         for (int i = 1; i <= sColCnt; i++) {
           TColumnValue sCell = (TColumnValue)gObjPool.getObject(TargetObjs.TCOLUMNVALUE);
+          if (sCell == null) {
+            sCell = new TColumnValue();
+          }
           TTypeId sQCType = mapSQL2QCType(sMeta.getColumnType(i));
           switch (sQCType) {
             case CHAR:
@@ -695,8 +722,12 @@ struct TGetResultSetMetadataResp {
             case DECIMAL:
               String value = sRS.getString(i);
               if (value != null) {
-                sCell.setStringVal(((TStringValue)gObjPool.getObject(TargetObjs.TSTRINGVALUE))
-                    .setValue(value));
+                TStringValue sStrV = (TStringValue)gObjPool.getObject(TargetObjs.TSTRINGVALUE);
+                if (sStrV != null) {
+                  sCell.setStringVal(sStrV.setValue(value));
+                } else {
+                  sCell.setStringVal(new TStringValue().setValue(value));
+                }
               }
               break;
             case BIGINT:
@@ -832,5 +863,17 @@ struct TGetResultSetMetadataResp {
     }
     return sInterT;
   }
+  
+  private ConnType convertSesstypeToConntype (TSessionType aSessType) {
+    switch (aSessType) {
+      case SESS_PHOENIX_JDBC:
+        return ConnType.PHOENIX_JDBC;
+      case SESS_IMPALA_JDBC:
+        return ConnType.IMPALA_JDBC;
+      case SESS_HIVE_JDBC:
+        return ConnType.HIVE_JDBC;
+      default:
+        return ConnType.UNKNOWN;
+    }
+  }
 }
-
