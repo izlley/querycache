@@ -44,6 +44,7 @@ public class ConnMgr {
     CORE_RESULT initialize(int aInitSize, float aResizingF, ConnType aType) {
       sFreelistThreshold = aResizingF;
 
+      // TODO: How can we handle url kv options? just ignore these?
       String sUrl = buildUrl(aType);
 
       for (int i = 0; i < aInitSize; i++) {
@@ -165,6 +166,11 @@ public class ConnMgr {
           sUrl = "jdbc:hive2://" + Configure.gHiveIp + ":"
               + Configure.gHivePort;
           break;
+        case MYSQL_JDBC:
+          sUrl = "jdbc:mysql://" + Configure.gMysqlIp + ":"
+              + Configure.gMysqlPort + "?user=" + Configure.gMysqlUser 
+              + "&password=" + Configure.gMysqlPass;
+          break;
           // below types are not supported yet
           // case IMPALA_THRIFT:
           // case HBASE:
@@ -188,6 +194,7 @@ public class ConnMgr {
         case PHOENIX_JDBC:
         case IMPALA_JDBC:
         case HIVE_JDBC:
+        case MYSQL_JDBC:
           sConnMgrofAll[sInd] = new ConnMgrofOne();
           if (sConnMgrofAll[sInd].initialize(aInitSize, aResizingF, sType) == CORE_RESULT.CORE_FAILURE) {
             return CORE_RESULT.CORE_FAILURE;
@@ -227,6 +234,7 @@ public class ConnMgr {
       case PHOENIX_JDBC:
       case IMPALA_JDBC:
       case HIVE_JDBC:
+      case MYSQL_JDBC:
         isType = true;
         break;
       default:

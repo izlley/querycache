@@ -16,9 +16,8 @@ public class Utils {
   /**
     * The required prefix for the connection URL.
     */
-  public static final String[] URL_PREFIX = {
-    "jdbc:bdb://", "jdbc:impala://", "thrift:impala://", "cli:hbase://", "jdbc:hive2://"
-  };
+  public static final String URL_PREFIX = ".+:.+://"; 
+  //"jdbc:bdb://", "jdbc:impala://", "thrift:impala://", "cli:hbase://", "jdbc:hive://, ..."
 
   /**
     * If host is provided, without a port.
@@ -181,6 +180,7 @@ public class Utils {
   public static JdbcConnectionParams parseURL(String uri) throws IllegalArgumentException {
     JdbcConnectionParams connParams = new JdbcConnectionParams();
 
+    /*
     boolean isMatch = false;
     int i = 0;
     for (; i < URL_PREFIX.length; i++) {
@@ -189,23 +189,18 @@ public class Utils {
         break;
       }
     }
+    */
     
-    if (!isMatch) {
+    if (!Pattern.matches(URL_PREFIX + ".*", uri)) {
       throw new IllegalArgumentException("Bad URL format: Missing prefix " + URL_PREFIX);
     }
 
-    // Don't parse URL with no other configuration.
-    if (uri.equalsIgnoreCase(URL_PREFIX[i])) {
-      connParams.setEmbeddedMode(true);
-      return connParams;
-    }
-    //LJY
     //URI jdbcURI = URI.create(uri.substring(URI_JDBC_PREFIX.length()));
-    int indCol = URL_PREFIX[i].indexOf(':');
-    int indCol2st = URL_PREFIX[i].indexOf(':', indCol + 1);
-    String protocol = URL_PREFIX[i].substring(0,indCol);
+    int indCol = uri.indexOf(':');
+    int indCol2st = uri.indexOf(':', indCol + 1);
+    String protocol = uri.substring(0,indCol);
     connParams.setProtocol(protocol);
-    String service = URL_PREFIX[i].substring(indCol + 1, indCol2st);
+    String service = uri.substring(indCol + 1, indCol2st);
     connParams.setService(service);
     URI jdbcURI = URI.create(uri.substring(indCol + 1));
 

@@ -22,6 +22,13 @@ public class Configure {
   static public final String gHiveIp = "localhost";
   static public final String gHivePort = "10000";
   
+  // Hive server ip/port
+  //static public final String gHiveIp = "DICm003";
+  static public final String gMysqlIp = "localhost";
+  static public final String gMysqlPort = "3306";
+  static public final String gMysqlUser = "hive";
+  static public final String gMysqlPass = "hive";
+  
   // ConMgr properties
   static public final int gConnPoolFreeInitSize = 16;
   static public final float gConnPoolFreeResizingF = 0.2f;

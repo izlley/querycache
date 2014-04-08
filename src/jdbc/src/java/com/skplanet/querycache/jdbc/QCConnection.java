@@ -80,28 +80,25 @@ public class QCConnection implements java.sql.Connection {
     } catch (IllegalArgumentException e) {
       throw new SQLException(e);
     }
-    if (connParams.isEmbeddedMode()) {
-      // client = new EmbeddedThriftCLIService();
-    } else {
-      // LJY
-      // extract user/password from JDBC connection properties if its not
-      // supplied in the connection URL
-      if (info.containsKey(QC_AUTH_USER)) {
-        connParams.getSessionVars().put(QC_AUTH_USER,
-            info.getProperty(QC_AUTH_USER));
-        if (info.containsKey(QC_AUTH_PASSWD)) {
-          connParams.getSessionVars().put(QC_AUTH_PASSWD,
-              info.getProperty(QC_AUTH_PASSWD));
-        }
-      }
-      if (info.containsKey(QC_AUTH_TYPE)) {
-        connParams.getSessionVars().put(QC_AUTH_TYPE,
-            info.getProperty(QC_AUTH_TYPE));
-      }
 
-      openTransport(uri, connParams.getHost(), connParams.getPort(),
-          connParams.getSessionVars());
+    // extract user/password from JDBC connection properties if its not
+    // supplied in the connection URL
+    if (info.containsKey(QC_AUTH_USER)) {
+      connParams.getSessionVars().put(QC_AUTH_USER,
+          info.getProperty(QC_AUTH_USER));
+      if (info.containsKey(QC_AUTH_PASSWD)) {
+        connParams.getSessionVars().put(QC_AUTH_PASSWD,
+            info.getProperty(QC_AUTH_PASSWD));
+       }
     }
+    if (info.containsKey(QC_AUTH_TYPE)) {
+      connParams.getSessionVars().put(QC_AUTH_TYPE,
+          info.getProperty(QC_AUTH_TYPE));
+    }
+
+    openTransport(uri, connParams.getHost(), connParams.getPort(),
+        connParams.getSessionVars());
+
 
     // currently only V1 is supported
     supportedProtocols.add(TProtocolVersion.QUERYCACHE_CLI_PROTOCOL_V1);
@@ -114,19 +111,12 @@ public class QCConnection implements java.sql.Connection {
 
   private void configureConnection(Utils.JdbcConnectionParams connParams)
       throws SQLException {
-    // set the qc variable in session state for local mode
-    if (connParams.isEmbeddedMode()) {
-      if (!connParams.getQCVars().isEmpty()) {
-        //SessionState.get().setQCVariables(connParams.getQCVars());
-      }
-    } else {
-      // for remote JDBC client, try to set the conf var using 'set foo=bar'
-      Statement stmt = createStatement();
-      for (Entry<String, String> qcConf : connParams.getQCConfs()
-          .entrySet()) {
-        stmt.execute("set " + qcConf.getKey() + "=" + qcConf.getValue());
-        stmt.close();
-      }
+    // for remote JDBC client, try to set the conf var using 'set foo=bar'
+    Statement stmt = createStatement();
+    for (Entry<String, String> qcConf : connParams.getQCConfs()
+        .entrySet()) {
+      stmt.execute("set " + qcConf.getKey() + "=" + qcConf.getValue());
+      stmt.close();
     }
   }
 

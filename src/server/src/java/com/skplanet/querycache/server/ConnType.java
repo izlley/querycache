@@ -16,6 +16,12 @@ public enum ConnType {
   HIVE_JDBC{
     int getIndex() { return 2; }
     String getPackgePath() {
+      return "com.mysql.jdbc.Driver";
+    }
+  },
+  MYSQL_JDBC{
+    int getIndex() { return 3; }
+    String getPackgePath() {
       return "org.apache.hive.jdbc.HiveDriver";
     }
   },

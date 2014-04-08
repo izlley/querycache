@@ -102,6 +102,9 @@ public class CLIHandler implements TCLIService.Iface {
       } else if (sService.equals("hive")) {
         sSType = ConnType.HIVE_JDBC;
         sSessType = TSessionType.SESS_HIVE_JDBC;
+      } else if (sService.equals("mysql")) {
+        sSType = ConnType.MYSQL_JDBC;
+        sSessType = TSessionType.SESS_MYSQL_JDBC;
       } else {
         // unsupported yet
         LOG.error("Unsupported storage type error :" + sUrl);
@@ -872,6 +875,8 @@ struct TGetResultSetMetadataResp {
         return ConnType.IMPALA_JDBC;
       case SESS_HIVE_JDBC:
         return ConnType.HIVE_JDBC;
+      case SESS_MYSQL_JDBC:
+        return ConnType.MYSQL_JDBC;
       default:
         return ConnType.UNKNOWN;
     }

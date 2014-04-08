@@ -35,7 +35,7 @@ public class QCDriver implements Driver {
   /**
    * The required prefix for the connection URL.
    */
-  private static final String[] URL_PREFIX = Utils.URL_PREFIX;
+  private static final String URL_PREFIX = Utils.URL_PREFIX;
 
   /**
    * If host is provided, without a port.
@@ -84,14 +84,7 @@ public class QCDriver implements Driver {
    */
 
   public boolean acceptsURL(String url) throws SQLException {
-    boolean isMatch = false;
-    for (int i = 0; i < URL_PREFIX.length; i++) {
-      if (Pattern.matches(URL_PREFIX[i] + ".*", url)) {
-        isMatch = true;
-        break;
-      }
-    }
-    return isMatch;
+    return Pattern.matches(URL_PREFIX + ".*", url);
   }
 
   public Connection connect(String url, Properties info) throws SQLException {
@@ -171,11 +164,8 @@ public class QCDriver implements Driver {
     }
 
     if (url != null) {
-      for (int i = 0; i < URL_PREFIX.length; i++) {
-        if (url.startsWith(URL_PREFIX[i])) {
-          info = parseURL(url, i, info);
-          break;
-        }
+      if (Pattern.matches("^" + URL_PREFIX + ".*$", url)) {
+        info = parseURL(url, info);
       }
     }
 
@@ -221,20 +211,21 @@ public class QCDriver implements Driver {
    * @return
    * @throws java.sql.SQLException
    */
-  private Properties parseURL(String url, int index, Properties defaults) throws SQLException {
+  private Properties parseURL(String url, Properties defaults) throws SQLException {
     Properties urlProps = (defaults != null) ? new Properties(defaults)
         : new Properties();
 
-    if (url == null || !url.startsWith(URL_PREFIX[index])) {
+    if (url == null || !Pattern.matches("^" + URL_PREFIX + ".*$", url)) {
       throw new SQLException("Invalid connection url: " + url);
     }
 
-    if (url.length() <= URL_PREFIX[index].length()) {
+    int prefixLen = url.indexOf("://") + 3;
+    if (url.length() <= prefixLen) {
       return urlProps;
     }
 
     // [hostname]:[port]/[db_name]
-    String connectionInfo = url.substring(URL_PREFIX[index].length());
+    String connectionInfo = url.substring(prefixLen);
 
     // [hostname]:[port] [db_name]
     String[] hostPortAndDatabase = connectionInfo.split("/", 2);
