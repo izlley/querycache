@@ -155,7 +155,8 @@ public class CLIHandler implements TCLIService.Iface {
     
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: Connection time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sSType.name() + " Connection time elapsed : " +
+          (endTime-startTime) + "ms");
     }
     
     return sResp;
@@ -200,7 +201,7 @@ public class CLIHandler implements TCLIService.Iface {
     
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: Close time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sConnType.name() + " Close time elapsed : " + (endTime-startTime) + "ms");
     }
     
     return sResp;
@@ -306,7 +307,7 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: Execute time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sConnType.name() + " Execute time elapsed : " + (endTime-startTime) + "ms");
     }
     
     return sResp;
@@ -446,7 +447,7 @@ public class CLIHandler implements TCLIService.Iface {
     }
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: CloseOp time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sConnType.name() + " CloseOp time elapsed : " + (endTime-startTime) + "ms");
     }
     return sResp;
   }
@@ -589,7 +590,7 @@ struct TGetResultSetMetadataResp {
 
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: GetResultSetMetadata time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sConnType.name() + " GetResultSetMetadata time elapsed : " + (endTime-startTime) + "ms");
     }
     return sResp;
   }
@@ -724,13 +725,11 @@ struct TGetResultSetMetadataResp {
             case BINARY:
             case DECIMAL:
               String value = sRS.getString(i);
-              if (value != null) {
-                TStringValue sStrV = (TStringValue)gObjPool.getObject(TargetObjs.TSTRINGVALUE);
-                if (sStrV != null) {
-                  sCell.setStringVal(sStrV.setValue(value));
-                } else {
-                  sCell.setStringVal(new TStringValue().setValue(value));
-                }
+              TStringValue sStrV = (TStringValue)gObjPool.getObject(TargetObjs.TSTRINGVALUE);
+              if (sStrV != null) {
+                sCell.setStringVal(sStrV.setValue(value));
+              } else {
+                sCell.setStringVal(new TStringValue().setValue(value));
               }
               break;
             case BIGINT:
@@ -782,7 +781,7 @@ struct TGetResultSetMetadataResp {
     }
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: Fetch time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sConnType.name() + " Fetch time elapsed : " + (endTime-startTime) + "ms");
     }
     return sResp;
   }
