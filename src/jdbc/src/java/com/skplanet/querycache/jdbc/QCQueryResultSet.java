@@ -45,6 +45,8 @@ public class QCQueryResultSet extends QCBaseResultSet {
   private boolean emptyResultSet = false;
   private boolean isScrollable = false;
   private boolean fetchFirst = false;
+  // TODO: this flag will be deprecated after supporting divided fetch
+  private boolean noMoreRows4Next = false;
 
   public static class Builder {
 
@@ -206,7 +208,7 @@ public class QCQueryResultSet extends QCBaseResultSet {
     if (isClosed) {
       throw new SQLException("Resultset is closed");
     }
-    if (emptyResultSet || (maxRows > 0 && rowsFetched >= maxRows)) {
+    if (noMoreRows4Next || emptyResultSet || (maxRows > 0 && rowsFetched >= maxRows)) {
       return false;
     }
 
@@ -239,7 +241,7 @@ public class QCQueryResultSet extends QCBaseResultSet {
       rowsFetched++;
       
       if (!fetchedRowsItr.hasNext()) {
-        emptyResultSet = true;
+        noMoreRows4Next = true;
       }
       
       if (LOG.isDebugEnabled()) {
@@ -321,10 +323,57 @@ public class QCQueryResultSet extends QCBaseResultSet {
 
   @Override
   public int getRow() throws SQLException {
-    return rowsFetched;
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    // it does not follow JDK spec :
+    //   this doesn't return the current row number, but return the number of rows
+    //   in the resultset.
+    if (fetchedRows != null) {
+      return fetchedRows.size();
+    }
+    return 0;
   }
 
+  @Override
+  public boolean last() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    // it does not follow JDK spec :
+    //   Even if the result set type is TYPE_FORWARD_ONLY, exception will not occur.
+    //if (!isScrollable) {
+    //  throw new SQLException("Method not supported for TYPE_FORWARD_ONLY resultset");
+    //}
+    
+    if (emptyResultSet || (maxRows > 0 && rowsFetched >= maxRows)) {
+      return false;
+    }
 
+    try {
+      TFetchOrientation orientation = TFetchOrientation.FETCH_NEXT;
+      
+      if (fetchedRows == null) {
+        TFetchResultsReq fetchReq = new TFetchResultsReq(stmtHandle,
+            orientation, fetchSize);
+        TFetchResultsResp fetchResp = client.FetchResults(fetchReq);
+        Utils.verifySuccessWithInfo(fetchResp.getStatus());
+        fetchedRows = fetchResp.getResults().getRows();
+        fetchedRowsItr = fetchedRows.iterator();
+      }
+
+      if (fetchedRows.size() == 0) {
+        return false;
+      } else {
+        return true;
+      }
+    } catch (SQLException eS) {
+      throw eS;
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      throw new SQLException("Error moving the cursor to the last row.", ex);
+    }
+  }
 
   public <T> T getObject(String columnLabel, Class<T> type)  throws SQLException {
     //JDK 1.7
