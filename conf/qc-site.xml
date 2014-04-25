@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+<!-- Querycache Execution Parameters -->
+<property>
+  <name>qc.server.port</name>
+  <value>8655</value>
+  <description>The default number of reduce tasks per job.  Typically set
+  to a prime close to the number of available hosts.  Ignored when
+  mapred.job.tracker is "local". Hadoop set this to 1 by default, whereas hive uses -1 as its default value.
+  By setting this property to -1, Hive will automatically figure out what should be the number of reducers.
+  </description>
+</property>
+
+<property>
+  <name>qc.workerthread.min</name>
+  <value>16</value>
+  <description>size per reducer.The default is 1G, i.e if the input size is 10G, it will use 10 reducers.</description>
+</property>
+
+<property>
+  <name>qc.wokerthread.max</name>
+  <value>64</value>
+  <description>max number of reducers will be used. If the one
+	specified in the configuration parameter mapred.reduce.tasks is
+	negative, hive will use this one as the max number of reducers when
+	automatically determine number of reducers.</description>
+</property>
+
+<property>
+  <name>qc.connpool.free.init.size</name>
+  <value>16</value>
+  <description>Whether to print the names of the columns in query output.</description>
+</property>
+
+<property>
+  <name>qc.connpool.free.resizing.factor</name>
+  <value>0.2f</value>
+  <description>Whether to include the current database in the hive prompt.</description>
+</property>
+
+<property>
+  <name>qc.query.profiling</name>
+  <value>true</value>
+  <description>Command line prompt configuration value. Other hiveconf can be used in
+        this configuration value. Variable substitution will only be invoked at the hive
+        cli startup.</description>
+</property>
+
+<property>
+  <name>qc.objpool.max.size</name>
+  <value>1048576</value>
+  <description>Scratch space for Hive jobs</description>
+</property>
+
+<property>
+  <name>qc.objpool.reload.cycle.milli</name>
+  <value>15000</value>
+  <description>Local scratch space for Hive jobs</description>
+</property>
+
+<property>
+  <name>qc.objpool.resizing.factor</name>
+  <value>0.2f</value>
+  <description>whether hive is running in test mode. If yes, it turns on sampling and prefixes the output tablename</description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers</name>
+  <value>impala,phoenix,hive,mysql</value>
+  <description>if hive is running in test mode, prefixes the output table by this string</description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.path</name>
+  <value>../lib/drivers</value>
+  <description>if hive is running in test mode and table is not bucketed, sampling frequency</description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.impala</name>
+  <value>localhost:21050</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.address.phoenix</name>
+  <value>211.234.235.55:2181</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.hive</name>
+  <value>localhost:10000</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.mysql</name>
+  <value>localhost:3306</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.user.mysql</name>
+  <value>hive</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.password.mysql</name>
+  <value>hive</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.server.authentication</name>
+  <value>NONE</value>
+  <description>
+    Client authentication types.
+       NONE: no authentication check
+       LDAP: LDAP/AD based authentication
+       KERBEROS: Kerberos/GSSAPI authentication
+       CUSTOM: Custom authentication provider
+               (Use with property hive.server2.custom.authentication.class)
+  </description>
+</property>
+
+<property>
+  <name>qc.server.custom.authentication.class</name>
+  <value></value>
+  <description>
+    Custom authentication class. Used when property
+    'hive.server2.authentication' is set to 'CUSTOM'. Provided class
+    must be a proper implementation of the interface
+    org.apache.hive.service.auth.PasswdAuthenticationProvider. HiveServer2
+    will call its Authenticate(user, passed) method to authenticate requests.
+    The implementation may optionally extend the Hadoop's
+    org.apache.hadoop.conf.Configured class to grab Hive's Configuration object.
+  </description>
+</property>
+
+<property>
+  <name>qc.server.authentication.kerberos.principal</name>
+  <value></value>
+  <description>
+    Kerberos server principal
+  </description>
+</property>
+
+<property>
+  <name>qc.server.authentication.kerberos.keytab</name>
+  <value></value>
+  <description>
+    Kerberos keytab file for server principal
+  </description>
+</property>
+
+<property>
+  <name>qc.server.authentication.ldap.url</name>
+  <value></value>
+  <description>
+    LDAP connection URL
+  </description>
+</property>
+
+<property>
+  <name>qc.server.thrift.sasl.qop</name>
+  <value>auth</value>
+  <description>Sasl QOP value; one of 'auth', 'auth-int' and 'auth-conf'</description>
+</property>
+
+<property>
+  <name>qc.server.authentication.ldap.baseDN</name>
+  <value></value>
+  <description>
+    LDAP base DN
+  </description>
+</property>
+</configuration>
+

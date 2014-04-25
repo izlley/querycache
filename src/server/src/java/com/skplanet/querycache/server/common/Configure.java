@@ -4,30 +4,31 @@ public class Configure {
   // querycache server port
   static public final int gServerPort = 8655;
   // server handler num
-  static public final int gMinWorkerThreads = 64;
-  static public final int gMaxWorkerThreads = 16;
+  static public final int gMinWorkerThreads = 16;
+  static public final int gMaxWorkerThreads = 64;
   
   // HBase ZK ip/port
-  static public final String gPhoenixZkqIp = "211.234.235.55";
-  //static public final String gPhoenixZkqIp = "DICm001";
+  //static public final String gPhoenixZkqIp = "211.234.235.55";
+  static public final String gPhoenixZkqIp = "DICm001";
   static public final String gPhoenixZkPort = "2181";
   
   // Impala cluster ip/port
-  //static public final String gImpalaIp = "DICn010";
-  static public final String gImpalaIp = "localhost";
+  static public final String gImpalaIp = "DICn010";
+  //static public final String gImpalaIp = "localhost";
   static public final String gImpalaPort = "21050";
   
   // Hive server ip/port
-  //static public final String gHiveIp = "DICm003";
-  static public final String gHiveIp = "localhost";
+  static public final String gHiveIp = "DICm003";
+  //static public final String gHiveIp = "localhost";
   static public final String gHivePort = "10000";
   
-  // Hive server ip/port
-  //static public final String gHiveIp = "DICm003";
-  static public final String gMysqlIp = "localhost";
+  // MySQL server ip/port
+  static public final String gMysqlIp = "172.19.109.238";
+  //static public final String gMysqlIp = "localhost";
   static public final String gMysqlPort = "3306";
   static public final String gMysqlUser = "hive";
-  static public final String gMysqlPass = "hive";
+  //static public final String gMysqlPass = "hive";
+  static public final String gMysqlPass = "!had.litc4#";
   
   // ConMgr properties
   static public final int gConnPoolFreeInitSize = 16;

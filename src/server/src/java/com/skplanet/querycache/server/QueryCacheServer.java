@@ -20,8 +20,6 @@ package com.skplanet.querycache.server;
 
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TServer.Args;
-import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TServerSocket;
@@ -29,27 +27,21 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 
 // Generated code
-import com.skplanet.querycache.thrift.*;
 import com.skplanet.querycache.cli.thrift.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.skplanet.querycache.server.common.*;
 
-import java.util.HashMap;
-
 public class QueryCacheServer {
   private static final Logger LOG = LoggerFactory.getLogger(QueryCacheServer.class);
 
-  public static CLIHandler handler;
-
-  public static TCLIService.Processor processor;
-
+  public static final QCConfiguration conf = new QCConfiguration();
+  
   public static void main(String [] args) {
     try {
-      handler = new CLIHandler();
-      processor = new TCLIService.Processor(handler);
-      //processor.process(arg0, arg1);
+      CLIHandler handler = new CLIHandler();
+      final TCLIService.Processor processor = new TCLIService.Processor(handler);
       
       Runnable sThriftServer = new Runnable() {
         public void run() {
@@ -68,7 +60,7 @@ public class QueryCacheServer {
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
-          String shutdownMsg = "Shutting down hive querycache.";
+          String shutdownMsg = "Shutting down querycache.";
           LOG.info(shutdownMsg);
         }
       });
@@ -85,20 +77,21 @@ public class QueryCacheServer {
     try {
       boolean tcpKeepAlive = true;
       
+      //TServerTransport serverTransport = tcpKeepAlive ?
+      //  new TServerSocketKeepAlive(Configure.gServerPort) : new TServerSocket(Configure.gServerPort);
       TServerTransport serverTransport = tcpKeepAlive ?
-        new TServerSocketKeepAlive(Configure.gServerPort) : new TServerSocket(Configure.gServerPort);
-      
-      // Use this for a multithreaded server
+        new TServerSocketKeepAlive(conf.getInt(QCConfigKeys.QC_SERVER_PORT, 8655)) : new TServerSocket(Configure.gServerPort);
+      // Use this for a multi-threaded server
       // Use CompactProtocol
       TThreadPoolServer.Args sArgs = new TThreadPoolServer.Args(serverTransport).
           processor(processor);
       sArgs.inputProtocolFactory(new TCompactProtocol.Factory());
       sArgs.outputProtocolFactory(new TCompactProtocol.Factory());
       sArgs.minWorkerThreads(Configure.gMinWorkerThreads);
-      sArgs.maxWorkerThreads(Configure.gMinWorkerThreads);
+      sArgs.maxWorkerThreads(Configure.gMaxWorkerThreads);
       
       TServer server = new TThreadPoolServer(sArgs);
-
+      
       System.out.println("Starting the QueryCache server...");
       LOG.info("Starting the QueryCache server...");
       server.serve();

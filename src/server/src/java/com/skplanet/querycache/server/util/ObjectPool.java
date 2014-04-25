@@ -21,7 +21,7 @@ public class ObjectPool {
   private long sReloadCycle = 0;
   private int  sMaxPoolSize = 0;
   private float sReloadingThreshhold = 0.f;
-  private static int sCellCoeff = 2;
+  private final int sCellCoeff = 2;
   
   private int  sObjCnt = 4;
   public static class TargetObjs {

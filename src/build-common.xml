@@ -77,6 +77,8 @@
     <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
     <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/lib/commons-lang3-${commons-lang3.version}.jar"/>
     <fileset file="${thirdparty.dir}/log/*.jar"/>
+    <fileset file="${thirdparty.dir}/guava-${guava.version}/guava-${guava.version}.jar"/>
+    <fileset file="${thirdparty.dir}/jackson-${jackson.version}/jackson-${jackson.version}.jar"/>
     <!--fileset file="${thirdparty.dir}/phoenix-${phoenix.version}/phoenix-${phoenix.version}-client.jar"/-->
     <!--fileset dir="${thirdparty.dir}" includes="**/*.jar"/-->
   </path>

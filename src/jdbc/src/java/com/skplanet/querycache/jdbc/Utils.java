@@ -179,17 +179,6 @@ public class Utils {
    */
   public static JdbcConnectionParams parseURL(String uri) throws IllegalArgumentException {
     JdbcConnectionParams connParams = new JdbcConnectionParams();
-
-    /*
-    boolean isMatch = false;
-    int i = 0;
-    for (; i < URL_PREFIX.length; i++) {
-      if (Pattern.matches(URL_PREFIX[i] + ".*", uri)) {
-        isMatch = true;
-        break;
-      }
-    }
-    */
     
     if (!Pattern.matches(URL_PREFIX + ".*", uri)) {
       throw new IllegalArgumentException("Bad URL format: Missing prefix " + URL_PREFIX);

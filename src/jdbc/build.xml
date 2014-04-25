@@ -48,8 +48,8 @@
       basedir="${build.classes}">
       <zipgroupfileset dir="${thirdparty.dir}">
         <include name="thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
-        <include name="log/commons-logging-${commons-logging.version}.jar"/>
-        <include name="log/slf4j-api-${slf4j-api.version}.jar"/>
+        <!--include name="log/commons-logging-${commons-logging.version}.jar"/-->
+        <!--include name="log/slf4j-api-${slf4j-api.version}.jar"/-->
       </zipgroupfileset>
       <manifest>
         <!-- Not putting these in their own manifest section, since that inserts

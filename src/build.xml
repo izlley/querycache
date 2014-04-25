@@ -238,6 +238,8 @@
           tofile="${target.conf.dir}/querycache-log4j.properties.template"/>
     <copy file="${basedir}/../conf/log4j.properties"
           tofile="${target.conf.dir}/log4j.properties"/>
+    <copy file="${basedir}/../conf/qc-site.xml"
+          tofile="${target.conf.dir}/qc-site.xml"/>
 
     <!-- copy jar files -->
     <copy todir="${target.lib.dir}" preservelastmodified="true" flatten="true">
@@ -254,6 +256,9 @@
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-jdbc-${hive.version}.jar"/>
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-metastore-${hive.version}.jar"/>
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-service-${hive.version}.jar"/>
+      <fileset file="${thirdparty.dir}/otherdrivers/mysql-connector-${mysql.connector.version}.jar"/>
+      <fileset file="${thirdparty.dir}/guava-${guava.version}/guava-${guava.version}.jar"/>
+      <fileset file="${thirdparty.dir}/jackson-${jackson.version}/jackson-${jackson.version}.jar"/>
     </copy>
     <copy file="${basedir}/README.md" todir="${target.dir}">
       <filterset>
