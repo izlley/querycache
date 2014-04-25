@@ -19,6 +19,7 @@
 package com.skplanet.querycache.server;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -39,11 +40,11 @@ import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 public class CLIHandler implements TCLIService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
   
-  static private ConnMgr gConnMgr = new ConnMgr();
+  private ConnMgr gConnMgr = new ConnMgr();
   
-  static private ObjectPool gObjPool = new ObjectPool(Configure.gMaxPoolSize,
-                                                      Configure.gReloadCycle,
-                                                      Configure.gObjPoolResizingF);
+  private ObjectPool gObjPool = new ObjectPool(Configure.gMaxPoolSize,
+                                               Configure.gReloadCycle,
+                                               Configure.gObjPoolResizingF);
 
   public CLIHandler() {
     if (gConnMgr.initialize(Configure.gConnPoolFreeInitSize,
@@ -54,7 +55,7 @@ public class CLIHandler implements TCLIService.Iface {
     }
   }
   
-  /*
+  /**
    * OpenSession()
    *
    *
@@ -172,7 +173,7 @@ public class CLIHandler implements TCLIService.Iface {
     aHostInfo.portnum = Configure.gServerPort;
   }
 
-  /*
+  /**
    * CloseSession()
    *
    * Closes the specified session and frees any resources currently allocated
@@ -207,7 +208,7 @@ public class CLIHandler implements TCLIService.Iface {
     return sResp;
   }
 
-  /*
+  /**
    * GetInfo()
    *
    * This function is based on ODBC's CLIGetInfo() function.
@@ -217,7 +218,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetInfoResp();
   }
 
-  /*
+  /**
    * ExecuteStatement()
    *
    * Execute a statement.
@@ -297,7 +298,8 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
       
     } catch (SQLException e) {
-      LOG.error("ExecuteStatement error :" + e.getMessage(), e);
+      LOG.error("ExecuteStatement error :" + e.getMessage() + "\n  -Error Query: " +
+        aReq.statement, e);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setSqlState(e.getSQLState());
       sResp.status.setErrorCode(e.getErrorCode());
@@ -307,13 +309,14 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (Configure.gQueryProfile) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: " + sConnType.name() + " Execute time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: " + sConnType.name() + " Execute time elapsed : " + (endTime-startTime) + "ms"+
+               "\n  -Query: " + aReq.statement);
     }
     
     return sResp;
   }
 
-  /*
+  /**
    * GetTypeInfo()
    *
    * Get information about types supported by the QueryCache.
@@ -323,7 +326,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetTypeInfoResp();
   }
 
-  /*
+  /**
    * GetCatalogs()
    *
    * Returns the list of databases
@@ -334,7 +337,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetCatalogsResp();
   }
 
-  /*
+  /**
    * GetSchemas()
    *
    * Returns the schema names available in this database
@@ -345,7 +348,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetSchemasResp();
   }
 
-  /*
+  /**
    * GetTables()
    *
    * Returns a list of tables with catalog, schema, and table type information.
@@ -356,7 +359,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetTablesResp();
   }
 
-  /*
+  /**
    * GetTableTypes()
    *
    * Returns the table types available in this database.
@@ -367,7 +370,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetTableTypesResp();
   }
 
-  /*
+  /**
    * GetColumns()
    *
    * Returns a list of columns in the specified tables.
@@ -379,7 +382,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetColumnsResp();
   }
 
-  /*
+  /**
    * GetOperationStatus()
    *
    * Get the status of an operation running on the server.
@@ -389,7 +392,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetOperationStatusResp();
   }
 
-  /*
+  /**
    * CancelOperation()
    *
    * Cancels processing on the specified operation handle and
@@ -400,7 +403,7 @@ public class CLIHandler implements TCLIService.Iface {
     return new TCancelOperationResp();
   }
 
-  /*
+  /**
    * CloseOperation()
    *
    * This will free all of the resources which allocated on
@@ -452,7 +455,7 @@ public class CLIHandler implements TCLIService.Iface {
     return sResp;
   }
 
-  /*
+  /**
    * GetResultSetMetadata()
    *
    * Retrieves schema information for the specified operation
@@ -595,7 +598,7 @@ struct TGetResultSetMetadataResp {
     return sResp;
   }
 
-  /*
+  /**
    * FetchResults()
    *
    * Fetch rows from server corresponding to a particular OperationHandle
@@ -701,7 +704,9 @@ struct TGetResultSetMetadataResp {
         sRowSet = new TRowSet();
       }
       // 0-based
-      sRowSet.startRowOffset = 0;
+      sRowSet.clear();
+      // to cope with no rows returned case
+      sRowSet.rows = new ArrayList<TRow>();
       sStmt.sState = StmtNode.State.FETCHING;
       
       int sColCnt = sMeta.getColumnCount();
@@ -769,6 +774,7 @@ struct TGetResultSetMetadataResp {
       }
 
       sResp.hasMoreRows = false;
+      sResp.numofrows = sRowCount;
       sResp.results = sRowSet;
       sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
     } catch (SQLException e) {
