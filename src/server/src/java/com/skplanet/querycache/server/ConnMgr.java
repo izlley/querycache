@@ -86,22 +86,24 @@ public class ConnMgr {
 
     public ConnNode allocConn(ConnType aType) {
       // 1. check the free-list whether it have available ConnNodes or not
-      long sFreeMaxSize = sFreelistMaxSize.get();
       try {
-        if (sFreeList.size() < sFreeMaxSize * sFreelistThreshold) {
-          long sPostMaxSize;
-          LOG.info("FreeList in ConnPool is too small, so resizing process is activated.");
-          String sUrl = buildUrl(aType);
-          for (int i = 0; i < sFreeMaxSize; i++) {
-            ConnNode sConn = new ConnNode();
-            sConn.initialize(aType, sConnIdGen.addAndGet(1L), sUrl);
-            LOG.debug("Make " + (i + 1) + "st ConnNode for ConnPool.");
-            // append to the FreeList : O(1)
-            sFreeList.add(sConn);
+        synchronized(this) {
+          long sFreeMaxSize = sFreelistMaxSize.get();
+          if (sFreeList.size() < sFreeMaxSize * sFreelistThreshold) {
+            long sPostMaxSize;
+            LOG.info("FreeList in ConnPool is too small, so resizing process is activated.");
+            String sUrl = buildUrl(aType);
+            for (int i = 0; i < sFreeMaxSize; i++) {
+              ConnNode sConn = new ConnNode();
+              sConn.initialize(aType, sConnIdGen.addAndGet(1L), sUrl);
+              LOG.debug("Make " + (i + 1) + "st ConnNode for ConnPool.");
+              // append to the FreeList : O(1)
+              sFreeList.add(sConn);
+            }
+            sPostMaxSize = sFreelistMaxSize.addAndGet(sFreeMaxSize);
+            LOG.info("FreeList resizing from " + sFreeMaxSize + " to "
+                + sPostMaxSize);
           }
-          sPostMaxSize = sFreelistMaxSize.addAndGet(sFreeMaxSize);
-          LOG.info("FreeList resizing from " + sFreeMaxSize + " to "
-              + sPostMaxSize);
         }
         // just ignore these exceptions
       } catch (SQLException e) {
@@ -191,10 +193,11 @@ public class ConnMgr {
     for (ConnType sType : ConnType.values()) {
       int sInd = sType.getIndex();
       switch (sType) {
+        case MYSQL_JDBC:
+          break;
         case PHOENIX_JDBC:
         case IMPALA_JDBC:
         case HIVE_JDBC:
-        case MYSQL_JDBC:
           sConnMgrofAll[sInd] = new ConnMgrofOne();
           if (sConnMgrofAll[sInd].initialize(aInitSize, aResizingF, sType) == CORE_RESULT.CORE_FAILURE) {
             return CORE_RESULT.CORE_FAILURE;
@@ -231,10 +234,12 @@ public class ConnMgr {
   private boolean CheckConnType(ConnType aType) {
     boolean isType = false;
     switch (aType) {
+      case MYSQL_JDBC:
+        LOG.error("Connection type is unknown : [" + aType.getIndex() + "]");
+        break;
       case PHOENIX_JDBC:
       case IMPALA_JDBC:
       case HIVE_JDBC:
-      case MYSQL_JDBC:
         isType = true;
         break;
       default:
