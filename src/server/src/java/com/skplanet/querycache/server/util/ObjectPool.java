@@ -8,8 +8,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.skplanet.querycache.server.common.Configure;
-import com.skplanet.querycache.server.ConnNode;
 import com.skplanet.querycache.thrift.*;
 
 public class ObjectPool {
@@ -21,7 +19,7 @@ public class ObjectPool {
   private long sReloadCycle = 0;
   private int  sMaxPoolSize = 0;
   private float sReloadingThreshhold = 0.f;
-  private final int sCellCoeff = 2;
+  private int sCellCoeff = 0;
   
   private int  sObjCnt = 4;
   public static class TargetObjs {
@@ -71,8 +69,9 @@ public class ObjectPool {
     }
   };
   
-  public ObjectPool(int aPoolSize, long aReloadCycle, float aReloadF) {
+  public ObjectPool(int aPoolSize, int aCellCoeff, long aReloadCycle, float aReloadF) {
     sMaxPoolSize = aPoolSize;
+    sCellCoeff   = aCellCoeff;
     sReloadCycle = aReloadCycle;
     sReloadingThreshhold = aReloadF;
     for (int i = 0; i < sObjCnt; i++) {
@@ -100,7 +99,7 @@ public class ObjectPool {
         }
         break;
       case 2:
-        // we need lots of Cell objects, so approximatively multiply by 128.
+        // we need lots of Cell objects, so approximatively multiply by 2.
         for (int i = sObjList.get(aInd).size(); 
              i < (sMaxPoolSize * sCellCoeff); i++) {
           sObjList.get(aInd).add((Object)new TColumnValue());

@@ -13,7 +13,7 @@ public class ConnNode {
   
   long sConnId = 0;
   Connection sHConn = null;
-  ConnType sConnType;
+  String sConnType;
   State sState;
   
   //TODO : use hashcode instead of long
@@ -27,13 +27,20 @@ public class ConnNode {
     ERROR
   }
   
-  public void initialize(ConnType aConnType, long aId, String aUrl) 
+  public void initialize(ConnProperty aConnType,
+                         long aId,
+                         String aUrl) 
       throws SQLException, LinkageError, ClassNotFoundException {
-    Class.forName(aConnType.getPackgePath());
+    Class.forName(aConnType.connPkgPath);
     this.sConnId = aId;
-    this.sHConn = DriverManager.getConnection(aUrl);
+    if (aConnType.connUserId.isEmpty()) {
+      this.sHConn = DriverManager.getConnection(aUrl);
+    } else {
+      this.sHConn = DriverManager.getConnection(aUrl,
+        aConnType.connUserId, aConnType.connPass);
+    }
     this.sState = State.CONNECTED;
-    this.sConnType = aConnType;
+    this.sConnType = aConnType.connTypeName;
   }
   
   public void finalize() {
@@ -48,7 +55,7 @@ public class ConnNode {
     StmtNode sStmt = sStmtMap.get(aStmtId);
     if (sStmt == null) {
       LOG.warn("There is no statement in StmtPool mapping to the id" + "(" +
-        aStmtId + ")");
+          sConnType + ":" + aStmtId + ")");
     }
     return sStmt;
   }
@@ -61,27 +68,29 @@ public class ConnNode {
     StmtNode sStmt = new StmtNode();
     sStmt.initialize(sId, this.sHConn);
     if (sStmtMap.put(sId, sStmt) != null) {
-      LOG.warn("There is same statement id in StmtPool" + "(" + sId + ")");
+      LOG.warn("There is same statement id in StmtPool" + "(" + sConnType + 
+          ":" + sId + ")");
     }
-    LOG.info("The statement is added.-ConnId:" + this.sConnId + ",StmtId:" +
-        sId + ",-# of Stmts:" + sStmtMap.size());
+    LOG.info("The statement is added.-Type:" + sConnType + ", -ConnId:" + 
+        this.sConnId + ", StmtId:" + sId + ", -# of Stmts:" + sStmtMap.size());
     return sStmt;
   }
   
   public void closeStmt(long aStmtId) throws SQLException {
     StmtNode sStmt = sStmtMap.remove(aStmtId);  // O(1)
-    LOG.info("The statement is closed.-ConnId:" + this.sConnId + ",StmtId:" +
-        aStmtId + ",-# of Stmts:" + sStmtMap.size());
+    LOG.info("The statement is closed.-Type:" + sConnType + ", -ConnId:" +
+        this.sConnId + ",StmtId:" + aStmtId + ",-# of Stmts:" + sStmtMap.size());
     if (sStmt != null) {
       sStmt.sHStmt.close();
     } else {
       LOG.debug("The statement is already closed." + "(" +
-          aStmtId + ")");
+          sConnType + ":" + aStmtId + ")");
     }
   }
   
   public void closeAllStmts() throws SQLException {
-    LOG.debug("Closing all statements in ConNode Id:" + sConnId);
+    LOG.debug("Closing all statements in ConNode Id -" + sConnType +
+        ":" + sConnId);
 
     Iterator<ConcurrentHashMap.Entry<Long, StmtNode>> iterator =
       sStmtMap.entrySet().iterator();
@@ -93,7 +102,7 @@ public class ConnNode {
       sEntry.getValue().sHStmt.close();
       iterator.remove();
     }
-    LOG.info("All statements are closed.-ConnId:" + this.sConnId + ",-# of Stmts:" +
-        sStmtMap.size());
+    LOG.info("All statements are closed.-Type:" + sConnType + ", -ConnId:"
+        + this.sConnId + ",-# of Stmts:" + sStmtMap.size());
   }
 }

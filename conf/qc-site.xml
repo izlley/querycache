@@ -55,6 +55,12 @@
 </property>
 
 <property>
+  <name>qc.objpool.cell.coeff</name>
+  <value>2</value>
+  <description>Scratch space for Hive jobs</description>
+</property>
+
+<property>
   <name>qc.objpool.reload.cycle.milli</name>
   <value>15000</value>
   <description>Local scratch space for Hive jobs</description>
@@ -73,14 +79,26 @@
 </property>
 
 <property>
-  <name>qc.storage.jdbc.drivers.path</name>
-  <value>../lib/drivers</value>
-  <description>if hive is running in test mode and table is not bucketed, sampling frequency</description>
-</property>
-
-<property>
   <name>qc.storage.jdbc.drivers.address.impala</name>
   <value>localhost:21050</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.pkgpath.impala</name>
+  <value>org.apache.hive.jdbc.HiveDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.impala</name>
+  <value>jdbc:hive2://</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.suffix.impala</name>
+  <value>;auth=noSasl</value>
   <description></description>
 </property>
     
@@ -91,17 +109,53 @@
 </property>
 
 <property>
+  <name>qc.storage.jdbc.drivers.pkgpath.phoenix</name>
+  <value>org.apache.phoenix.jdbc.PhoenixDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.phoenix</name>
+  <value>jdbc:phoenix:</value>
+  <description></description>
+</property>
+    
+<property>
   <name>qc.storage.jdbc.drivers.address.hive</name>
   <value>localhost:10000</value>
   <description></description>
 </property>
 
 <property>
+  <name>qc.storage.jdbc.drivers.pkgpath.hive</name>
+  <value>org.apache.hive.jdbc.HiveDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.hive</name>
+  <value>jdbc:hive2://</value>
+  <description></description>
+</property>
+    
+<property>
   <name>qc.storage.jdbc.drivers.address.mysql</name>
   <value>localhost:3306</value>
   <description></description>
 </property>
 
+<property>
+  <name>qc.storage.jdbc.drivers.pkgpath.mysql</name>
+  <value>com.mysql.jdbc.Driver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.mysql</name>
+  <value>jdbc:mysql://</value>
+  <description></description>
+</property>
+    
 <property>
   <name>qc.storage.jdbc.drivers.user.mysql</name>
   <value>hive</value>
@@ -114,7 +168,7 @@
   <description></description>
 </property>
 
-<property>
+<!--property>
   <name>qc.server.authentication</name>
   <value>NONE</value>
   <description>
@@ -177,6 +231,6 @@
   <description>
     LDAP base DN
   </description>
-</property>
+</property-->
 </configuration>
 

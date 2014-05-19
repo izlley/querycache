@@ -1,127 +1,86 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# This script runs the querycache core commands. 
+for i in "$@"
+do
+case $i in
+    -storage_driver_dir=*)
+    DRIVER_DIR="${i#*=}"
+    ;;
+    -h|--help|*)
+    echo "Usage: `basename $0` -storage_driver_dir=<dir_path>"
+    exit 1
+    ;;
+esac
+done
 
-bin=`which $0`
-bin=`dirname ${bin}`
-bin=`cd "$bin"; pwd`
- 
-DEFAULT_LIBEXEC_DIR="$bin"/../lib
-QC_LIBEXEC_DIR=${QC_LIBEXEC_DIR:-$DEFAULT_LIBEXEC_DIR}
-#. ${bin}/querycache-config.sh
+# Source this file from the $QC_HOME directory to
+# setup your environment. If $QC_HOME is undefined
+# this script will set it to the current working directory.
 
-function print_usage(){
-  echo "Usage: hadoop [--config confdir] COMMAND"
-  echo "       where COMMAND is one of:"
-  echo "  fs                   run a generic filesystem user client"
-  echo "  version              print the version"
-  echo "  jar <jar>            run a jar file"
-  echo "  checknative [-a|-h]  check native hadoop and compression libraries availability"
-  echo "  distcp <srcurl> <desturl> copy file or directories recursively"
-  echo "  archive -archiveName NAME -p <parent path> <src>* <dest> create a hadoop archive"
-  echo "  classpath            prints the class path needed to get the"
-  echo "                       Hadoop jar and the required libraries"
-  echo "  daemonlog            get/set the log level for each daemon"
-  echo " or"
-  echo "  CLASSNAME            run the class named CLASSNAME"
-  echo ""
-  echo "Most commands print help when invoked w/o parameters."
-}
-
-if [ $# = 0 ]; then
-  print_usage
-  exit
+export JAVA_HOME=${JAVA_HOME-/usr/java/default}
+if [ ! -d $JAVA_HOME ] ; then
+    echo "Error! JAVA_HOME must be set to the location of your JDK!"
+    exit 1
 fi
 
-COMMAND=$1
-case $COMMAND in
-  # usage flags
-  --help|-help|-h)
-    print_usage
-    exit
-    ;;
+JAVA=${JAVA-'java'}
 
-  #hdfs commands
-  namenode|secondarynamenode|datanode|dfs|dfsadmin|fsck|balancer|fetchdt|oiv|dfsgroups)
-    echo "DEPRECATED: Use of this script to execute hdfs command is deprecated." 1>&2
-    echo "Instead use the hdfs command for it." 1>&2
-    echo "" 1>&2
-    #try to locate hdfs and if present, delegate to it.  
-    shift
-    if [ -f "${HADOOP_HDFS_HOME}"/bin/hdfs ]; then
-      exec "${HADOOP_HDFS_HOME}"/bin/hdfs ${COMMAND/dfsgroups/groups}  "$@"
-    elif [ -f "${HADOOP_PREFIX}"/bin/hdfs ]; then
-      exec "${HADOOP_PREFIX}"/bin/hdfs ${COMMAND/dfsgroups/groups} "$@"
+if [ -z $QC_HOME ]; then
+    this=${0/-/} # login-shells often have leading '-' chars
+    shell_exec=`basename $SHELL`
+    if [ "$this" = "$shell_exec" ]; then
+        # Assume we're already in QC_HOME
+        interactive=1
+        export QC_HOME="$(pwd)/.."
     else
-      echo "HADOOP_HDFS_HOME not found!"
-      exit 1
+        interactive=0
+        while [ -h "$this" ]; do
+            ls=`ls -ld "$this"`
+            link=`expr "$ls" : '.*-> \(.*\)$'`
+            if expr "$link" : '.*/.*' > /dev/null; then
+                this="$link"
+            else
+                this=`dirname "$this"`/"$link"
+            fi
+        done
+
+        # convert relative path to absolute path
+        bin=`dirname "$this"`
+        script=`basename "$this"`
+        bin=`cd "$bin"; pwd`
+        this="$bin/$script"
+
+        export QC_HOME=`dirname "$bin"`
     fi
-    ;;
+fi
 
-  #mapred commands for backwards compatibility
-  pipes|job|queue|mrgroups|mradmin|jobtracker|tasktracker|mrhaadmin|mrzkfc|jobtrackerha)
-    echo "DEPRECATED: Use of this script to execute mapred command is deprecated." 1>&2
-    echo "Instead use the mapred command for it." 1>&2
-    echo "" 1>&2
-    #try to locate mapred and if present, delegate to it.
-    shift
-    if [ -f "${HADOOP_MAPRED_HOME}"/bin/mapred ]; then
-      exec "${HADOOP_MAPRED_HOME}"/bin/mapred ${COMMAND/mrgroups/groups} "$@"
-    elif [ -f "${HADOOP_PREFIX}"/bin/mapred ]; then
-      exec "${HADOOP_PREFIX}"/bin/mapred ${COMMAND/mrgroups/groups} "$@"
-    else
-      echo "HADOOP_MAPRED_HOME not found!"
-      exit 1
-    fi
-    ;;
+if [ -z $DRIVER_DIR ]; then
+    DRIVER_DIR=$QC_HOME/lib/driver
+fi
 
-  classpath)
-    if $cygwin; then
-      CLASSPATH=`cygpath -p -w "$CLASSPATH"`
-    fi
-    echo $CLASSPATH
-    exit
-    ;;
+JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms2g -Xmx20g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/log/querycache-gc-$(date +%Y%m%d-%H%M%S).log"}
+export QC_CONF_DIR=$QC_HOME/conf
+export QC_LIB_DIR=$QC_HOME/lib
+export PATH=$QC_HOME/bin:$PATH
 
-  #core commands  
-  *)
-    # the core commands
-    if [ "$COMMAND" = "fs" ] ; then
-      CLASS=org.apache.hadoop.fs.FsShell
-    elif [ "$COMMAND" = "version" ] ; then
-      CLASS=org.apache.hadoop.util.VersionInfo
-    elif [ "$COMMAND" = "jar" ] ; then
-      CLASS=org.apache.hadoop.util.RunJar
-    elif [ "$COMMAND" = "checknative" ] ; then
-      CLASS=org.apache.hadoop.util.NativeLibraryChecker
-    elif [ "$COMMAND" = "distcp" ] ; then
-      CLASS=org.apache.hadoop.tools.DistCp
-      CLASSPATH=${CLASSPATH}:${TOOL_PATH}
-    elif [ "$COMMAND" = "daemonlog" ] ; then
-      CLASS=org.apache.hadoop.log.LogLevel
-    elif [ "$COMMAND" = "archive" ] ; then
-      CLASS=org.apache.hadoop.tools.HadoopArchives
-      CLASSPATH=${CLASSPATH}:${TOOL_PATH}
-    elif [[ "$COMMAND" = -*  ]] ; then
-        # class and package names cannot begin with a -
-        echo "Error: No command named \`$COMMAND' was found. Perhaps you meant \`hadoop ${COMMAND#-}'"
-        exit 1
-    else
-      CLASS=$COMMAND
-    fi
-    shift
-    
-    # Always respect HADOOP_OPTS and HADOOP_CLIENT_OPTS
-    HADOOP_OPTS="$HADOOP_OPTS $HADOOP_CLIENT_OPTS"
+echo "$QC_LIB_DIR"
 
-    #make sure security appender is turned off
-    HADOOP_OPTS="$HADOOP_OPTS -Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,NullAppender}"
+CLASSPATH=$QC_HOME/lib:$CLASSPATH
+CLASSPATH=$QC_HOME/conf:$CLASSPATH
+for jar in `ls ${QC_LIB_DIR}/*.jar`; do
+  CLASSPATH=${CLASSPATH}:$jar
+done
+for jar in `ls ${DRIVER_DIR}/*.jar`; do
+  CLASSPATH=${CLASSPATH}:$jar
+done
+export CLASSPATH
 
-    if $cygwin; then
-      CLASSPATH=`cygpath -p -w "$CLASSPATH"`
-    fi
-    export CLASSPATH=$CLASSPATH
-    exec "$JAVA" $JAVA_HEAP_MAX $HADOOP_OPTS $CLASS "$@"
-    ;;
+echo "QC_HOME                = $QC_HOME"
+echo "JAVA_HOME              = $JAVA_HOME"
+echo "DRIVER_DIR             = $DRIVER_DIR"
+echo "CLASSPATH              = $CLASSPATH"
+echo "JVMARGS                = $JVMARGS"
 
-esac
+echo "start Querycache..."
+exec nohup $JAVA $JVMARGS -classpath "$CLASSPATH" com.skplanet.querycache.server.QueryCacheServer "$@" > /dev/null 2>&1 &
+ 

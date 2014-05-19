@@ -1,4 +1,4 @@
-Apache Querycache (TM) 0.01.1
+Apache Querycache (TM) 0.01.3
 ======================
 
 The Querycache (TM) is a smart distributed cache for storing 

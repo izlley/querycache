@@ -80,15 +80,18 @@ public class QueryCacheServer {
       //TServerTransport serverTransport = tcpKeepAlive ?
       //  new TServerSocketKeepAlive(Configure.gServerPort) : new TServerSocket(Configure.gServerPort);
       TServerTransport serverTransport = tcpKeepAlive ?
-        new TServerSocketKeepAlive(conf.getInt(QCConfigKeys.QC_SERVER_PORT, 8655)) : new TServerSocket(Configure.gServerPort);
+        new TServerSocketKeepAlive(conf.getInt(QCConfigKeys.QC_SERVER_PORT, QCConfigKeys.QC_SERVER_PORT_DEFAULT))
+        : new TServerSocket(conf.getInt(QCConfigKeys.QC_SERVER_PORT, QCConfigKeys.QC_SERVER_PORT_DEFAULT));
       // Use this for a multi-threaded server
       // Use CompactProtocol
       TThreadPoolServer.Args sArgs = new TThreadPoolServer.Args(serverTransport).
           processor(processor);
       sArgs.inputProtocolFactory(new TCompactProtocol.Factory());
       sArgs.outputProtocolFactory(new TCompactProtocol.Factory());
-      sArgs.minWorkerThreads(Configure.gMinWorkerThreads);
-      sArgs.maxWorkerThreads(Configure.gMaxWorkerThreads);
+      sArgs.minWorkerThreads(conf.getInt(QCConfigKeys.QC_WORKERTHREAD_MIN,
+        QCConfigKeys.QC_WORKERTHREAD_MIN_DEFAULT));
+      sArgs.maxWorkerThreads(conf.getInt(QCConfigKeys.QC_WORKERTHREAD_MAX,
+        QCConfigKeys.QC_WORKERTHREAD_MAX_DEFAULT));
       
       TServer server = new TThreadPoolServer(sArgs);
       
