@@ -1,7 +1,9 @@
 package com.skplanet.querycache.server;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -11,10 +13,15 @@ import org.slf4j.LoggerFactory;
 public class ConnNode {
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
   
+  // for debug 
+  // 0:open/1:exec/2:getmeta/3:fetch/4:stmtclose/5:connclose
+  long[] latency = {0,0,0,0,0,0,0,0,0,0};
+  
   long sConnId = 0;
   Connection sHConn = null;
-  String sConnType;
-  State sState;
+  private String sConnType;
+  private State  sState;
+  private String url;
   
   //TODO : use hashcode instead of long
   private final AtomicLong sStmtIdGen = new AtomicLong(0L);
@@ -41,6 +48,7 @@ public class ConnNode {
     }
     this.sState = State.CONNECTED;
     this.sConnType = aConnType.connTypeName;
+    this.url = aUrl;
   }
   
   public void finalize() {

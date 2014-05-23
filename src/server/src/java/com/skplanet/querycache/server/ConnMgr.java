@@ -1,9 +1,9 @@
 package com.skplanet.querycache.server;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.skplanet.querycache.server.common.InternalType.*;
+import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
+import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 
 public class ConnMgr {
   private static final Logger LOG = LoggerFactory.getLogger(ConnMgr.class);
@@ -27,12 +28,12 @@ public class ConnMgr {
     // TODO: 1. more sophisticated concurrency control is needed
     // 2. We need to reduce FreeList periodically to prevent from expanding
     // infinitely
-    List<ConnNode> sFreeList = Collections
+    private List<ConnNode> sFreeList = Collections
         .synchronizedList(new LinkedList<ConnNode>());
     // TODO: We need a periodic garbage collection of zombie connections to
     // prevent unintended
     // UsingMap expansion.
-    ConcurrentHashMap<Long, ConnNode> sUsingMap = new ConcurrentHashMap<Long, ConnNode>(
+    private ConcurrentHashMap<Long, ConnNode> sUsingMap = new ConcurrentHashMap<Long, ConnNode>(
         16, 0.9f, 1);
 
     // TODO: use hashcode instead of long
@@ -42,44 +43,182 @@ public class ConnMgr {
     private final AtomicLong sConnIdGen = new AtomicLong(0L);
     private float sFreelistThreshold; // def:0.2f
     private AtomicLong sFreelistMaxSize; // def:16
+    private long sResizingCycle; // def:15*1000
+    private long sGCCycle; // def:5*60*1000;
 
     // below properties are used for connecting to storage system
-    ConnProperty connProp = new ConnProperty();
+    private ConnProperty connProp = new ConnProperty();
+    // index of connection addresses for failover control in a round-robin fashion
+    private short connAddrIndex = -1;
     
-    CORE_RESULT initialize(int aInitSize, float aResizingF, String aConnType,
-        ConnProperty.protocolType aProtoType) {
-      sFreelistThreshold = aResizingF;
+    // lock for adding a ConnNode to the ConnPool concurrently
+    //private Object connPoolLock = new Object();
+    
+    // It's a checker thread running in the background to extend the size of the ConnPool.
+    private Runnable sReloadThread = new Runnable() {
+      public void run() {
+        LOG.info("ConnPool resizing thread init.");
+        boolean interrupted = false;
+        try {
+          while (true) {
+            try {
+              Thread.sleep(sResizingCycle);
+              int currSize = sFreeList.size();
+              long maxSize = sFreelistMaxSize.get();
+              int  addedCnt = 0;
+              String url = "";
+              if (currSize < (int)(maxSize * sFreelistThreshold)) {
+                LOG.info("Resizing more ConnNode in the ConnPool, Type = "
+                  + connProp.connTypeName + ", current size = "
+                  + currSize + ", max size = " + maxSize);
+                // resizing connpool to x2
+                for (int i = 0; i < maxSize; i++) {
+                  ConnNode sConn = new ConnNode();
+                  try {
+                    // Every time builUrl is called, returns different address for distributing connections
+                    url = buildUrl();
+                    sConn.initialize(connProp,
+                                     sConnIdGen.addAndGet(1L),
+                                     url);
+                    LOG.info("Add " + (addedCnt + 1) + "st ConnNode for ConnPool to " + url);
+                    // append to the FreeList : O(1)
+                    sFreeList.add(sConn);
+                    sFreelistMaxSize.addAndGet(1);
+                    addedCnt++;
+                  } catch (SQLException e) {
+                    LOG.error(
+                      "Connection error to (" + url + ") " + ":" + e.getMessage(), e);
+                    // I don't wanna infinite loop here.
+                    //i--;
+                  } catch (LinkageError e) {
+                    LOG.error(
+                      "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
+                  } catch (ClassNotFoundException e) {
+                    LOG.error(
+                      "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
+                  }
+                }
+                LOG.info("FreeList resizing from " + maxSize + " to "
+                    + sFreelistMaxSize.get());
+              }
+            } catch (InterruptedException e) {
+              // Deliberately ignore
+              interrupted = true;
+            }
+          }
+        } finally {
+          if (interrupted) {
+            Thread.currentThread().interrupt();
+          }
+        }
+      }
+    };
+    
+    // It's a checker thread running in the background to detect failed connections 
+    // and remove those connections.
+    // TODO: If a client abort a connection abnormally, the qc server does not know 
+    //   whether it's a normal close case or not. Therefore, this connection is retained forever.
+    //   We also need gc for removing these zombie connections periodically.
+    private Runnable sGCThread = new Runnable() {
+      public void run() {
+        LOG.info("ConnPool GC thread init.");
+        boolean interrupted = false;
+        try {
+          while (true) {
+            try {
+              Thread.sleep(sGCCycle);
+              LOG.info("[" + connProp.connTypeName + "] ConnPool GC activated...");
+              // is this thread-safe? it doesn't matter
+              for (Iterator<ConnNode> iter = sFreeList.iterator(); iter.hasNext();) {
+                Statement stmt = null;
+                ConnNode conn = iter.next();
+                try {
+                  stmt = conn.sHConn.createStatement();
+                  // execute call need communication with storage server.
+                  stmt.execute(QueryCacheServer.conf.get(
+                      QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY,
+                      QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT));
+                } catch (SQLException e) {
+                  // only handling the connection error
+                  if (e.getSQLState().equals("08S01")) {
+                    // remove failed ConnNode in the ConnPool
+                    iter.remove();
+                    LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
+                  }
+                } finally {
+                  try {
+                    stmt.close();
+                  } catch (SQLException e) {
+                    // just ignore
+                  }
+                }
+              }
+              LOG.info("[" + connProp.connTypeName + "] ConnPool size after GC : " + sFreeList.size());
+            } catch (InterruptedException e) {
+              // Deliberately ignore
+              interrupted = true;
+            }
+          }
+        } finally {
+          if (interrupted) {
+            Thread.currentThread().interrupt();
+          }
+        }
+      }
+    };
+    
+    public CORE_RESULT initialize(String aConnType,
+                                  ConnProperty.protocolType aProtoType) {
+      // get properties for initialize ConnMgr
+      final int initSize = QueryCacheServer.conf.getInt(
+          QCConfigKeys.QC_CONNECTIONPOOL_FREE_INIT_SIZE,
+          QCConfigKeys.QC_CONNECTIONPOOL_FREE_INIT_SIZE_DEFAULT);
+      this.sFreelistThreshold = QueryCacheServer.conf.getFloat(
+          QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F,
+          QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT);
+      this.sResizingCycle = QueryCacheServer.conf.getLong(
+          QCConfigKeys.QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI,
+          QCConfigKeys.QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI_DEFAULT);
+      this.sGCCycle = QueryCacheServer.conf.getLong(
+          QCConfigKeys.QC_CONNECTIONPOOL_GC_CYCLE_MILLI,
+          QCConfigKeys.QC_CONNECTIONPOOL_GC_CYCLE_MILLI_DEFAULT);
+        
       if (connProp.setConnProperties(aConnType, aProtoType) != CORE_RESULT.CORE_SUCCESS)
         return CORE_RESULT.CORE_FAILURE;
-
+      String url = "";
+      
       // TODO: How can we handle url kv options? just ignore these?
-      String sUrl = buildUrl();
-
-      for (int i = 0; i < aInitSize; i++) {
+      for (int i = 0; i < initSize; i++) {
         ConnNode sConn = new ConnNode();
         try {
+          // Every time builUrl is called, returns different address for distributing connections
+          url = buildUrl();
           sConn.initialize(connProp,
                            sConnIdGen.addAndGet(1L),
-                           sUrl);
-          LOG.info("Make " + (i + 1) + "st ConnNode for ConnPool of " + aConnType);
+                           url);
+          LOG.info("Add " + (i + 1) + "st ConnNode for ConnPool to " + url);
           // append to the FreeList : O(1)
           sFreeList.add(sConn);
         } catch (SQLException e) {
-          LOG.error("Connection error " + aConnType + ":" + e.getMessage(),
-              e);
-          return CORE_RESULT.CORE_FAILURE;
+          LOG.error("Connection error to (" + url + ") " + ":" + e.getMessage(), e);
+          LOG.info("Retrying connection");
+          i--;
+          continue;
         } catch (LinkageError e) {
           LOG.error(
-              "Connection init error " + aConnType + ":" + e.getMessage(), e);
+            "Connection init error " + aConnType + ":" + e.getMessage(), e);
           return CORE_RESULT.CORE_FAILURE;
         } catch (ClassNotFoundException e) {
           LOG.error(
-              "Connection init error " + aConnType + ":" + e.getMessage(), e);
+            "Connection init error " + aConnType + ":" + e.getMessage(), e);
           return CORE_RESULT.CORE_FAILURE;
         }
       }
-      sFreelistMaxSize = new AtomicLong(aInitSize);
+      sFreelistMaxSize = new AtomicLong(initSize);
 
+      // start background thread for checking connpool size and resizing if necessary
+      new Thread(sReloadThread).start();
+      new Thread(sGCThread).start();
       return CORE_RESULT.CORE_SUCCESS;
     }
 
@@ -95,49 +234,58 @@ public class ConnMgr {
     }
 
     public ConnNode allocConn() {
-      // 1. check the free-list whether it have available ConnNodes or not
-      try {
-        synchronized(this) {
-          long sFreeMaxSize = sFreelistMaxSize.get();
-          if (sFreeList.size() < sFreeMaxSize * sFreelistThreshold) {
-            long sPostMaxSize;
-            LOG.info("FreeList in ConnPool is too small, so resizing process is activated.");
-            String sUrl = buildUrl();
-            for (int i = 0; i < sFreeMaxSize; i++) {
-              ConnNode sConn = new ConnNode();
-              sConn.initialize(connProp, sConnIdGen.addAndGet(1L), sUrl);
-              LOG.debug("Make " + (i + 1) + "st ConnNode for ConnPool.");
-              // append to the FreeList : O(1)
-              sFreeList.add(sConn);
-            }
-            sPostMaxSize = sFreelistMaxSize.addAndGet(sFreeMaxSize);
-            LOG.info("FreeList resizing from " + sFreeMaxSize + " to "
-                + sPostMaxSize);
-          }
-        }
-        // just ignore these exceptions
-      } catch (SQLException e) {
-        LOG.warn("Connection error :" + e.getMessage(), e);
-      } catch (LinkageError e) {
-        LOG.error("Connection init error :" + e.getMessage(), e);
-      } catch (ClassNotFoundException e) {
-        LOG.error("Connection init error :" + e.getMessage(), e);
-      }
-
-      // 2. move from FreeList to UsingMap
+      // 1. get a ConNode from the FreeList
       // O(1)
       ConnNode sConn = sFreeList.remove(0);
+      
+      // 2. if no ConNode in the ConnPool, make connection explicitly
+      if (sConn == null) {
+        // retry count is not configurable
+        short retryCnt = 3;
+        String url = "";
+        for (int i = 0; i < retryCnt; i++) {
+          ConnNode sConn2 = new ConnNode();
+          try {
+            // Every time builUrl is called, it returns different address for distributing connections
+            url = buildUrl();
+            sConn.initialize(connProp,
+                             sConnIdGen.addAndGet(1L),
+                             url);
+            LOG.info("Add " + (i + 1) + "st ConnNode for ConnPool to " + url);
+            // append to the FreeList : O(1)
+            sFreelistMaxSize.addAndGet(1);
+            sConn = sConn2;
+            break;
+          } catch (SQLException e) {
+            LOG.error("Connection error to (" + url + ") " + ":" + e.getMessage(), e);
+            LOG.info("Retrying connection");
+            continue;
+          } catch (LinkageError e) {
+            LOG.error(
+              "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
+            LOG.info("Retrying connection");
+            continue;
+          } catch (ClassNotFoundException e) {
+            LOG.error(
+              "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
+            LOG.info("Retrying connection");
+            continue;
+          }
+        }
+      }
+      
       if (sConn != null) {
         // O(1)
         sUsingMap.put(sConn.sConnId, sConn);
-        LOG.info("Moving ConnNode from FreeList to UsingMap." + "-Free size:"
+        LOG.info("Moving ConnNode from FreeList to UsingMap. -Type: "
+            + connProp.connTypeName + "-Free size:"
             + sFreeList.size() + ",-FreeMaxSize:" + sFreelistMaxSize
             + ",-Using size:" + sUsingMap.size());
       }
 
       return sConn;
     }
-
+    
     public CORE_RESULT closeConn(long aConnId) {
       ConnNode sConn = sUsingMap.remove(aConnId);
       // close all statements in the ConnNode
@@ -164,13 +312,19 @@ public class ConnMgr {
     }
 
     private String buildUrl() {
-      String sUrl = "";
-      sUrl = connProp.connUrlPrefix + connProp.connAddr;
+      short sInd = 0;
+      synchronized(this){
+        sInd = (connProp.connAddr.length - 1 <= connAddrIndex)? 
+          connAddrIndex = 0 : ++connAddrIndex;
+      }
+      String sUrl =
+        connProp.connUrlPrefix +
+        connProp.connAddr[sInd] +
+        ":" + connProp.connPort;
 
       if (!connProp.connUrlSuffix.isEmpty()) {
         sUrl += "/" + connProp.connUrlSuffix;
       }
-      
       return sUrl;
     }
   }
@@ -186,13 +340,8 @@ public class ConnMgr {
     
     for (String driver: sDrivers) {
       ConnMgrofOne sConn = new ConnMgrofOne();
-      if (sConn.initialize(
-          QueryCacheServer.conf.getInt(QCConfigKeys.QC_CONNECTIONPOOL_FREE_INIT_SIZE,
-            QCConfigKeys.QC_CONNECTIONPOOL_FREE_INIT_SIZE_DEFAULT),
-          QueryCacheServer.conf.getFloat(QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F,
-            QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT),
-          driver,
-          ConnProperty.protocolType.JDBC) == CORE_RESULT.CORE_FAILURE) {
+      if (sConn.initialize(driver, ConnProperty.protocolType.JDBC)
+            == CORE_RESULT.CORE_FAILURE) {
         LOG.error("Connection error to " + driver);
         continue;
       }
@@ -204,13 +353,8 @@ public class ConnMgr {
     
     if (sHBaseDriver != null) {
       ConnMgrofOne sConn = new ConnMgrofOne();
-      if (sConn.initialize(
-          QueryCacheServer.conf.getInt(QCConfigKeys.QC_CONNECTIONPOOL_FREE_INIT_SIZE,
-            QCConfigKeys.QC_CONNECTIONPOOL_FREE_INIT_SIZE_DEFAULT),
-          QueryCacheServer.conf.getFloat(QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F,
-            QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT),
-          sHBaseDriver,
-          ConnProperty.protocolType.HBASE) == CORE_RESULT.CORE_FAILURE) {
+      if (sConn.initialize(sHBaseDriver, ConnProperty.protocolType.HBASE)
+            == CORE_RESULT.CORE_FAILURE) {
         LOG.error("Connection error to " + sHBaseDriver);
       } else {
         connMgrofAll.put("hbase:" + sHBaseDriver, sConn);
@@ -243,22 +387,4 @@ public class ConnMgr {
     }
     return sConnMgr.closeConn(aConnId);
   }
-
-  /*private boolean CheckConnType(String aType) {
-    boolean isType = false;
-    switch (aType) {
-      case MYSQL_JDBC:
-        LOG.error("Connection type is unknown : [" + aType.getIndex() + "]");
-        break;
-      case PHOENIX_JDBC:
-      case IMPALA_JDBC:
-      case HIVE_JDBC:
-        isType = true;
-        break;
-      default:
-        LOG.error("Connection type is unknown : [" + aType.getIndex() + "]");
-        break;
-    }
-    return isType;
-  }*/
 }

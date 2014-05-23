@@ -11,8 +11,16 @@ public class QCConfigKeys {
   public static final int     QC_CONNECTIONPOOL_FREE_INIT_SIZE_DEFAULT = 16;
   public static final String  QC_CONNECTIONPOOL_FREE_RESIZING_F = "qc.connpool.free.resizing.factor";
   public static final float   QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT = 0.2f;
+  public static final String  QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI = "qc.connpool.resizing.cycle.milli";
+  public static final long    QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI_DEFAULT = 15 * 1000;
+  public static final String  QC_CONNECTIONPOOL_GC_CYCLE_MILLI = "qc.connpool.gc.cycle.milli";
+  public static final long    QC_CONNECTIONPOOL_GC_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;
+  public static final String  QC_CONNECTIONPOOL_GC_VERIFY_QUERY = "qc.connpool.gc.verify.query";
+  public static final String  QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT = "show databases";
   public static final String  QC_QUERY_PROFILING = "qc.query.profiling";
-  public static final boolean QC_QUERY_PROFILING_DEFAULT = true;
+  public static final boolean QC_QUERY_PROFILING_DEFAULT = false;
+  public static final String  QC_QUERY_PROFILING_DETAIL_UPPER_MILLI = "qc.query.profiling.detail.upper.milli";
+  public static final long    QC_QUERY_PROFILING_DETAIL_UPPER_MILLI_DEFAULT = 500;
   public static final String  QC_OBJECTPOOL_MAX_SIZE = "qc.objpool.max.size";
   public static final int     QC_OBJECTPOOL_MAX_SIZE_DEFAULT = 1024 * 1024;
   public static final String  QC_OBJECTPOOL_CELL_COEFF = "qc.objpool.cell.coeff";
@@ -23,6 +31,7 @@ public class QCConfigKeys {
   public static final float   QC_OBJECTPOOL_RESIZING_F_DEFAULT = 0.2f;
   public static final String  QC_STORAGE_JDBC_DRIVERS = "qc.storage.jdbc.drivers";
   public static final String  QC_STORAGE_JDBC_DRIVERS_ADDRESS_PREFIX = "qc.storage.jdbc.drivers.address";
+  public static final String  QC_STORAGE_JDBC_DRIVERS_PORT_PREFIX = "qc.storage.jdbc.drivers.port";
   public static final String  QC_STORAGE_JDBC_DRIVERS_PKGPATH_PREFIX = "qc.storage.jdbc.drivers.pkgpath";
   public static final String  QC_STORAGE_JDBC_DRIVERS_URLPREFIX_PREFIX = "qc.storage.jdbc.drivers.url.prefix";
   public static final String  QC_STORAGE_JDBC_DRIVERS_USER_PREFIX = "qc.storage.jdbc.drivers.user";
@@ -30,6 +39,7 @@ public class QCConfigKeys {
   public static final String  QC_STORAGE_JDBC_DRIVERS_URLSUFFIX_PREFIX = "qc.storage.jdbc.drivers.url.suffix";
   public static final String  QC_STORAGE_HBASE_DRIVER = "qc.storage.hbase.driver";
   public static final String  QC_STORAGE_HBASE_DRIVER_ADDRESS_PREFIX = "qc.storage.hbase.drivers.address";
+  public static final String  QC_STORAGE_HBASE_DRIVER_PORT_PREFIX = "qc.storage.hbase.drivers.port";
   public static final String  QC_STORAGE_HBASE_DRIVER_URLPREFIX_PREFIX = "qc.storage.hbase.drivers.url.prefix";
   public static final String  QC_STORAGE_HBASE_DRIVER_USER_PREFIX = "qc.storage.hbase.drivers.user";
   public static final String  QC_STORAGE_HBASE_DRIVER_PASSWORD_PREFIX = "qc.storage.hbase.drivers.password";

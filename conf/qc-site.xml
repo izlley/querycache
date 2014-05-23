@@ -20,7 +20,7 @@
 </property>
 
 <property>
-  <name>qc.wokerthread.max</name>
+  <name>qc.workerthread.max</name>
   <value>64</value>
   <description>max number of reducers will be used. If the one
 	specified in the configuration parameter mapred.reduce.tasks is
@@ -41,8 +41,34 @@
 </property>
 
 <property>
+  <name>qc.connpool.resizing.cycle.milli</name>
+  <value>15000</value>
+  <description>Local scratch space for Hive jobs</description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.cycle.milli</name>
+  <value>300000</value>
+  <description>Local scratch space for Hive jobs</description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.verify.query</name>
+  <value>show databases</value>
+  <description>Local scratch space for Hive jobs</description>
+</property>
+
+<property>
   <name>qc.query.profiling</name>
   <value>true</value>
+  <description>Command line prompt configuration value. Other hiveconf can be used in
+        this configuration value. Variable substitution will only be invoked at the hive
+        cli startup.</description>
+</property>
+
+<property>
+  <name>qc.query.profiling.detail.upper.milli</name>
+  <value>500</value>
   <description>Command line prompt configuration value. Other hiveconf can be used in
         this configuration value. Variable substitution will only be invoked at the hive
         cli startup.</description>
@@ -80,7 +106,13 @@
 
 <property>
   <name>qc.storage.jdbc.drivers.address.impala</name>
-  <value>localhost:21050</value>
+  <value>localhost</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.port.impala</name>
+  <value>21050</value>
   <description></description>
 </property>
     
@@ -104,7 +136,13 @@
     
 <property>
   <name>qc.storage.jdbc.drivers.address.phoenix</name>
-  <value>211.234.235.55:2181</value>
+  <value>211.234.235.55</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.port.phoenix</name>
+  <value>2181</value>
   <description></description>
 </property>
 
@@ -122,7 +160,13 @@
     
 <property>
   <name>qc.storage.jdbc.drivers.address.hive</name>
-  <value>localhost:10000</value>
+  <value>localhost</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.port.hive</name>
+  <value>10000</value>
   <description></description>
 </property>
 
@@ -140,7 +184,13 @@
     
 <property>
   <name>qc.storage.jdbc.drivers.address.mysql</name>
-  <value>localhost:3306</value>
+  <value>localhost</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.port.mysql</name>
+  <value>3306</value>
   <description></description>
 </property>
 

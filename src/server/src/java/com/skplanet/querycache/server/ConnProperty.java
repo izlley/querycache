@@ -5,7 +5,8 @@ import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
 public class ConnProperty {
   public String connTypeName  = "";
   public String connPkgPath   = "";
-  public String connAddr      = "";
+  public String[] connAddr    = {};
+  public String connPort      = "";
   public String connUserId    = "";
   public String connPass      = "";
   public String connUrlPrefix = "";
@@ -22,7 +23,9 @@ public class ConnProperty {
     this.connPkgPath =
         QueryCacheServer.conf.get(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS_PKGPATH_PREFIX + '.' + aConnType, "");
     this.connAddr =
-        QueryCacheServer.conf.get(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS_ADDRESS_PREFIX + '.' + aConnType, "");
+        QueryCacheServer.conf.getStrings(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS_ADDRESS_PREFIX + '.' + aConnType, new String[0]);
+    this.connPort =
+        QueryCacheServer.conf.get(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS_PORT_PREFIX + '.' + aConnType, "");
     this.connUserId =
         QueryCacheServer.conf.get(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS_USER_PREFIX + '.' + aConnType, "");
     this.connPass =
@@ -33,7 +36,7 @@ public class ConnProperty {
         QueryCacheServer.conf.get(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS_URLSUFFIX_PREFIX + '.' + aConnType, "");
     if (this.connTypeName.isEmpty() ||
         this.connPkgPath.isEmpty() ||
-        this.connAddr.isEmpty() ||
+        this.connAddr.length == 0 ||
         this.connUrlPrefix.isEmpty()) {
       return CORE_RESULT.CORE_FAILURE;
     }

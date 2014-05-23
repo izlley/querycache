@@ -3,7 +3,7 @@ import java.lang.*;
 import java.util.List;
 import java.util.ArrayList;
 
-public class TestJdbcGetRow {
+public class TestJdbcSelect {
 
    //static String gQuery = "select * from OCB";
    static String gQuery = "select mbid from ocb_behavior where 1=1"	

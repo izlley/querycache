@@ -6,6 +6,10 @@ import org.slf4j.LoggerFactory;
 
 public class StmtNode {
   private static final Logger LOG = LoggerFactory.getLogger(StmtNode.class);
+  
+  //for debug
+  long sumLatency = 0;
+  
   long sStmtId = 0;
   Statement sHStmt = null;
   boolean sHasResultSet = false;
