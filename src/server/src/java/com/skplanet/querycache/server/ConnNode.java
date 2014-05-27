@@ -16,6 +16,8 @@ public class ConnNode {
   // for debug 
   // 0:open/1:exec/2:getmeta/3:fetch/4:stmtclose/5:connclose
   long[] latency = {0,0,0,0,0,0,0,0,0,0};
+  long[] execPofile = null;
+  long[] fetchProfile = null;
   
   long sConnId = 0;
   Connection sHConn = null;

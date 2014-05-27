@@ -59,8 +59,8 @@
 </property>
 
 <property>
-  <name>qc.query.profiling</name>
-  <value>true</value>
+  <name>qc.query.profiling.level</name>
+  <value>3</value>
   <description>Command line prompt configuration value. Other hiveconf can be used in
         this configuration value. Variable substitution will only be invoked at the hive
         cli startup.</description>
@@ -68,7 +68,7 @@
 
 <property>
   <name>qc.query.profiling.detail.upper.milli</name>
-  <value>500</value>
+  <value>300</value>
   <description>Command line prompt configuration value. Other hiveconf can be used in
         this configuration value. Variable substitution will only be invoked at the hive
         cli startup.</description>
@@ -76,7 +76,7 @@
 
 <property>
   <name>qc.objpool.max.size</name>
-  <value>1048576</value>
+  <value>1000</value>
   <description>Scratch space for Hive jobs</description>
 </property>
 

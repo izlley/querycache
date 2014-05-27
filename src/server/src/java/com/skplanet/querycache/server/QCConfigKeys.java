@@ -17,8 +17,8 @@ public class QCConfigKeys {
   public static final long    QC_CONNECTIONPOOL_GC_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;
   public static final String  QC_CONNECTIONPOOL_GC_VERIFY_QUERY = "qc.connpool.gc.verify.query";
   public static final String  QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT = "show databases";
-  public static final String  QC_QUERY_PROFILING = "qc.query.profiling";
-  public static final boolean QC_QUERY_PROFILING_DEFAULT = false;
+  public static final String  QC_QUERY_PROFILING_LEVEL = "qc.query.profiling.level";
+  public static final int     QC_QUERY_PROFILING_LEVEL_DEFAULT = 0;
   public static final String  QC_QUERY_PROFILING_DETAIL_UPPER_MILLI = "qc.query.profiling.detail.upper.milli";
   public static final long    QC_QUERY_PROFILING_DETAIL_UPPER_MILLI_DEFAULT = 500;
   public static final String  QC_OBJECTPOOL_MAX_SIZE = "qc.objpool.max.size";

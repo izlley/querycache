@@ -41,8 +41,8 @@ import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 public class CLIHandler implements TCLIService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
   
-  private final boolean isProfile = QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_QUERY_PROFILING,
-    QCConfigKeys.QC_QUERY_PROFILING_DEFAULT);
+  private final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
+    QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
 
   private ConnMgr gConnMgr = new ConnMgr();
   
@@ -78,7 +78,7 @@ public class CLIHandler implements TCLIService.Iface {
     long startTime = 0;
     long endTime;
     
-    if (isProfile) {
+    if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
     
@@ -132,9 +132,9 @@ public class CLIHandler implements TCLIService.Iface {
       new THandleIdentifier(sConn.sConnId, 0, sUrl));
     sResp.setSessionHandle(sSH);
     
-    if (isProfile) {
+    if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: " + sUrl + " Connection time elapsed : " +
+      LOG.info("PROFILE: ConnID=" + sConn.sConnId + ", Url=" + sUrl + ", Connection time elapsed=" +
           (endTime-startTime) + "ms");
       sConn.latency[0] = endTime-startTime;
     }
@@ -165,7 +165,7 @@ public class CLIHandler implements TCLIService.Iface {
     long endTime;
     ConnNode sConn = null;
     
-    if (isProfile) {
+    if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
       sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType,
           aReq.sessionHandle.sessionId.connid);
@@ -181,31 +181,63 @@ public class CLIHandler implements TCLIService.Iface {
     TCloseSessionResp sResp = new TCloseSessionResp();
     sResp.setStatus(new TStatus().setStatusCode(TStatusCode.SUCCESS_STATUS));
     
-    if (isProfile) {
+    if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
       sConn.latency[5] = endTime-startTime;
       long total = 0;
       for (int i = 0; i < 6; i++) {
         total += sConn.latency[i];
       }
-      LOG.info("PROFILE: " + aReq.sessionHandle.sessionId.driverType + 
-          " Close time elapsed : " + (endTime-startTime) + "ms" +
-          " #Total lanency : " + total + "ms");
+      LOG.info("PROFILE: ConnID=" + sConn.sConnId + ", Type=" + aReq.sessionHandle.sessionId.driverType + 
+          ", Close time elapsed=" + (endTime-startTime) + "ms" +
+          ", #Total lanency=" + total + "ms");
       if (total >= 
             QueryCacheServer.conf.getLong(
               QCConfigKeys.QC_QUERY_PROFILING_DETAIL_UPPER_MILLI,
               QCConfigKeys.QC_QUERY_PROFILING_DETAIL_UPPER_MILLI_DEFAULT)) {
         String profile =   
-              "    -Open      : " + sConn.latency[0]
-          + "\n    -Execquery : " + sConn.latency[1]
-          + "\n    -Getmeta   : " + sConn.latency[2]
-          + "\n    -Fetch     : " + sConn.latency[3]
-          + "\n    -Stmtclose : " + sConn.latency[4]
+            "\n    -Open      : " + sConn.latency[0]
+          + "\n    -Execquery : " + sConn.latency[1];
+        if (profileLvl > 1) {
+          profile +=
+            "\n      - #1. GetConn   : " + (sConn.execPofile[1] - sConn.execPofile[0])
+          + "\n      - #2. AllocStmt : " + (sConn.execPofile[2] - sConn.execPofile[1])
+          + "\n      - #3. ExecStmt  : " + (sConn.execPofile[3] - sConn.execPofile[2])
+          + "\n      - #4. Build resp: " + (sConn.execPofile[4] - sConn.execPofile[3]);
+        }
+        profile += 
+            "\n    -Getmeta   : " + sConn.latency[2]
+          + "\n    -Fetch     : " + sConn.latency[3];
+        if (profileLvl > 1) {
+          profile += 
+              "\n      - #1. GetConn      : " + (sConn.fetchProfile[1] - sConn.fetchProfile[0])
+            + "\n      - #2. GetStmt      : " + (sConn.fetchProfile[2] - sConn.fetchProfile[1])
+            + "\n      - #3. GetMeta      : " + (sConn.fetchProfile[3] - sConn.fetchProfile[2]);
+          switch (profileLvl) {
+            case 2:
+              profile += 
+              "\n      - #4. Fetch        : " + (sConn.fetchProfile[4] - sConn.fetchProfile[3]);
+              break;
+            case 3:
+              profile += 
+              "\n      - #4. Fetch"
+            + "\n            - First fetch   : " + (sConn.fetchProfile[4] - sConn.fetchProfile[3])
+            + "\n            - FetchRows(sum): " + (sConn.fetchProfile[5])
+            + "\n            - GetCols(sum)  : " + (sConn.fetchProfile[6])
+            + "\n      - #5. Build resp   : " + (sConn.fetchProfile[8] - sConn.fetchProfile[7]);
+              break;
+            default:
+              break;
+          }
+        }
+        profile += 
+            "\n    -Stmtclose : " + sConn.latency[4]
           + "\n    -Connclose : " + sConn.latency[5];
-        LOG.info("###Detail profile: \n" + profile);
+        LOG.info("###Detail profile: ConnID=" + sConn.sConnId + profile);
         for (int i = 0; i < sConn.latency.length; i++) {
           sConn.latency[i] = 0;
         }
+        sConn.execPofile = sConn.fetchProfile = null;
       }
     }
     
@@ -248,9 +280,12 @@ public class CLIHandler implements TCLIService.Iface {
     LOG.info("ExecuteStatement is requested.");
     long startTime = 0;
     long endTime;
+    long timeArr[] = new long[10];
+    int i = 0;
+    StmtNode sStmt = null;
     
-    if (isProfile) {
-      startTime = System.currentTimeMillis();
+    if (profileLvl > 0) {
+      timeArr[i++] = startTime = System.currentTimeMillis();
     }
     // 1. get connection from pool
     long sConnId = aReq.sessionHandle.sessionId.connid;
@@ -268,17 +303,24 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorMessage("ExecuteStatement error : the connection doesn't exist.");
       return sResp;
     }
+    if (profileLvl > 1)
+      timeArr[i++] = System.currentTimeMillis();
 
     // 2. alloc statement
     try {
-      StmtNode sStmt = sConn.allocStmt();
+      sStmt   = sConn.allocStmt();
       sStmtId = sStmt.sStmtId;
       // TODO: 3. set statement properties by TExecuteStatementReq.configuration
       //    (e.g. setMaxRows())
+
+      if (profileLvl > 1)
+        timeArr[i++] = System.currentTimeMillis();
       
       // 4. execute query
       boolean sIsRS = sStmt.sHStmt.execute(aReq.statement);
       sStmt.sState = StmtNode.State.RUNNING;
+      if (profileLvl > 1)
+        timeArr[i++] = System.currentTimeMillis();
       
       // 5. build TExecuteStatementResp
       THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
@@ -309,11 +351,16 @@ public class CLIHandler implements TCLIService.Iface {
       return sResp;
     }
 
-    if (isProfile) {
+    if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: " + aReq.sessionHandle.sessionId.driverType + " Execute time elapsed : "
-        + (endTime-startTime) + "ms" + "\n  -Query: " + aReq.statement);
+      LOG.info("PROFILE: ConnID=" + sConn.sConnId + ", StmtId=" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", Execute time elapsed="
+        + (endTime-startTime) + "ms" + "\n  -Query=" + aReq.statement);
       sConn.latency[1] = endTime-startTime;
+      if (profileLvl > 1) {
+        timeArr[i++] = endTime;
+        sConn.execPofile = timeArr;
+      }
     }
     
     return sResp;
@@ -418,7 +465,7 @@ public class CLIHandler implements TCLIService.Iface {
     long startTime = 0;
     long endTime;
     
-    if (isProfile) {
+    if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
     TCloseOperationResp sResp = new TCloseOperationResp();
@@ -450,9 +497,10 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.errorMessage = e.getMessage();
       return sResp;
     }
-    if (isProfile) {
+    if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: " + aReq.operationHandle.operationId.driverType + " CloseOp time elapsed : "
+      LOG.info("PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
+        + aReq.operationHandle.operationId.driverType + ", CloseOp time elapsed="
         + (endTime-startTime) + "ms");
       sConn.latency[4] = endTime-startTime;
     }
@@ -509,7 +557,7 @@ struct TGetResultSetMetadataResp {
     long startTime = 0;
     long endTime;
     
-    if (isProfile) {
+    if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
     TGetResultSetMetadataResp sResp = new TGetResultSetMetadataResp();
@@ -594,10 +642,11 @@ struct TGetResultSetMetadataResp {
       return sResp;
     }
 
-    if (isProfile) {
+    if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: " + aReq.operationHandle.operationId.driverType + 
-        " GetResultSetMetadata time elapsed : " + (endTime-startTime) + "ms");
+      LOG.info("PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
+        + aReq.operationHandle.operationId.driverType
+        + ", GetResultSetMetadata time elapsed=" + (endTime-startTime) + "ms");
       sConn.latency[2] = endTime-startTime;
     }
     return sResp;
@@ -645,17 +694,20 @@ struct TGetResultSetMetadataResp {
   public TFetchResultsResp FetchResults(TFetchResultsReq aReq) {
     LOG.info("FetchResults is requested.");
     long startTime = 0;
-    long endTime;
+    long endTime, midTime;
+    long timeArr[] = new long[10];
+    int  j = 0, k = 0;
+    long sRowCount = 0;
     
-    if (isProfile) {
-      startTime = System.currentTimeMillis();
+    if (profileLvl > 0) {
+      timeArr[j++] = startTime = System.currentTimeMillis();
     }
     
     TFetchResultsResp sResp = new TFetchResultsResp();
     sResp.setStatus(new TStatus());
     
     //
-    // 1. get ResultSet
+    // 1. get Conn
     //
     long sConnId = aReq.operationHandle.operationId.connid;
     long sStmtId = aReq.operationHandle.operationId.stmtid;
@@ -669,7 +721,12 @@ struct TGetResultSetMetadataResp {
       sResp.status.errorMessage = "FetchResults error : the connection doesn't exist.";
       return sResp;
     }
+    if (profileLvl > 1)
+      timeArr[j++] = System.currentTimeMillis();
     
+    //
+    // 2. get Stmt
+    //
     StmtNode sStmt = sConn.sStmtMap.get(sStmtId);
     if (sStmt == null) {
       // the statement doesn't even exist, just send a error msg.
@@ -687,9 +744,11 @@ struct TGetResultSetMetadataResp {
       sResp.status.errorMessage = "FetchResults error : The statement has no ResultSet.";
       return sResp;
     }
+    if (profileLvl > 1)
+      timeArr[j++] = System.currentTimeMillis();
     
     //
-    // 2. Fetch each row and save to TRowSet
+    // 3. Fetch each row and save to TRowSet
     //
     try {
       ResultSet sRS = sStmt.sRS;
@@ -714,13 +773,27 @@ struct TGetResultSetMetadataResp {
       sStmt.sState = StmtNode.State.FETCHING;
       
       int sColCnt = sMeta.getColumnCount();
+      if (profileLvl > 1)
+        timeArr[j++] = System.currentTimeMillis(); // T0
+      
       // TODO: Below code block should be more optimized for performance
-      long sRowCount = 0;
+      k = j;
       while (sRS.next()) {
         ++sRowCount;
         TRow sRow = (TRow)gObjPool.getObject(TargetObjs.TROW);
         if (sRow == null) {
           sRow = new TRow();
+        }
+        if (profileLvl > 2) {
+          midTime = System.currentTimeMillis(); // T1
+          if (sRowCount == 1) {
+            // put first-fetch TS
+            timeArr[j++] = midTime;
+            k = j;
+          }
+          j = k;
+          // put the sum of T1 to calculate avg time of next()
+          timeArr[j++] += midTime;
         }
         for (int i = 1; i <= sColCnt; i++) {
           TColumnValue sCell = (TColumnValue)gObjPool.getObject(TargetObjs.TCOLUMNVALUE);
@@ -775,6 +848,25 @@ struct TGetResultSetMetadataResp {
           sRow.addToColVals(sCell);
         }
         sRowSet.addToRows(sRow);
+        if (profileLvl > 2) {
+          midTime = System.currentTimeMillis(); // T2
+          // put the sum of T2 to calculate avg time of get cols
+          timeArr[j++] += midTime;
+          // we also need TS of the last T2
+          timeArr[j++] = midTime;
+        }
+      }
+      
+      if (profileLvl > 2) {
+        if (sRowCount > 0) {
+          // calculate sum time of next and get cols
+          // sum of next() = (sum from i=2 to n of TS1 - sum from i=1 to n-1 of TS2)
+          // sum of get cols = (sum from i=1 to n of TS3 - sum from i=1 to n of TS2)
+          midTime = timeArr[k];
+          timeArr[k] =
+            ((timeArr[k]-timeArr[k-1])-(timeArr[k+1]-timeArr[k+2]));
+          timeArr[k+1] = (timeArr[k+1] - midTime);
+        }
       }
 
       sResp.hasMoreRows = false;
@@ -789,11 +881,21 @@ struct TGetResultSetMetadataResp {
       sResp.status.errorMessage = e.getMessage();
       return sResp;
     }
-    if (isProfile) {
-      endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: " + aReq.operationHandle.operationId.driverType + " Fetch time elapsed : "
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis(); // T3
+      LOG.info("PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
+        + aReq.operationHandle.operationId.driverType + ", Fetch time elapsed="
         + (endTime-startTime) + "ms");
       sConn.latency[3] = endTime-startTime;
+      if (profileLvl > 1) {
+        if (profileLvl > 2 && sRowCount == 0) {
+          timeArr[j++] = endTime;
+          timeArr[j++] = timeArr[j++] = 0;
+          timeArr[j++] = endTime;
+        }
+        timeArr[j++] = endTime;
+        sConn.fetchProfile = timeArr;
+      }
     }
     return sResp;
   }

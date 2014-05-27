@@ -8,10 +8,15 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.skplanet.querycache.server.QCConfigKeys;
+import com.skplanet.querycache.server.QueryCacheServer;
 import com.skplanet.querycache.thrift.*;
 
 public class ObjectPool {
   private static final Logger LOG = LoggerFactory.getLogger(ObjectPool.class);
+  private final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
+      QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
+  
   // Object pool
   // TODO: preventing a full GC we need a logic for recycling object
   List<List<Object>> sObjList = new ArrayList<List<Object>>();
@@ -77,7 +82,7 @@ public class ObjectPool {
     for (int i = 0; i < sObjCnt; i++) {
       // create a new obj-linkedlist and add to the sObjList
       // append : O(1)
-      sObjList.add(Collections.synchronizedList(new LinkedList<Object>()));
+      sObjList.add(new LinkedList<Object>());
       initObjPool(i);
     }
     
@@ -119,7 +124,13 @@ public class ObjectPool {
     try {
       // get(ind) : O(1)
       // remove first element : O(1)
-      Object sObj = sObjList.get(aInd).remove(0);
+      List<Object> sObjs = sObjList.get(aInd);
+      Object sObj = null;
+      // TODO: Is there any lock-free linked-list?
+      //       This looks very promising: http://concurrencykit.org/
+      synchronized(sObjs) {
+        sObj = sObjs.remove(0);
+      }
       return sObj;
     } catch (IndexOutOfBoundsException e) {
       return null;
