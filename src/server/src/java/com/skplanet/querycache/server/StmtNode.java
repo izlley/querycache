@@ -14,6 +14,8 @@ public class StmtNode {
   Statement sHStmt = null;
   boolean sHasResultSet = false;
   ResultSet sRS = null;
+  String sQuery = "";
+  long rowCnt = 0;
   State sState = State.CLOSED;
   
   public static enum State {
@@ -30,5 +32,7 @@ public class StmtNode {
     this.sState = State.INIT;
     this.sHasResultSet = false;
     this.sRS = null;
+    this.sQuery = "";
+    this.rowCnt = 0;
   }
 }

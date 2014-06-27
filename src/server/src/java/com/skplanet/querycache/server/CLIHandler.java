@@ -35,14 +35,21 @@ import org.slf4j.LoggerFactory;
 
 import com.skplanet.querycache.server.common.*;
 import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
+import com.skplanet.querycache.server.sqlcompiler.Analyzer;
 import com.skplanet.querycache.server.util.ObjectPool;
 import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
+import com.skplanet.querycache.server.sqlcompiler.AuthorizationException;
 
 public class CLIHandler implements TCLIService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
   
   private final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
     QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
+  private final boolean isSyntaxCheck =
+    QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_QUERY_SYNTAX_CHECK,
+      QCConfigKeys.QC_QUERY_SYNTAX_CHECK_DEFAULT);
+  private final boolean isAuthCheck = !QueryCacheServer.conf.get(QCConfigKeys.QC_AUTHORIZATION,
+    QCConfigKeys.QC_AUTHORIZATION_DEFAULT).equalsIgnoreCase("NONE");
 
   private ConnMgr gConnMgr = new ConnMgr();
   
@@ -74,9 +81,11 @@ public class CLIHandler implements TCLIService.Iface {
    */
 
   public TOpenSessionResp OpenSession(TOpenSessionReq aReq) {
-    LOG.info("OpenSession is requested.");
+    LOG.debug("OpenSession is requested.");
     long startTime = 0;
     long endTime;
+    String user;
+    String password;
     
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
@@ -95,6 +104,8 @@ public class CLIHandler implements TCLIService.Iface {
     
     // TODO: we need to add authentication process
     // 2. check id/pass from auhentication db
+    user = aReq.username;
+    password = aReq.password;
     
     // 3. alloc a ConnNode
     sConn = gConnMgr.allocConn(sUrl);
@@ -121,6 +132,8 @@ public class CLIHandler implements TCLIService.Iface {
     }
     
     // TODO: 4. set connection properties by TOpenSessionReq.configuration
+    sConn.user = user;
+    sConn.setPassword(password);
     
     // 5. build TOpenSessionResp for responding to the client
     //sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
@@ -134,7 +147,7 @@ public class CLIHandler implements TCLIService.Iface {
     
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: ConnID=" + sConn.sConnId + ", Url=" + sUrl + ", Connection time elapsed=" +
+      LOG.info("OpenSession PROFILE: ConnID=" + sConn.sConnId + ", Url=" + sUrl + ", Connection time elapsed=" +
           (endTime-startTime) + "ms");
       sConn.latency[0] = endTime-startTime;
     }
@@ -160,7 +173,7 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TCloseSessionResp CloseSession(TCloseSessionReq aReq) {
-    LOG.info("CloseSession is requested.");
+    LOG.debug("CloseSession is requested.");
     long startTime = 0;
     long endTime;
     ConnNode sConn = null;
@@ -188,7 +201,8 @@ public class CLIHandler implements TCLIService.Iface {
       for (int i = 0; i < 6; i++) {
         total += sConn.latency[i];
       }
-      LOG.info("PROFILE: ConnID=" + sConn.sConnId + ", Type=" + aReq.sessionHandle.sessionId.driverType + 
+      LOG.info("CloseSession PROFILE: ConnID=" + sConn.sConnId + ", Type=" + 
+          aReq.sessionHandle.sessionId.driverType + 
           ", Close time elapsed=" + (endTime-startTime) + "ms" +
           ", #Total lanency=" + total + "ms");
       if (total >= 
@@ -198,17 +212,18 @@ public class CLIHandler implements TCLIService.Iface {
         String profile =   
             "\n    -Open      : " + sConn.latency[0]
           + "\n    -Execquery : " + sConn.latency[1];
-        if (profileLvl > 1) {
+        if (profileLvl > 1 && sConn.execPofile != null) {
           profile +=
-            "\n      - #1. GetConn   : " + (sConn.execPofile[1] - sConn.execPofile[0])
-          + "\n      - #2. AllocStmt : " + (sConn.execPofile[2] - sConn.execPofile[1])
-          + "\n      - #3. ExecStmt  : " + (sConn.execPofile[3] - sConn.execPofile[2])
-          + "\n      - #4. Build resp: " + (sConn.execPofile[4] - sConn.execPofile[3]);
+            "\n      - #1. GetConn     : " + (sConn.execPofile[1] - sConn.execPofile[0])
+          + "\n      - #2. AllocStmt   : " + (sConn.execPofile[2] - sConn.execPofile[1])
+          + "\n      - #3. AnalyzeStmt : " + (sConn.execPofile[3] - sConn.execPofile[2])
+          + "\n      - #4. ExecStmt    : " + (sConn.execPofile[4] - sConn.execPofile[3])
+          + "\n      - #5. Build resp  : " + (sConn.execPofile[5] - sConn.execPofile[4]);
         }
         profile += 
             "\n    -Getmeta   : " + sConn.latency[2]
           + "\n    -Fetch     : " + sConn.latency[3];
-        if (profileLvl > 1) {
+        if (profileLvl > 1 && sConn.fetchProfile != null) {
           profile += 
               "\n      - #1. GetConn      : " + (sConn.fetchProfile[1] - sConn.fetchProfile[0])
             + "\n      - #2. GetStmt      : " + (sConn.fetchProfile[2] - sConn.fetchProfile[1])
@@ -234,11 +249,11 @@ public class CLIHandler implements TCLIService.Iface {
             "\n    -Stmtclose : " + sConn.latency[4]
           + "\n    -Connclose : " + sConn.latency[5];
         LOG.info("###Detail profile: ConnID=" + sConn.sConnId + profile);
-        for (int i = 0; i < sConn.latency.length; i++) {
-          sConn.latency[i] = 0;
-        }
-        sConn.execPofile = sConn.fetchProfile = null;
       }
+      for (int i = 0; i < sConn.latency.length; i++) {
+        sConn.latency[i] = 0;
+      }
+      sConn.execPofile = sConn.fetchProfile = null;
     }
     
     return sResp;
@@ -277,7 +292,7 @@ public class CLIHandler implements TCLIService.Iface {
   */
 
   public TExecuteStatementResp ExecuteStatement(TExecuteStatementReq aReq) {
-    LOG.info("ExecuteStatement is requested.");
+    LOG.debug("ExecuteStatement is requested.");
     long startTime = 0;
     long endTime;
     long timeArr[] = new long[10];
@@ -287,7 +302,9 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       timeArr[i++] = startTime = System.currentTimeMillis();
     }
+    //
     // 1. get connection from pool
+    //
     long sConnId = aReq.sessionHandle.sessionId.connid;
     long sStmtId = 0;
     
@@ -306,23 +323,59 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 1)
       timeArr[i++] = System.currentTimeMillis();
 
+    //
     // 2. alloc statement
+    //
     try {
       sStmt   = sConn.allocStmt();
       sStmtId = sStmt.sStmtId;
-      // TODO: 3. set statement properties by TExecuteStatementReq.configuration
+      // TODO: 2.5 set statement properties by TExecuteStatementReq.configuration
       //    (e.g. setMaxRows())
 
       if (profileLvl > 1)
         timeArr[i++] = System.currentTimeMillis();
       
-      // 4. execute query
-      boolean sIsRS = sStmt.sHStmt.execute(aReq.statement);
-      sStmt.sState = StmtNode.State.RUNNING;
+      //
+      // 3. Analyze SQL stmt
+      //
+      if (isSyntaxCheck || isAuthCheck) {
+        try {
+          Analyzer compiler = new Analyzer(sConn.user,
+            aReq.sessionHandle.sessionId.driverType, gConnMgr);
+          compiler.analyzer(aReq.statement, isAuthCheck);
+        } catch (AuthorizationException e) {
+          if (isAuthCheck) {
+            LOG.error("Authorization error:" + e.getMessage() +
+                "\n  -Error Query: " + aReq.statement, e);
+            sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+            sResp.status.setErrorMessage(e.getMessage());
+            return sResp;
+          }
+        } catch (AnalyzerException e) {
+          if (isSyntaxCheck) {
+            LOG.error("Query syntax error:" + e.getMessage() +
+                "\n  -Error Query: " + aReq.statement, e);
+            sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+            sResp.status.setErrorMessage(e.getMessage());
+            return sResp;
+          }
+        }
+      }
       if (profileLvl > 1)
         timeArr[i++] = System.currentTimeMillis();
       
+      //
+      // 4. execute query
+      //
+      boolean sIsRS = sStmt.sHStmt.execute(aReq.statement);
+      sStmt.sState = StmtNode.State.RUNNING;
+      sStmt.sQuery = aReq.statement;
+      if (profileLvl > 1)
+        timeArr[i++] = System.currentTimeMillis();
+      
+      //
       // 5. build TExecuteStatementResp
+      //
       THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
         aReq.sessionHandle.sessionId.driverType);
       TOperationHandle sOH = new TOperationHandle();
@@ -348,14 +401,21 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setSqlState(e.getSQLState());
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("ExecuteStatement: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      
       return sResp;
     }
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: ConnID=" + sConn.sConnId + ", StmtId=" + sStmtId
+      LOG.info("ExecuteStatement PROFILE: ConnID=" + sConn.sConnId + ", StmtId=" + sStmtId
         + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", Execute time elapsed="
-        + (endTime-startTime) + "ms" + "\n  -Query=" + aReq.statement);
+        + (endTime-startTime) + "ms" + ", Query=" + aReq.statement);
       sConn.latency[1] = endTime-startTime;
       if (profileLvl > 1) {
         timeArr[i++] = endTime;
@@ -461,9 +521,10 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TCloseOperationResp CloseOperation(TCloseOperationReq aReq) {
-    LOG.info("CloseOperation is requested.");
+    LOG.debug("CloseOperation is requested.");
     long startTime = 0;
     long endTime;
+    StmtNode sStmt = null;
     
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
@@ -487,7 +548,7 @@ public class CLIHandler implements TCLIService.Iface {
     
     // 2. close the statement
     try {
-      sConn.closeStmt(sStmtId);
+      sStmt = sConn.closeStmt(sStmtId);
       sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
     } catch (SQLException e) {
       LOG.error("CloseOperation error (" + e.getSQLState() + ") :" + e.getMessage(), e);
@@ -495,14 +556,23 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
+        LOG.warn("CloseOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
       return sResp;
     }
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
+      LOG.info("CloseOperation PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
         + aReq.operationHandle.operationId.driverType + ", CloseOp time elapsed="
         + (endTime-startTime) + "ms");
       sConn.latency[4] = endTime-startTime;
+      LOG.info("#QUERY PROFILE(" + sConnId + ":" + sStmtId + "): Query= \"" + sStmt.sQuery
+          + "\"" + ", Type=" + aReq.operationHandle.operationId.driverType 
+          + ", RowCnt=" + sStmt.rowCnt + ", ExecFetch time elapsed="
+          + (sConn.latency[1]+sConn.latency[2]+sConn.latency[3]+sConn.latency[4]) + "ms");
     }
     return sResp;
   }
@@ -553,7 +623,7 @@ struct TGetResultSetMetadataResp {
 }
    */
   public TGetResultSetMetadataResp GetResultSetMetadata(TGetResultSetMetadataReq aReq) {
-    LOG.info("GetResultSetMetadata is requested.");
+    LOG.debug("GetResultSetMetadata is requested.");
     long startTime = 0;
     long endTime;
     
@@ -639,12 +709,17 @@ struct TGetResultSetMetadataResp {
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
+        LOG.warn("GetResultSetMetadata: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
       return sResp;
     }
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
+      LOG.info("GetResultSetMetadata PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
         + aReq.operationHandle.operationId.driverType
         + ", GetResultSetMetadata time elapsed=" + (endTime-startTime) + "ms");
       sConn.latency[2] = endTime-startTime;
@@ -692,7 +767,7 @@ struct TGetResultSetMetadataResp {
   */
 
   public TFetchResultsResp FetchResults(TFetchResultsReq aReq) {
-    LOG.info("FetchResults is requested.");
+    LOG.debug("FetchResults is requested.");
     long startTime = 0;
     long endTime, midTime;
     long timeArr[] = new long[10];
@@ -870,7 +945,7 @@ struct TGetResultSetMetadataResp {
       }
 
       sResp.hasMoreRows = false;
-      sResp.numofrows = sRowCount;
+      sResp.numofrows = sStmt.rowCnt = sRowCount;
       sResp.results = sRowSet;
       sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
     } catch (SQLException e) {
@@ -879,11 +954,16 @@ struct TGetResultSetMetadataResp {
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
+        LOG.warn("FetchResults: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
       return sResp;
     }
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis(); // T3
-      LOG.info("PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
+      LOG.info("FetchResults PROFILE: ConnId=" + sConnId + ", StmtId=" + sStmtId + ", Type="
         + aReq.operationHandle.operationId.driverType + ", Fetch time elapsed="
         + (endTime-startTime) + "ms");
       sConn.latency[3] = endTime-startTime;

@@ -214,7 +214,6 @@
     <delete dir="${target.dir}"/>
   </target>
 
-
   <target name="package"
           depends="jar"
           description="Deploy JAR artifacts">
@@ -237,12 +236,11 @@
       </filterset>
     </copy>
 
-    <copy file="${basedir}/../conf/querycache-log4j.properties.template"
-          tofile="${target.conf.dir}/querycache-log4j.properties.template"/>
-    <copy file="${basedir}/../conf/log4j.properties"
-          tofile="${target.conf.dir}/log4j.properties"/>
-    <copy file="${basedir}/../conf/qc-site.xml"
-          tofile="${target.conf.dir}/qc-site.xml"/>
+    <copy todir="${target.conf.dir}" preservelastmodified="true" flatten="true">
+      <fileset dir="${basedir}/../conf"  >
+        <exclude name="sentry"/>
+      </fileset>
+    </copy>
 
     <!-- copy jar files -->
     <copy todir="${target.lib.dir}" preservelastmodified="true" flatten="true">
@@ -255,8 +253,14 @@
       <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/libthrift-${thrift.version}.jar"/>
       <fileset file="${thirdparty.dir}/thrift-${thrift.version}/lib/java/lib/commons-lang3-${commons-lang3.version}.jar"/>
       <fileset file="${thirdparty.dir}/log/*.jar"/>
-      <fileset file="${thirdparty.dir}/guava-${guava.version}/guava-${guava.version}.jar"/>
-      <fileset file="${thirdparty.dir}/jackson-${jackson.version}/jackson-${jackson.version}.jar"/>
+      <fileset file="${thirdparty.dir}/cup-${cup.version}/cup-${cup.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/sentry-core-common-${sentry.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/sentry-core-model-db-${sentry.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/sentry-policy-common-${sentry.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/sentry-policy-db-${sentry.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/sentry-provider-common-${sentry.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/sentry-provider-file-${sentry.version}.jar"/>
+      <fileset file="${thirdparty.dir}/apache-sentry-${sentry.version}/lib/shiro-core-${shiro-core.version}.jar"/>
     </copy>
     <copy todir="${target.lib.driver.dir}" preservelastmodified="true" flatten="true">
       <fileset file="${thirdparty.dir}/phoenix-${phoenix.version}/phoenix-${phoenix.version}-client.jar"/>

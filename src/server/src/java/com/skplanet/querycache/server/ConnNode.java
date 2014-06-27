@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,10 @@ public class ConnNode {
   private String sConnType;
   private State  sState;
   private String url;
+  
+  // for checking authentication&authorization
+  String user;
+  private String password;
   
   //TODO : use hashcode instead of long
   private final AtomicLong sStmtIdGen = new AtomicLong(0L);
@@ -86,7 +91,7 @@ public class ConnNode {
     return sStmt;
   }
   
-  public void closeStmt(long aStmtId) throws SQLException {
+  public StmtNode closeStmt(long aStmtId) throws SQLException {
     StmtNode sStmt = sStmtMap.remove(aStmtId);  // O(1)
     LOG.info("The statement is closed.-Type:" + sConnType + ", -ConnId:" +
         this.sConnId + ",StmtId:" + aStmtId + ",-# of Stmts:" + sStmtMap.size());
@@ -96,6 +101,7 @@ public class ConnNode {
       LOG.debug("The statement is already closed." + "(" +
           sConnType + ":" + aStmtId + ")");
     }
+    return sStmt;
   }
   
   public void closeAllStmts() throws SQLException {
@@ -114,5 +120,13 @@ public class ConnNode {
     }
     LOG.info("All statements are closed.-Type:" + sConnType + ", -ConnId:"
         + this.sConnId + ",-# of Stmts:" + sStmtMap.size());
+  }
+  
+  public void setPassword(String aPass) {
+    this.password = aPass;
+  }
+  
+  public String getPassword() {
+    return password;
   }
 }

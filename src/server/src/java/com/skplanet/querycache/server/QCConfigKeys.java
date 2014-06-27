@@ -13,6 +13,8 @@ public class QCConfigKeys {
   public static final float   QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT = 0.2f;
   public static final String  QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI = "qc.connpool.resizing.cycle.milli";
   public static final long    QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI_DEFAULT = 15 * 1000;
+  public static final String  QC_CONNECTIONPOOL_GC = "qc.connpool.gc";
+  public static final boolean QC_CONNECTIONPOOL_GC_DEFAULT = true;
   public static final String  QC_CONNECTIONPOOL_GC_CYCLE_MILLI = "qc.connpool.gc.cycle.milli";
   public static final long    QC_CONNECTIONPOOL_GC_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;
   public static final String  QC_CONNECTIONPOOL_GC_VERIFY_QUERY = "qc.connpool.gc.verify.query";
@@ -37,6 +39,10 @@ public class QCConfigKeys {
   public static final String  QC_STORAGE_JDBC_DRIVERS_USER_PREFIX = "qc.storage.jdbc.drivers.user";
   public static final String  QC_STORAGE_JDBC_DRIVERS_PASSWORD_PREFIX = "qc.storage.jdbc.drivers.password";
   public static final String  QC_STORAGE_JDBC_DRIVERS_URLSUFFIX_PREFIX = "qc.storage.jdbc.drivers.url.suffix";
+  public static final String  QC_STORAGE_AUTH_POLICY_FILE_PREFIX = "qc.storage.auth.policy.file";
+  //default: org.apache.sentry.provider.file.LocalGroupResourceAuthorizationProvider
+  public static final String  QC_STORAGE_AUTH_POLICY_PROVIDER_CLASS_PREFIX = "qc.storage.auth.policy.provider.class";
+  public static final String  QC_STORAGE_AUTH_UDF_WHITELIST_FILE_PREFIX = "qc.storage.auth.udf.whitelist.file";
   public static final String  QC_STORAGE_HBASE_DRIVER = "qc.storage.hbase.driver";
   public static final String  QC_STORAGE_HBASE_DRIVER_ADDRESS_PREFIX = "qc.storage.hbase.drivers.address";
   public static final String  QC_STORAGE_HBASE_DRIVER_PORT_PREFIX = "qc.storage.hbase.drivers.port";
@@ -44,4 +50,10 @@ public class QCConfigKeys {
   public static final String  QC_STORAGE_HBASE_DRIVER_USER_PREFIX = "qc.storage.hbase.drivers.user";
   public static final String  QC_STORAGE_HBASE_DRIVER_PASSWORD_PREFIX = "qc.storage.hbase.drivers.password";
   public static final String  QC_STORAGE_HBASE_DRIVER_URLSUFFIX_PREFIX = "qc.storage.hbase.drivers.url.suffix";
+  public static final String  QC_QUERY_SYNTAX_CHECK = "qc.query.syntax.check";
+  public static final boolean QC_QUERY_SYNTAX_CHECK_DEFAULT = false;
+  public static final String  QC_AUTHORIZATION = "qc.authorization";
+  public static final String  QC_AUTHORIZATION_DEFAULT = "NONE";
+  public static final String  QC_AUTHORIZATION_POLICY_RELOAD_CYCLE_MILLI = "qc.authorization.policy.reload.cycle.milli";
+  public static final long    QC_AUTHORIZATION_POLICY_RELOAD_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;
 }

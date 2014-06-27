@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.skplanet.querycache.server.auth.AuthorizationConfig;
+import com.skplanet.querycache.server.auth.AuthorizationLoader;
 import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
 import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 
@@ -51,8 +53,8 @@ public class ConnMgr {
     // index of connection addresses for failover control in a round-robin fashion
     private short connAddrIndex = -1;
     
-    // lock for adding a ConnNode to the ConnPool concurrently
-    //private Object connPoolLock = new Object();
+    // managing authorization control
+    private AuthorizationLoader authLoader = null;
     
     // It's a checker thread running in the background to extend the size of the ConnPool.
     private Runnable sReloadThread = new Runnable() {
@@ -150,6 +152,8 @@ public class ConnMgr {
                     stmt.close();
                   } catch (SQLException e) {
                     // just ignore
+                    LOG.warn("ConnPool GC: closing stmt error (connId:" + conn.sConnId + ")" +
+                      ", " + e.getMessage());
                   }
                 }
               }
@@ -167,7 +171,7 @@ public class ConnMgr {
       }
     };
     
-    public CORE_RESULT initialize(String aConnType,
+    private CORE_RESULT initialize(String aConnType,
                                   ConnProperty.protocolType aProtoType) {
       // get properties for initialize ConnMgr
       final int initSize = QueryCacheServer.conf.getInt(
@@ -218,22 +222,37 @@ public class ConnMgr {
 
       // start background thread for checking connpool size and resizing if necessary
       new Thread(sReloadThread).start();
-      new Thread(sGCThread).start();
+      if (QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_CONNECTIONPOOL_GC,
+          QCConfigKeys.QC_CONNECTIONPOOL_GC_DEFAULT)) {
+        new Thread(sGCThread).start();
+      }
       return CORE_RESULT.CORE_SUCCESS;
     }
 
-    public ConnNode getConn(long aConnId) {
+    private ConnNode getConn(long aConnId) {
       // return null if this map contains no mapping for the key
       // O(1)
       ConnNode sConn = sUsingMap.get(aConnId);
       if (sConn == null) {
-        LOG.warn("There is no connection in ConnPool mapping to the id" + "("
-            + aConnId + ")");
+        LOG.warn(
+          "ConnMgrofOne.getConn(): There is no connection in ConnPool mapping to the id"
+          + "(" + aConnId + ")");
       }
       return sConn;
     }
 
-    public ConnNode allocConn() {
+    private void removeConn(long aConnId) {
+      // return null if this map contains no mapping for the key
+      // O(1)
+      ConnNode sConn = sUsingMap.remove(aConnId);
+      if (sConn == null) {
+        LOG.warn(
+          "ConnMgrofOne.removeConn(): There is no connection in ConnPool mapping to the id"
+          + "(" + aConnId + ")");
+      }
+    }
+    
+    private ConnNode allocConn() {
       // 1. get a ConNode from the FreeList
       // O(1)
       ConnNode sConn = sFreeList.remove(0);
@@ -286,8 +305,9 @@ public class ConnMgr {
       return sConn;
     }
     
-    public CORE_RESULT closeConn(long aConnId) {
+    private CORE_RESULT closeConn(long aConnId) {
       ConnNode sConn = sUsingMap.remove(aConnId);
+      
       // close all statements in the ConnNode
       try {
         sConn.closeAllStmts();
@@ -310,7 +330,7 @@ public class ConnMgr {
           + ",-Using size:" + sUsingMap.size());
       return CORE_RESULT.CORE_SUCCESS;
     }
-
+    
     private String buildUrl() {
       short sInd = 0;
       synchronized(this){
@@ -334,10 +354,8 @@ public class ConnMgr {
 
   CORE_RESULT initialize() {
     connMgrofAll = new HashMap<String, ConnMgrofOne>();
-    
-    // initialize jdbc connpools
     String[] sDrivers = QueryCacheServer.conf.getStrings(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS);
-    
+    // initialize jdbc connpools
     for (String driver: sDrivers) {
       ConnMgrofOne sConn = new ConnMgrofOne();
       if (sConn.initialize(driver, ConnProperty.protocolType.JDBC)
@@ -345,6 +363,24 @@ public class ConnMgr {
         LOG.error("Connection error to " + driver);
         continue;
       }
+
+      // Load Sentry configuration for authorization control
+      if (QueryCacheServer.conf.get(
+            QCConfigKeys.QC_AUTHORIZATION, QCConfigKeys.QC_AUTHORIZATION_DEFAULT).equalsIgnoreCase("SENTRY")) {
+        AuthorizationConfig authorizationConfig = new AuthorizationConfig(
+          driver,
+          QueryCacheServer.conf.get(
+            QCConfigKeys.QC_STORAGE_AUTH_POLICY_FILE_PREFIX + "." + driver),
+          QueryCacheServer.conf.get(
+            QCConfigKeys.QC_STORAGE_AUTH_UDF_WHITELIST_FILE_PREFIX + "." + driver, null),
+          QueryCacheServer.conf.get(
+            QCConfigKeys.QC_STORAGE_AUTH_POLICY_PROVIDER_CLASS_PREFIX + "." + driver,
+            "org.apache.sentry.provider.file.LocalGroupResourceAuthorizationProvider")
+        );
+        authorizationConfig.validateConfig();
+        sConn.authLoader = new AuthorizationLoader(authorizationConfig);
+      }
+      
       connMgrofAll.put("jdbc:" + driver, sConn);
     }
     
@@ -372,6 +408,13 @@ public class ConnMgr {
     return sConnMgr.getConn(aConnId);
   }
 
+  public void removeConn(String aType, long aConnId) {
+    ConnMgrofOne sConnMgr = connMgrofAll.get(aType);
+    if (sConnMgr == null)
+      return;
+    sConnMgr.removeConn(aConnId);
+  }
+  
   public ConnNode allocConn(String aType) {
     ConnMgrofOne sConnMgr = connMgrofAll.get(aType);
     if (sConnMgr == null) {
@@ -386,5 +429,17 @@ public class ConnMgr {
       return null;
     }
     return sConnMgr.closeConn(aConnId);
+  }
+  
+  public AuthorizationLoader getAuthLoader(String aType) {
+    ConnMgrofOne sConnMgr = connMgrofAll.get(aType);
+    if (sConnMgr == null) {
+      return null;
+    }
+    return sConnMgr.authLoader;
+  }
+  
+  public Map<String, ConnMgrofOne> getConnMgrofAll() {
+    return this.connMgrofAll;
   }
 }
