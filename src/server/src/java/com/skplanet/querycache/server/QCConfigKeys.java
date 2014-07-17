@@ -13,7 +13,7 @@ public class QCConfigKeys {
   public static final float   QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT = 0.2f;
   public static final String  QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI = "qc.connpool.resizing.cycle.milli";
   public static final long    QC_CONNECTIONPOOL_RESIZING_CYCLE_MILLI_DEFAULT = 15 * 1000;
-  public static final String  QC_CONNECTIONPOOL_GC = "qc.connpool.gc";
+  public static final String  QC_CONNECTIONPOOL_GC_PREFIX = "qc.connpool.gc";
   public static final boolean QC_CONNECTIONPOOL_GC_DEFAULT = true;
   public static final String  QC_CONNECTIONPOOL_GC_CYCLE_MILLI = "qc.connpool.gc.cycle.milli";
   public static final long    QC_CONNECTIONPOOL_GC_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;

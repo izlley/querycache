@@ -417,7 +417,7 @@ public class CLIHandler implements TCLIService.Iface {
       endTime = System.currentTimeMillis();
       LOG.info("ExecuteStatement PROFILE: ConnID=" + sConn.sConnId + ", StmtId=" + sStmtId
         + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", Execute time elapsed="
-        + (endTime-startTime) + "ms" + ", Query=" + aReq.statement);
+        + (endTime-startTime) + "ms" + ", Query=" + aReq.statement.replace('\n', ' '));
       sConn.latency[1] = endTime-startTime;
       if (profileLvl > 1) {
         timeArr[i++] = endTime;
@@ -571,7 +571,7 @@ public class CLIHandler implements TCLIService.Iface {
         + aReq.operationHandle.operationId.driverType + ", CloseOp time elapsed="
         + (endTime-startTime) + "ms");
       sConn.latency[4] = endTime-startTime;
-      LOG.info("#QUERY PROFILE(" + sConnId + ":" + sStmtId + "): Query= \"" + sStmt.sQuery
+      LOG.info("#QUERY PROFILE(" + sConnId + ":" + sStmtId + "): Query= \"" + sStmt.sQuery.replace('\n', ' ')
           + "\"" + ", Type=" + aReq.operationHandle.operationId.driverType 
           + ", RowCnt=" + sStmt.rowCnt + ", ExecFetch time elapsed="
           + (sConn.latency[1]+sConn.latency[2]+sConn.latency[3]+sConn.latency[4]) + "ms");

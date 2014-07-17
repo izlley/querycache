@@ -222,8 +222,8 @@ public class ConnMgr {
 
       // start background thread for checking connpool size and resizing if necessary
       new Thread(sReloadThread).start();
-      if (QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_CONNECTIONPOOL_GC,
-          QCConfigKeys.QC_CONNECTIONPOOL_GC_DEFAULT)) {
+      if (QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_CONNECTIONPOOL_GC_PREFIX +
+           "." + aConnType, QCConfigKeys.QC_CONNECTIONPOOL_GC_DEFAULT)) {
         new Thread(sGCThread).start();
       }
       return CORE_RESULT.CORE_SUCCESS;
