@@ -366,7 +366,8 @@ public class ConnMgr {
 
       // Load Sentry configuration for authorization control
       if (QueryCacheServer.conf.get(
-            QCConfigKeys.QC_AUTHORIZATION, QCConfigKeys.QC_AUTHORIZATION_DEFAULT).equalsIgnoreCase("SENTRY")) {
+           QCConfigKeys.QC_AUTHORIZATION_PREFIX + "." + driver, QCConfigKeys.QC_AUTHORIZATION_DEFAULT).
+             equalsIgnoreCase("SENTRY")) {
         AuthorizationConfig authorizationConfig = new AuthorizationConfig(
           driver,
           QueryCacheServer.conf.get(

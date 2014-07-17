@@ -48,8 +48,6 @@ public class CLIHandler implements TCLIService.Iface {
   private final boolean isSyntaxCheck =
     QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_QUERY_SYNTAX_CHECK,
       QCConfigKeys.QC_QUERY_SYNTAX_CHECK_DEFAULT);
-  private final boolean isAuthCheck = !QueryCacheServer.conf.get(QCConfigKeys.QC_AUTHORIZATION,
-    QCConfigKeys.QC_AUTHORIZATION_DEFAULT).equalsIgnoreCase("NONE");
 
   private ConnMgr gConnMgr = new ConnMgr();
   
@@ -147,8 +145,8 @@ public class CLIHandler implements TCLIService.Iface {
     
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("OpenSession PROFILE: ConnID=" + sConn.sConnId + ", Url=" + sUrl + ", Connection time elapsed=" +
-          (endTime-startTime) + "ms");
+      LOG.info("OpenSession PROFILE: UserID=" + user + ", ConnID=" + sConn.sConnId +
+        ", Url=" + sUrl + ", Connection time elapsed=" + (endTime-startTime) + "ms");
       sConn.latency[0] = endTime-startTime;
     }
     
@@ -338,6 +336,10 @@ public class CLIHandler implements TCLIService.Iface {
       //
       // 3. Analyze SQL stmt
       //
+      boolean isAuthCheck = 
+        !QueryCacheServer.conf.get(QCConfigKeys.QC_AUTHORIZATION_PREFIX + "." +
+          aReq.sessionHandle.sessionId.driverType.split(":")[1], QCConfigKeys.QC_AUTHORIZATION_DEFAULT).
+            equalsIgnoreCase("NONE");
       if (isSyntaxCheck || isAuthCheck) {
         try {
           Analyzer compiler = new Analyzer(sConn.user,

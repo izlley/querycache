@@ -52,7 +52,7 @@ public class QCConfigKeys {
   public static final String  QC_STORAGE_HBASE_DRIVER_URLSUFFIX_PREFIX = "qc.storage.hbase.drivers.url.suffix";
   public static final String  QC_QUERY_SYNTAX_CHECK = "qc.query.syntax.check";
   public static final boolean QC_QUERY_SYNTAX_CHECK_DEFAULT = false;
-  public static final String  QC_AUTHORIZATION = "qc.authorization";
+  public static final String  QC_AUTHORIZATION_PREFIX = "qc.authorization";
   public static final String  QC_AUTHORIZATION_DEFAULT = "NONE";
   public static final String  QC_AUTHORIZATION_POLICY_RELOAD_CYCLE_MILLI = "qc.authorization.policy.reload.cycle.milli";
   public static final long    QC_AUTHORIZATION_POLICY_RELOAD_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;

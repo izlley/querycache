@@ -51,19 +51,19 @@ public class Analyzer {
     try {
       analResult.queryStmt_ = (QueryStmt) parser.parse().value;
       if (analResult.queryStmt_ == null) return;
-      LOG.info("QueryStmt: -QueryType=" + analResult.queryStmt_.type.toString() +
-             "\n           -[limit,filter,nested,join,with,invalidateall]=[" + analResult.queryStmt_.isLimit+","+
+      LOG.info("User=" + user_ + ", QueryStmt: QueryType=" + analResult.queryStmt_.type.toString() +
+             ", [limit,filter,nested,join,with,invalidateall]=[" + analResult.queryStmt_.isLimit+","+
              analResult.queryStmt_.isFilterCond+","+analResult.queryStmt_.isNested+","+analResult.queryStmt_.isJoin+
              ","+analResult.queryStmt_.isWith+","+analResult.queryStmt_.isInvalidateAll+"]"+
-             "\n           -[nestedLvl,unionLvl]="+"["+analResult.queryStmt_.nestedLvl+","+
+             ", [nestedLvl,unionLvl]="+"["+analResult.queryStmt_.nestedLvl+","+
              analResult.queryStmt_.unionLvl+"]"+
-      		   "\n           -Datastore=" + analResult.queryStmt_.dataStoreRefs.toString() +
-             "\n           -Database=[" + analResult.queryStmt_.toStringdatabaseRefs() +
-             "]\n           -Table=[" + analResult.queryStmt_.toStringtableRefs() +
-             "]\n           -View=[" + analResult.queryStmt_.toStringviewRefs() +
-             "]\n           -With=" + analResult.queryStmt_.withRefs.toString() +
-             "\n           -Function=[" + analResult.queryStmt_.toStringfunctionRefs() +
-             "]\n           -Uris=" + analResult.queryStmt_.uriPathRefs.toString());
+      		   ", Datastore=" + analResult.queryStmt_.dataStoreRefs.toString() +
+             ", Database=[" + analResult.queryStmt_.toStringdatabaseRefs() +
+             "], Table=[" + analResult.queryStmt_.toStringtableRefs() +
+             "], View=[" + analResult.queryStmt_.toStringviewRefs() +
+             "], With=" + analResult.queryStmt_.withRefs.toString() +
+             ", Function=[" + analResult.queryStmt_.toStringfunctionRefs() +
+             "], Uris=" + analResult.queryStmt_.uriPathRefs.toString());
       if (isAuthCheck) {
         checkAuthorization(analResult);
       }
