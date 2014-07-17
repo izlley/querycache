@@ -1,0 +1,3 @@
+<ClassList>
+    <Class javaname="org.apache.hive.builtins.UDAFUnionMap" sqlname="union_map" />
+</ClassList>

@@ -1,0 +1,1 @@
+ADD JAR hive-builtins-0.10.0-cdh4.2.0.jar;

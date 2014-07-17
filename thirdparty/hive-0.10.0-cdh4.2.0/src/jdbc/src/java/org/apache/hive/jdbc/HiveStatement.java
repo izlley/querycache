@@ -32,7 +32,10 @@ import org.apache.hive.service.cli.thrift.TCloseOperationReq;
 import org.apache.hive.service.cli.thrift.TCloseOperationResp;
 import org.apache.hive.service.cli.thrift.TExecuteStatementReq;
 import org.apache.hive.service.cli.thrift.TExecuteStatementResp;
+import org.apache.hive.service.cli.thrift.TGetOperationStatusReq;
+import org.apache.hive.service.cli.thrift.TGetOperationStatusResp;
 import org.apache.hive.service.cli.thrift.TOperationHandle;
+import org.apache.hive.service.cli.thrift.TOperationState;
 import org.apache.hive.service.cli.thrift.TSessionHandle;
 
 /**
@@ -180,6 +183,19 @@ public class HiveStatement implements java.sql.Statement {
       execReq.setConfOverlay(sessConf);
       TExecuteStatementResp execResp = client.ExecuteStatement(execReq);
       Utils.verifySuccessWithInfo(execResp.getStatus());
+      // if it's a select query, just skip this code block for performance
+      if (!execResp.getOperationHandle().isHasResultSet()) {
+        TGetOperationStatusReq statusReq = new TGetOperationStatusReq(execResp.getOperationHandle());
+        while (true) {
+          TGetOperationStatusResp statusResp = client.GetOperationStatus(statusReq);
+          if (statusResp.getOperationState() != TOperationState.RUNNING_STATE) {
+            break;
+          } else {
+            // is this proper interval? it doesn't matter...
+            Thread.sleep(500);
+          }
+        }
+      }
       stmtHandle = execResp.getOperationHandle();
     } catch (SQLException eS) {
       throw eS;

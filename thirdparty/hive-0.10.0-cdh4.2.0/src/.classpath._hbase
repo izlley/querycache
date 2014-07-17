@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+--> 
+<classpath>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="lib" path="build/hadoopcore/hadoop-2.0.0-cdh4.2.0/hadoop-2.0.0-cdh4.2.0-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="build/hadoopcore/hadoop-2.0.0-cdh4.2.0/hadoop-2.0.0-cdh4.2.0-test.jar"/>
+	<classpathentry exported="true" kind="lib" path="build/hadoopcore/hadoop-2.0.0-cdh4.2.0/lib/servlet-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="build/hadoopcore/hadoop-2.0.0-cdh4.2.0/lib/jetty-5.1.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="build/hadoopcore/hadoop-2.0.0-cdh4.2.0/lib/jetty-ext/jsp-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="cli/lib/jline-0.9.94.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/json.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-3.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-cli-1.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-codec-@commons-code.version@.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.0.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-logging-api-1.0.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/derby.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jdo2-api-@jdo2-api.version@.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/datanucleus-core-2.0.3-ZD5977-CDH5293.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/datanucleus-enhancer-2.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/datanucleus-rdbms-2.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/thrift-fb303-@thrift-fb303.version@.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/thrift-@thrift.version@.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/log4j-1.2.16.jar"/>
+	<classpathentry exported="true" kind="lib" path="ql/lib/antlr-3.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="ql/lib/antlr-runtime-3.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="testlibs/junit-4.10.jar"/>
+	<classpathentry exported="true" kind="lib" path="stats/lib/hbase-0.92.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="stats/lib/hbase-@hbase-test.version@-test.jar"/>
+	<classpathentry exported="true" kind="lib" path="stats/lib/zookeeper-3.4.3.jar"/>
+	<classpathentry kind="src" path="build/ql/gen-javabean"/>
+	<classpathentry kind="src" path="build/contrib/test/src"/>
+	<classpathentry kind="src" path="build/ql/test/src"/>
+	<classpathentry kind="src" path="cli/src/java"/>
+	<classpathentry kind="src" path="common/src/java"/>
+	<classpathentry kind="src" path="contrib/src/java"/>
+	<classpathentry kind="src" path="contrib/src/test"/>
+	<classpathentry kind="src" path="metastore/src/gen-javabean"/>
+	<classpathentry kind="src" path="metastore/src/java"/>
+	<classpathentry kind="src" path="metastore/src/model"/>
+	<classpathentry kind="src" path="metastore/src/test"/>
+	<classpathentry kind="src" path="ql/src/gen-javabean"/>
+	<classpathentry kind="src" path="ql/src/java"/>
+	<classpathentry kind="src" path="ql/src/test"/>
+	<classpathentry kind="src" path="serde/src/gen-javabean"/>
+        <classpathentry kind="src" path="serde/src/gen-java"/>
+	<classpathentry kind="src" path="serde/src/java"/>
+	<classpathentry kind="src" path="serde/src/test"/>
+	<classpathentry kind="src" path="service/src/gen-javabean"/>
+	<classpathentry kind="src" path="service/src/java"/>
+	<classpathentry kind="src" path="service/src/test"/>
+	<classpathentry kind="src" path="jdbc/src/java"/>
+	<classpathentry kind="src" path="jdbc/src/test"/>
+	<classpathentry kind="src" path="shims/src/2.0/java"/>
+	<classpathentry kind="src" path="shims/src/common/java"/>
+	<classpathentry kind="src" path="hbase-handler/src/java"/>
+        <classpathentry kind="src" path="hwi/src/java"/>
+	<classpathentry kind="src" path="hwi/src/test"/>
+        <classpathentry kind="output" path="build/eclipse-classes"/>
+</classpath>

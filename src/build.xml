@@ -267,6 +267,9 @@
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-jdbc-${hive.version}.jar"/>
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-metastore-${hive.version}.jar"/>
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-service-${hive.version}.jar"/>
+      <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/hive-common-${hive.version}.jar"/>
+      <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/httpclient-4.2.5.jar"/>
+      <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/httpcore-4.2.5.jar"/>
       <fileset file="${thirdparty.dir}/otherdrivers/mysql-connector-${mysql.connector.version}.jar"/>
     </copy>
     <copy todir="${target.example.dir}" preservelastmodified="true" flatten="true">

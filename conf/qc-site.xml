@@ -42,25 +42,37 @@
 
 <property>
   <name>qc.connpool.resizing.cycle.milli</name>
-  <value>15000</value>
+  <value>30000</value>
+  <description>Local scratch space for Hive jobs</description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.hive</name>
+  <value>true</value>
+  <description>Local scratch space for Hive jobs</description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.impala</name>
+  <value>true</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.cycle.milli</name>
-  <value>300000</value>
+  <value>20000</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.verify.query</name>
-  <value>show databases</value>
+  <value>Oh God, help me to get out of here!</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
 <property>
   <name>qc.query.profiling.level</name>
-  <value>3</value>
+  <value>2</value>
   <description>Command line prompt configuration value. Other hiveconf can be used in
         this configuration value. Variable substitution will only be invoked at the hive
         cli startup.</description>
@@ -68,7 +80,7 @@
 
 <property>
   <name>qc.query.profiling.detail.upper.milli</name>
-  <value>300</value>
+  <value>1</value>
   <description>Command line prompt configuration value. Other hiveconf can be used in
         this configuration value. Variable substitution will only be invoked at the hive
         cli startup.</description>
@@ -88,7 +100,7 @@
 
 <property>
   <name>qc.objpool.reload.cycle.milli</name>
-  <value>15000</value>
+  <value>3000000</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
@@ -100,7 +112,7 @@
 
 <property>
   <name>qc.storage.jdbc.drivers</name>
-  <value>impala,phoenix,hive,mysql</value>
+  <value>impala,hive</value>
   <description>if hive is running in test mode, prefixes the output table by this string</description>
 </property>
 
@@ -135,6 +147,19 @@
 </property>
     
 <property>
+  <name>qc.storage.auth.policy.file.impala</name>
+  <!--value>hdfs://localhost/tmp/server1.ini</value-->
+  <value>/home/leejy/work/workspace/querycache/conf/sentry/server1.ini</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.auth.udf.whitelist.file.impala</name>
+  <value>/home/leejy/work/workspace/querycache/conf/sentry/server1_udf</value>
+  <description></description>
+</property>
+
+<property>
   <name>qc.storage.jdbc.drivers.address.phoenix</name>
   <value>211.234.235.55</value>
   <description></description>
@@ -159,6 +184,18 @@
 </property>
     
 <property>
+  <name>qc.storage.auth.policy.file.phoenix</name>
+  <value>/home/leejy/work/workspace/querycache/conf/sentry/server3.ini</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.auth.udf.whitelist.file.phoenix</name>
+  <value>/home/leejy/work/workspace/querycache/conf/sentry/server3_udf</value>
+  <description></description>
+</property>
+
+<property>
   <name>qc.storage.jdbc.drivers.address.hive</name>
   <value>localhost</value>
   <description></description>
@@ -182,6 +219,18 @@
   <description></description>
 </property>
     
+<property>
+  <name>qc.storage.auth.policy.file.hive</name>
+  <value>/home/leejy/work/workspace/querycache/conf/sentry/server2.ini</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.auth.udf.whitelist.file.hive</name>
+  <value>/home/leejy/work/workspace/querycache/conf/sentry/server2_udf</value>
+  <description></description>
+</property>
+
 <property>
   <name>qc.storage.jdbc.drivers.address.mysql</name>
   <value>localhost</value>
@@ -216,6 +265,31 @@
   <name>qc.storage.jdbc.drivers.password.mysql</name>
   <value>hive</value>
   <description></description>
+</property>
+
+<property>
+  <name>qc.query.syntax.check</name>
+  <value>true</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.impala</name>
+  <value>SENTRY</value>
+  <description>
+    Client authorization types.
+       NONE: no authorization check
+       SENTRY: Apache Sentry authorization
+       CUSTOM: Custom authorization provider
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.policy.reload.cycle.milli</name>
+  <value>300000</value>
+  <description>
+  </description>
 </property>
 
 <!--property>

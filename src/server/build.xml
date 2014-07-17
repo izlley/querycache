@@ -19,22 +19,55 @@
 
 <project name="server" default="jar">
   <property name="src.dir" value="${basedir}/src"/>
+  <property name="jflex.gen.dir" value="${basedir}/generated-sources/jflex"/>
+  <property name="cup.gen.dir" value="${basedir}/generated-sources/cup"/>
 
   <import file="../build-common.xml"/>
 
-  <target name="compile" depends="init,thriftif">
+  <taskdef name="cup" classname="java_cup.anttask.CUPTask" classpath="${thirdparty.dir}/cup-${cup.version}/cup-${cup.version}.jar" />
+  <taskdef name="jflex" classname="JFlex.anttask.JFlexTask" classpath="${thirdparty.dir}/jflex-${jflex.version}/JFlex.jar" />
+  
+  <target name="cup">
+    <delete dir="${cup.gen.dir}"/>
+    <mkdir dir="${cup.gen.dir}"/>
+    <for param="cup.file">
+      <path>
+        <fileset dir="${src.dir}" includes="cup/*.y" />
+      </path>
+      <sequential>
+        <echo message="Generating Java code for @{cup.file}"/>
+        <cup srcfile="@{cup.file}" interface="on" destdir="${cup.gen.dir}" parser="SqlParser" symbols="SqlParserSymbols" quiet="false" nonterms="true"/>
+      </sequential>
+    </for>
+  </target>
+  
+  <target name="jflex" depends="cup">
+    <delete dir="${jflex.gen.dir}"/>
+    <mkdir dir="${jflex.gen.dir}"/>
+    <for param="jflex.file">
+      <path>
+        <fileset dir="${src.dir}" includes="jflex/*.flex" />
+      </path>
+      <sequential>
+        <echo message="Generating Java code for @{jflex.file}"/>
+        <jflex file="@{jflex.file}" destdir="${jflex.gen.dir}" />
+      </sequential>
+    </for>
+  </target>
+  
+  <target name="compile" depends="init,thriftif,jflex">
     <echo message="Project: ${ant.project.name}"/>
     <javac
-     encoding="${build.encoding}"
-     srcdir="${src.dir}/java:${basedir}/generated-sources"
-     includes="**/*.java"
-     destdir="${build.classes}"
-     debug="${javac.debug}"
-     deprecation="${javac.deprecation}"
-     source="${sourceJavaVersion}"
-     target="${targetJavaVersion}"
-     bootclasspath="${javaBootClasspath}"
-     includeantruntime="false">
+    encoding="${build.encoding}"
+    srcdir="${src.dir}/java:${basedir}/generated-sources"
+    includes="**/*.java"
+    destdir="${build.classes}"
+    debug="${javac.debug}"
+    deprecation="${javac.deprecation}"
+    source="${sourceJavaVersion}"
+    target="${targetJavaVersion}"
+    bootclasspath="${javaBootClasspath}"
+    includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
   </target>

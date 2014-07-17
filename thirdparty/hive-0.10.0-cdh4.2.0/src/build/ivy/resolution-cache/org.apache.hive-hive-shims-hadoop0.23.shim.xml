@@ -1,0 +1,968 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="ivy-report.xsl"?>
+<ivy-report version="1.0">
+	<info
+		organisation="org.apache.hive"
+		module="hive-shims"
+		revision="0.10.0-cdh4.2.0"
+		conf="hadoop0.23.shim"
+		confs="hadoop0.23.shim"
+		date="20140520170805"/>
+	<dependencies>
+		<module organisation="org.apache.hadoop" name="hadoop-archives" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311082214" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, runtime, master" position="62">
+				<metadata-artifact status="no" details="" size="70394" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-archives/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-archives/2.0.0-cdh4.2.0/hadoop-archives-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-archives" type="jar" ext="jar" status="no" details="" size="21415" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-archives/jars/hadoop-archives-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-archives/2.0.0-cdh4.2.0/hadoop-archives-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311082132" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, runtime, master" position="64">
+				<metadata-artifact status="no" details="" size="76787" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-jobclient/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-jobclient/2.0.0-cdh4.2.0/hadoop-mapreduce-client-jobclient-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-mapreduce-client-jobclient" type="tests" ext="jar" extra-classifier="tests" status="no" details="" size="1295410" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-jobclient/testss/hadoop-mapreduce-client-jobclient-2.0.0-cdh4.2.0-tests.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-jobclient/2.0.0-cdh4.2.0/hadoop-mapreduce-client-jobclient-2.0.0-cdh4.2.0-tests.jar"/>
+					</artifact>
+					<artifact name="hadoop-mapreduce-client-jobclient" type="jar" ext="jar" status="no" details="" size="31796" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-jobclient/jars/hadoop-mapreduce-client-jobclient-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-jobclient/2.0.0-cdh4.2.0/hadoop-mapreduce-client-jobclient-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311082103" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="68">
+				<metadata-artifact status="no" details="" size="74777" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-shuffle/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-shuffle/2.0.0-cdh4.2.0/hadoop-mapreduce-client-shuffle-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-mapreduce-client-shuffle" type="jar" ext="jar" status="no" details="" size="20522" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-shuffle/jars/hadoop-mapreduce-client-shuffle-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-shuffle/2.0.0-cdh4.2.0/hadoop-mapreduce-client-shuffle-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081926" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="69">
+				<metadata-artifact status="no" details="" size="79502" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-server-nodemanager/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-server-nodemanager/2.0.0-cdh4.2.0/hadoop-yarn-server-nodemanager-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-yarn-server-nodemanager" type="jar" ext="jar" status="no" details="" size="398875" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-server-nodemanager/jars/hadoop-yarn-server-nodemanager-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-server-nodemanager/2.0.0-cdh4.2.0/hadoop-yarn-server-nodemanager-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311082058" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, master(*), runtime, compile(*), runtime(*), master" position="65">
+				<metadata-artifact status="no" details="" size="75208" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-common/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-common/2.0.0-cdh4.2.0/hadoop-mapreduce-client-common-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-mapreduce-client-common" type="jar" ext="jar" status="no" details="" size="592957" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-common/jars/hadoop-mapreduce-client-common-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-common/2.0.0-cdh4.2.0/hadoop-mapreduce-client-common-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-yarn-server-common" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081907" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="67">
+				<metadata-artifact status="no" details="" size="79778" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-server-common/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-server-common/2.0.0-cdh4.2.0/hadoop-yarn-server-common-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-yarn-server-common" type="jar" ext="jar" status="no" details="" size="151473" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-server-common/jars/hadoop-yarn-server-common-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-server-common/2.0.0-cdh4.2.0/hadoop-yarn-server-common-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-yarn-client" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081953" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="66">
+				<metadata-artifact status="no" details="" size="74764" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-client/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-client/2.0.0-cdh4.2.0/hadoop-yarn-client-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-yarn-client" type="jar" ext="jar" status="no" details="" size="20159" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-client/jars/hadoop-yarn-client-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-client/2.0.0-cdh4.2.0/hadoop-yarn-client-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311082022" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, master(*), compile(*), runtime, runtime(*), master" position="51">
+				<metadata-artifact status="no" details="" size="74971" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-core/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-core/2.0.0-cdh4.2.0/hadoop-mapreduce-client-core-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-mapreduce-client-core" type="jar" ext="jar" status="no" details="" size="1440065" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-mapreduce-client-core/jars/hadoop-mapreduce-client-core-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-mapreduce-client-core/2.0.0-cdh4.2.0/hadoop-mapreduce-client-core-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-yarn-common" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081853" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="52">
+				<metadata-artifact status="no" details="" size="75016" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-common/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-common/2.0.0-cdh4.2.0/hadoop-yarn-common-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-yarn-common" type="jar" ext="jar" status="no" details="" size="1062674" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-common/jars/hadoop-yarn-common-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-common/2.0.0-cdh4.2.0/hadoop-yarn-common-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-yarn-api" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081820" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="53">
+				<metadata-artifact status="no" details="" size="74155" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-api/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-api/2.0.0-cdh4.2.0/hadoop-yarn-api-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-yarn-api" type="jar" ext="jar" status="no" details="" size="1037190" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-yarn-api/jars/hadoop-yarn-api-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-yarn-api/2.0.0-cdh4.2.0/hadoop-yarn-api-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.sun.jersey.contribs" name="jersey-guice" >
+			<revision name="1.8" status="release" pubdate="20110624213251" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="61">
+				<metadata-artifact status="no" details="" size="5437" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey.contribs/jersey-guice/ivy-1.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/sun/jersey/contribs/jersey-guice/1.8/jersey-guice-1.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jersey-guice" type="jar" ext="jar" status="no" details="" size="14712" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey.contribs/jersey-guice/jars/jersey-guice-1.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/sun/jersey/contribs/jersey-guice/1.8/jersey-guice-1.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.sun.jersey.jersey-test-framework" name="jersey-test-framework-grizzly2" >
+			<revision name="1.8" status="release" pubdate="20110624213332" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="60">
+				<metadata-artifact status="no" details="" size="4239" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey.jersey-test-framework/jersey-test-framework-grizzly2/ivy-1.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-test-framework/jersey-test-framework-grizzly2/1.8/jersey-test-framework-grizzly2-1.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jersey-test-framework-grizzly2" type="jar" ext="jar" status="no" details="" size="12907" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey.jersey-test-framework/jersey-test-framework-grizzly2/jars/jersey-test-framework-grizzly2-1.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-test-framework/jersey-test-framework-grizzly2/1.8/jersey-test-framework-grizzly2-1.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-hdfs" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140312022905" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, runtime, master" position="63">
+				<metadata-artifact status="no" details="" size="77827" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-hdfs/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-hdfs/2.0.0-cdh4.2.0/hadoop-hdfs-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-hdfs" type="tests" ext="jar" extra-classifier="tests" status="no" details="" size="1643880" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-hdfs/testss/hadoop-hdfs-2.0.0-cdh4.2.0-tests.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-hdfs/2.0.0-cdh4.2.0/hadoop-hdfs-2.0.0-cdh4.2.0-tests.jar"/>
+					</artifact>
+					<artifact name="hadoop-hdfs" type="jar" ext="jar" status="no" details="" size="4475790" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-hdfs/jars/hadoop-hdfs-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-hdfs/2.0.0-cdh4.2.0/hadoop-hdfs-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.jboss.netty" name="netty" >
+			<revision name="3.2.4.Final" status="release" pubdate="20110207214052" resolver="maven2" artresolver="default" homepage="http://www.jboss.org/netty/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="59">
+				<license name="Apache License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0"/>
+				<metadata-artifact status="no" details="" size="9429" time="0" location="/home/leejy/.ivy2/cache/org.jboss.netty/netty/ivy-3.2.4.Final.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/jboss/netty/netty/3.2.4.Final/netty-3.2.4.Final.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="3.2.4.Final" rev-constraint-default="3.2.4.Final" rev-constraint-dynamic="3.2.4.Final" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="netty" type="bundle" ext="jar" status="no" details="" size="790250" time="0" location="/home/leejy/.ivy2/cache/org.jboss.netty/netty/bundles/netty-3.2.4.Final.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/jboss/netty/netty/3.2.4.Final/netty-3.2.4.Final.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.google.inject.extensions" name="guice-servlet" >
+			<revision name="3.0" status="release" pubdate="20110326032252" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="54">
+				<metadata-artifact status="no" details="" size="3856" time="0" location="/home/leejy/.ivy2/cache/com.google.inject.extensions/guice-servlet/ivy-3.0.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/google/inject/extensions/guice-servlet/3.0/guice-servlet-3.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="com.sun.jersey.contribs" name="jersey-guice" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="1.8"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="guice-servlet" type="jar" ext="jar" status="no" details="" size="65012" time="0" location="/home/leejy/.ivy2/cache/com.google.inject.extensions/guice-servlet/jars/guice-servlet-3.0.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/google/inject/extensions/guice-servlet/3.0/guice-servlet-3.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.google.inject" name="guice" >
+			<revision name="3.0" status="release" pubdate="20110326031947" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="55">
+				<metadata-artifact status="no" details="" size="4120" time="0" location="/home/leejy/.ivy2/cache/com.google.inject/guice/ivy-3.0.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/google/inject/guice/3.0/guice-3.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="com.google.inject.extensions" name="guice-servlet" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="3.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="com.sun.jersey.contribs" name="jersey-guice" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="1.8"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="3.0" rev-constraint-default="3.0" rev-constraint-dynamic="3.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="guice" type="jar" ext="jar" status="no" details="" size="710492" time="0" location="/home/leejy/.ivy2/cache/com.google.inject/guice/jars/guice-3.0.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/google/inject/guice/3.0/guice-3.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.sonatype.sisu.inject" name="cglib" >
+			<revision name="2.2.1-v20090111" status="release" pubdate="20110104221244" resolver="maven2" artresolver="default" homepage="http://sourceforge.net/projects/cglib/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="58">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="3949" time="0" location="/home/leejy/.ivy2/cache/org.sonatype.sisu.inject/cglib/ivy-2.2.1-v20090111.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/sonatype/sisu/inject/cglib/2.2.1-v20090111/cglib-2.2.1-v20090111.pom"/>
+				<caller organisation="com.google.inject" name="guice" conf="compile, runtime" rev="2.2.1-v20090111" rev-constraint-default="2.2.1-v20090111" rev-constraint-dynamic="2.2.1-v20090111" callerrev="3.0"/>
+				<artifacts>
+					<artifact name="cglib" type="jar" ext="jar" status="no" details="" size="278864" time="0" location="/home/leejy/.ivy2/cache/org.sonatype.sisu.inject/cglib/jars/cglib-2.2.1-v20090111.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/sonatype/sisu/inject/cglib/2.2.1-v20090111/cglib-2.2.1-v20090111.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="aopalliance" name="aopalliance" >
+			<revision name="1.0" status="release" pubdate="20070227074340" resolver="maven2" artresolver="default" homepage="http://aopalliance.sourceforge.net" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="57">
+				<license name="Public Domain"/>
+				<metadata-artifact status="no" details="" size="2386" time="0" location="/home/leejy/.ivy2/cache/aopalliance/aopalliance/ivy-1.0.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/aopalliance/aopalliance/1.0/aopalliance-1.0.pom"/>
+				<caller organisation="com.google.inject" name="guice" conf="compile, runtime" rev="1.0" rev-constraint-default="1.0" rev-constraint-dynamic="1.0" callerrev="3.0"/>
+				<artifacts>
+					<artifact name="aopalliance" type="jar" ext="jar" status="no" details="" size="4467" time="0" location="/home/leejy/.ivy2/cache/aopalliance/aopalliance/jars/aopalliance-1.0.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/aopalliance/aopalliance/1.0/aopalliance-1.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="asm" name="asm" >
+			<revision name="3.2" status="release" pubdate="20090707130802" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="27">
+				<metadata-artifact status="no" details="" size="2800" time="0" location="/home/leejy/.ivy2/cache/asm/asm/ivy-3.2.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/asm/asm/3.2/asm-3.2.pom"/>
+				<caller organisation="com.sun.jersey" name="jersey-server" conf="compile, runtime" rev="3.2" rev-constraint-default="3.2" rev-constraint-dynamic="3.1" callerrev="1.8"/>
+				<caller organisation="org.sonatype.sisu.inject" name="cglib" conf="compile, runtime" rev="3.2" rev-constraint-default="3.2" rev-constraint-dynamic="3.1" callerrev="2.2.1-v20090111"/>
+				<artifacts>
+					<artifact name="asm" type="jar" ext="jar" status="no" details="" size="43398" time="0" location="/home/leejy/.ivy2/cache/asm/asm/jars/asm-3.2.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/asm/asm/3.2/asm-3.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.codehaus.jackson" name="jackson-xc" >
+			<revision name="1.8.8" status="release" pubdate="20120121102710" resolver="maven2" artresolver="default" homepage="http://jackson.codehaus.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="25">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<license name="GNU Lesser General Public License (LGPL), Version 2.1" url="http://www.fsf.org/licensing/licenses/lgpl.txt"/>
+				<metadata-artifact status="no" details="" size="3026" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-xc/ivy-1.8.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-xc/1.8.8/jackson-xc-1.8.8.pom"/>
+				<caller organisation="com.sun.jersey" name="jersey-json" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.7.1" callerrev="1.8"/>
+				<artifacts>
+					<artifact name="jackson-xc" type="jar" ext="jar" status="no" details="" size="32353" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-xc/jars/jackson-xc-1.8.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-xc/1.8.8/jackson-xc-1.8.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.codehaus.jackson" name="jackson-jaxrs" >
+			<revision name="1.8.8" status="release" pubdate="20120121102643" resolver="maven2" artresolver="default" homepage="http://jackson.codehaus.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="24">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<license name="GNU Lesser General Public License (LGPL), Version 2.1" url="http://www.fsf.org/licensing/licenses/lgpl.txt"/>
+				<metadata-artifact status="no" details="" size="3031" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-jaxrs/ivy-1.8.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-jaxrs/1.8.8/jackson-jaxrs-1.8.8.pom"/>
+				<caller organisation="com.sun.jersey" name="jersey-json" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.7.1" callerrev="1.8"/>
+				<artifacts>
+					<artifact name="jackson-jaxrs" type="jar" ext="jar" status="no" details="" size="17884" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-jaxrs/jars/jackson-jaxrs-1.8.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-jaxrs/1.8.8/jackson-jaxrs-1.8.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-common" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140312022746" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, runtime, master" position="1">
+				<metadata-artifact status="no" details="" size="79262" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-common/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-common/2.0.0-cdh4.2.0/hadoop-common-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-common" type="jar" ext="jar" status="no" details="" size="2266145" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-common/jars/hadoop-common-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-common/2.0.0-cdh4.2.0/hadoop-common-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+					<artifact name="hadoop-common" type="tests" ext="jar" extra-classifier="tests" status="no" details="" size="1212163" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-common/testss/hadoop-common-2.0.0-cdh4.2.0-tests.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-common/2.0.0-cdh4.2.0/hadoop-common-2.0.0-cdh4.2.0-tests.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.jcraft" name="jsch" >
+			<revision name="0.1.42" status="release" pubdate="20090807032939" resolver="maven2" artresolver="default" homepage="http://www.jcraft.com/jsch/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="46">
+				<license name="BSD" url="http://www.jcraft.com/jsch/LICENSE.txt"/>
+				<metadata-artifact status="no" details="" size="2479" time="0" location="/home/leejy/.ivy2/cache/com.jcraft/jsch/ivy-0.1.42.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/jcraft/jsch/0.1.42/jsch-0.1.42.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="0.1.42" rev-constraint-default="0.1.42" rev-constraint-dynamic="0.1.42" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jsch" type="jar" ext="jar" status="no" details="" size="185746" time="0" location="/home/leejy/.ivy2/cache/com.jcraft/jsch/jars/jsch-0.1.42.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/jcraft/jsch/0.1.42/jsch-0.1.42.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-auth" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081256" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="44">
+				<metadata-artifact status="no" details="" size="70282" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-auth/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-auth/2.0.0-cdh4.2.0/hadoop-auth-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-auth" type="jar" ext="jar" status="no" details="" size="46855" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-auth/jars/hadoop-auth-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-auth/2.0.0-cdh4.2.0/hadoop-auth-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.google.protobuf" name="protobuf-java" >
+			<revision name="2.4.0a" status="release" pubdate="20110311025543" resolver="maven2" artresolver="default" homepage="http://code.google.com/p/protobuf" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="43">
+				<license name="New BSD license" url="http://www.opensource.org/licenses/bsd-license.php"/>
+				<metadata-artifact status="no" details="" size="3144" time="0" location="/home/leejy/.ivy2/cache/com.google.protobuf/protobuf-java/ivy-2.4.0a.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/2.4.0a/protobuf-java-2.4.0a.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="2.4.0a" rev-constraint-default="2.4.0a" rev-constraint-dynamic="2.4.0a" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="protobuf-java" type="jar" ext="jar" status="no" details="" size="449818" time="0" location="/home/leejy/.ivy2/cache/com.google.protobuf/protobuf-java/jars/protobuf-java-2.4.0a.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/2.4.0a/protobuf-java-2.4.0a.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="net.sf.kosmosfs" name="kfs" >
+			<revision name="0.3" status="release" pubdate="20090520062051" resolver="maven2" artresolver="default" homepage="http://kosmosfs.sourceforge.net/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="42">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2445" time="0" location="/home/leejy/.ivy2/cache/net.sf.kosmosfs/kfs/ivy-0.3.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/net/sf/kosmosfs/kfs/0.3/kfs-0.3.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="0.3" rev-constraint-default="0.3" rev-constraint-dynamic="0.3" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="kfs" type="jar" ext="jar" status="no" details="" size="11981" time="0" location="/home/leejy/.ivy2/cache/net.sf.kosmosfs/kfs/jars/kfs-0.3.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/net/sf/kosmosfs/kfs/0.3/kfs-0.3.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.avro" name="avro" >
+			<revision name="1.7.3" status="release" pubdate="20121204032343" resolver="maven2" artresolver="default" homepage="http://avro.apache.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="39">
+				<metadata-artifact status="no" details="" size="10070" time="0" location="/home/leejy/.ivy2/cache/org.apache.avro/avro/ivy-1.7.3.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/apache/avro/avro/1.7.3/avro-1.7.3.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="1.7.3" rev-constraint-default="1.7.3" rev-constraint-dynamic="1.7.3" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="1.7.3" rev-constraint-default="1.7.3" rev-constraint-dynamic="1.7.3" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="1.7.3" rev-constraint-default="1.7.3" rev-constraint-dynamic="1.7.3" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.7.3" rev-constraint-default="1.7.3" rev-constraint-dynamic="1.7.3" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="1.7.3" rev-constraint-default="1.7.3" rev-constraint-dynamic="1.7.3" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="avro" type="jar" ext="jar" status="no" details="" size="299377" time="0" location="/home/leejy/.ivy2/cache/org.apache.avro/avro/jars/avro-1.7.3.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/apache/avro/avro/1.7.3/avro-1.7.3.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.xerial.snappy" name="snappy-java" >
+			<revision name="1.0.4.1" status="release" pubdate="20111005103507" resolver="maven2" artresolver="default" homepage="http://code.google.com/p/snappy-java/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="41">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="3884" time="0" location="/home/leejy/.ivy2/cache/org.xerial.snappy/snappy-java/ivy-1.0.4.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/xerial/snappy/snappy-java/1.0.4.1/snappy-java-1.0.4.1.pom"/>
+				<caller organisation="org.apache.avro" name="avro" conf="compile, runtime" rev="1.0.4.1" rev-constraint-default="1.0.4.1" rev-constraint-dynamic="1.0.4.1" callerrev="1.7.3"/>
+				<artifacts>
+					<artifact name="snappy-java" type="bundle" ext="jar" status="no" details="" size="995968" time="0" location="/home/leejy/.ivy2/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.0.4.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/xerial/snappy/snappy-java/1.0.4.1/snappy-java-1.0.4.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.thoughtworks.paranamer" name="paranamer" >
+			<revision name="2.3" status="release" pubdate="20101019221431" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="40">
+				<metadata-artifact status="no" details="" size="3594" time="0" location="/home/leejy/.ivy2/cache/com.thoughtworks.paranamer/paranamer/ivy-2.3.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/thoughtworks/paranamer/paranamer/2.3/paranamer-2.3.pom"/>
+				<caller organisation="org.apache.avro" name="avro" conf="compile, runtime" rev="2.3" rev-constraint-default="2.3" rev-constraint-dynamic="2.3" callerrev="1.7.3"/>
+				<artifacts>
+					<artifact name="paranamer" type="jar" ext="jar" status="no" details="" size="29555" time="0" location="/home/leejy/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.3.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/thoughtworks/paranamer/paranamer/2.3/paranamer-2.3.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="javax.inject" name="javax.inject" >
+			<revision name="1" status="release" pubdate="20091014083500" resolver="maven2" artresolver="default" homepage="http://code.google.com/p/atinject/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="56">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2573" time="0" location="/home/leejy/.ivy2/cache/javax.inject/javax.inject/ivy-1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/javax/inject/javax.inject/1/javax.inject-1.pom"/>
+				<caller organisation="com.google.inject" name="guice" conf="compile, runtime" rev="1" rev-constraint-default="1" rev-constraint-dynamic="1" callerrev="3.0"/>
+				<caller organisation="com.sun.jersey.contribs" name="jersey-guice" conf="compile, runtime" rev="1" rev-constraint-default="1" rev-constraint-dynamic="1" callerrev="1.8"/>
+				<artifacts>
+					<artifact name="javax.inject" type="jar" ext="jar" status="no" details="" size="2497" time="0" location="/home/leejy/.ivy2/cache/javax.inject/javax.inject/jars/javax.inject-1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.mockito" name="mockito-all" >
+			<revision name="1.8.5" status="release" pubdate="20100526033104" resolver="maven2" artresolver="default" homepage="http://www.mockito.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="38">
+				<license name="The MIT License" url="http://code.google.com/p/mockito/wiki/License"/>
+				<metadata-artifact status="no" details="" size="2352" time="0" location="/home/leejy/.ivy2/cache/org.mockito/mockito-all/ivy-1.8.5.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/mockito/mockito-all/1.8.5/mockito-all-1.8.5.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.8.5" rev-constraint-default="1.8.5" rev-constraint-dynamic="1.8.5" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="mockito-all" type="jar" ext="jar" status="no" details="" size="1419869" time="0" location="/home/leejy/.ivy2/cache/org.mockito/mockito-all/jars/mockito-all-1.8.5.jar">
+						<origin-location is-local="false" location="https://oss.sonatype.org/content/groups/public/org/mockito/mockito-all/1.8.5/mockito-all-1.8.5.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.codehaus.jackson" name="jackson-mapper-asl" >
+			<revision name="1.8.8" status="release" pubdate="20120121102502" resolver="maven2" artresolver="default" homepage="http://jackson.codehaus.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="23">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2653" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-mapper-asl/ivy-1.8.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-mapper-asl/1.8.8/jackson-mapper-asl-1.8.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.avro" name="avro" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.7.3"/>
+				<caller organisation="org.codehaus.jackson" name="jackson-jaxrs" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.8.8"/>
+				<caller organisation="org.codehaus.jackson" name="jackson-xc" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.8.8"/>
+				<caller organisation="com.sun.jersey" name="jersey-json" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.7.1" callerrev="1.8"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jackson-mapper-asl" type="jar" ext="jar" status="no" details="" size="668564" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-mapper-asl/jars/jackson-mapper-asl-1.8.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-mapper-asl/1.8.8/jackson-mapper-asl-1.8.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.codehaus.jackson" name="jackson-core-asl" >
+			<revision name="1.8.8" status="release" pubdate="20120121102420" resolver="maven2" artresolver="default" homepage="http://jackson.codehaus.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="22">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2437" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-core-asl/ivy-1.8.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-core-asl/1.8.8/jackson-core-asl-1.8.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.avro" name="avro" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.7.3"/>
+				<caller organisation="org.codehaus.jackson" name="jackson-jaxrs" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.8.8"/>
+				<caller organisation="org.codehaus.jackson" name="jackson-xc" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.8.8"/>
+				<caller organisation="com.sun.jersey" name="jersey-json" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.7.1" callerrev="1.8"/>
+				<caller organisation="org.codehaus.jackson" name="jackson-mapper-asl" conf="compile, runtime" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="1.8.8"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.8.8" rev-constraint-default="1.8.8" rev-constraint-dynamic="1.8.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jackson-core-asl" type="jar" ext="jar" status="no" details="" size="227500" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jackson/jackson-core-asl/jars/jackson-core-asl-1.8.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-core-asl/1.8.8/jackson-core-asl-1.8.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.slf4j" name="slf4j-log4j12" >
+			<revision name="1.6.1" status="release" pubdate="20100706053004" resolver="maven2" artresolver="default" homepage="http://www.slf4j.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="45">
+				<metadata-artifact status="no" details="" size="4498" time="0" location="/home/leejy/.ivy2/cache/org.slf4j/slf4j-log4j12/ivy-1.6.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/slf4j/slf4j-log4j12/1.6.1/slf4j-log4j12-1.6.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-auth" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="slf4j-log4j12" type="jar" ext="jar" status="no" details="" size="9753" time="0" location="/home/leejy/.ivy2/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.6.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/slf4j/slf4j-log4j12/1.6.1/slf4j-log4j12-1.6.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.slf4j" name="slf4j-api" >
+			<revision name="1.6.1" status="release" pubdate="20100706052924" resolver="maven2" artresolver="default" homepage="http://www.slf4j.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="37">
+				<metadata-artifact status="no" details="" size="4320" time="0" location="/home/leejy/.ivy2/cache/org.slf4j/slf4j-api/ivy-1.6.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-auth" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.slf4j" name="slf4j-log4j12" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="1.6.1"/>
+				<caller organisation="org.apache.avro" name="avro" conf="compile, runtime" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.4" callerrev="1.7.3"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.6.1" rev-constraint-default="1.6.1" rev-constraint-dynamic="1.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="slf4j-api" type="jar" ext="jar" status="no" details="" size="25496" time="0" location="/home/leejy/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.6.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-configuration" name="commons-configuration" >
+			<revision name="1.6" status="release" pubdate="20090205044444" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/${pom.artifactId.substring(8)}/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="32">
+				<license name="The Apache Software License, Version 2.0" url="/LICENSE.txt"/>
+				<metadata-artifact status="no" details="" size="5546" time="0" location="/home/leejy/.ivy2/cache/commons-configuration/commons-configuration/ivy-1.6.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.6" rev-constraint-default="1.6" rev-constraint-dynamic="1.6" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-configuration" type="jar" ext="jar" status="no" details="" size="298829" time="0" location="/home/leejy/.ivy2/cache/commons-configuration/commons-configuration/jars/commons-configuration-1.6.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-beanutils" name="commons-beanutils-core" >
+			<revision name="1.8.0" status="release" pubdate="20080901031344" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/beanutils/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="36">
+				<metadata-artifact status="no" details="" size="2550" time="0" location="/home/leejy/.ivy2/cache/commons-beanutils/commons-beanutils-core/ivy-1.8.0.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-beanutils/commons-beanutils-core/1.8.0/commons-beanutils-core-1.8.0.pom"/>
+				<caller organisation="commons-configuration" name="commons-configuration" conf="compile, runtime" rev="1.8.0" rev-constraint-default="1.8.0" rev-constraint-dynamic="1.8.0" callerrev="1.6"/>
+				<artifacts>
+					<artifact name="commons-beanutils-core" type="jar" ext="jar" status="no" details="" size="206035" time="0" location="/home/leejy/.ivy2/cache/commons-beanutils/commons-beanutils-core/jars/commons-beanutils-core-1.8.0.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-beanutils/commons-beanutils-core/1.8.0/commons-beanutils-core-1.8.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-digester" name="commons-digester" >
+			<revision name="1.8" status="release" pubdate="20061204033311" resolver="maven2" artresolver="default" homepage="http://jakarta.apache.org/commons/digester/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="34">
+				<license name="The Apache Software License, Version 2.0" url="/LICENSE.txt"/>
+				<metadata-artifact status="no" details="" size="3201" time="0" location="/home/leejy/.ivy2/cache/commons-digester/commons-digester/ivy-1.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-digester/commons-digester/1.8/commons-digester-1.8.pom"/>
+				<caller organisation="commons-configuration" name="commons-configuration" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="1.6"/>
+				<artifacts>
+					<artifact name="commons-digester" type="jar" ext="jar" status="no" details="" size="143602" time="0" location="/home/leejy/.ivy2/cache/commons-digester/commons-digester/jars/commons-digester-1.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-digester/commons-digester/1.8/commons-digester-1.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-beanutils" name="commons-beanutils" >
+			<revision name="1.7.0" status="release" pubdate="20051109072021" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="35">
+				<metadata-artifact status="no" details="" size="2388" time="0" location="/home/leejy/.ivy2/cache/commons-beanutils/commons-beanutils/ivy-1.7.0.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.pom"/>
+				<caller organisation="commons-digester" name="commons-digester" conf="compile, runtime" rev="1.7.0" rev-constraint-default="1.7.0" rev-constraint-dynamic="1.7.0" callerrev="1.8"/>
+				<artifacts>
+					<artifact name="commons-beanutils" type="jar" ext="jar" status="no" details="" size="188671" time="0" location="/home/leejy/.ivy2/cache/commons-beanutils/commons-beanutils/jars/commons-beanutils-1.7.0.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-collections" name="commons-collections" >
+			<revision name="3.2.1" status="release" pubdate="20080415100924" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/collections/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="33">
+				<metadata-artifact status="no" details="" size="4584" time="0" location="/home/leejy/.ivy2/cache/commons-collections/commons-collections/ivy-3.2.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.pom"/>
+				<caller organisation="commons-configuration" name="commons-configuration" conf="compile, runtime" rev="3.2.1" rev-constraint-default="3.2.1" rev-constraint-dynamic="3.2.1" callerrev="1.6"/>
+				<artifacts>
+					<artifact name="commons-collections" type="jar" ext="jar" status="no" details="" size="575389" time="0" location="/home/leejy/.ivy2/cache/commons-collections/commons-collections/jars/commons-collections-3.2.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-lang" name="commons-lang" >
+			<revision name="2.5" status="release" pubdate="20100225102344" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/lang/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="31">
+				<metadata-artifact status="no" details="" size="5209" time="0" location="/home/leejy/.ivy2/cache/commons-lang/commons-lang/ivy-2.5.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-lang/commons-lang/2.5/commons-lang-2.5.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="2.5" rev-constraint-default="2.5" rev-constraint-dynamic="2.5" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="commons-configuration" name="commons-configuration" conf="compile, runtime" rev="2.5" rev-constraint-default="2.5" rev-constraint-dynamic="2.4" callerrev="1.6"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.5" rev-constraint-default="2.5" rev-constraint-dynamic="2.5" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-lang" type="jar" ext="jar" status="no" details="" size="279193" time="0" location="/home/leejy/.ivy2/cache/commons-lang/commons-lang/jars/commons-lang-2.5.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-lang/commons-lang/2.5/commons-lang-2.5.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="net.java.dev.jets3t" name="jets3t" >
+			<revision name="0.6.1" status="release" pubdate="20080810184952" resolver="maven2" artresolver="default" homepage="http://jets3t.s3.amazonaws.com/index.html" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="29">
+				<license name="Apache License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0"/>
+				<metadata-artifact status="no" details="" size="3056" time="0" location="/home/leejy/.ivy2/cache/net.java.dev.jets3t/jets3t/ivy-0.6.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/net/java/dev/jets3t/jets3t/0.6.1/jets3t-0.6.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="0.6.1" rev-constraint-default="0.6.1" rev-constraint-dynamic="0.6.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jets3t" type="jar" ext="jar" status="no" details="" size="321806" time="0" location="/home/leejy/.ivy2/cache/net.java.dev.jets3t/jets3t/jars/jets3t-0.6.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/net/java/dev/jets3t/jets3t/0.6.1/jets3t-0.6.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="log4j" name="log4j" >
+			<revision name="1.2.17" status="release" pubdate="20120526184339" resolver="maven2" artresolver="default" homepage="http://logging.apache.org/log4j/1.2/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="28">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="3770" time="0" location="/home/leejy/.ivy2/cache/log4j/log4j/ivy-1.2.17.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/log4j/log4j/1.2.17/log4j-1.2.17.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.2.17" rev-constraint-default="1.2.17" rev-constraint-dynamic="1.2.17" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.slf4j" name="slf4j-log4j12" conf="compile, runtime" rev="1.2.17" rev-constraint-default="1.2.17" rev-constraint-dynamic="1.2.16" callerrev="1.6.1"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.2.17" rev-constraint-default="1.2.17" rev-constraint-dynamic="1.2.17" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-auth" conf="compile, runtime" rev="1.2.17" rev-constraint-default="1.2.17" rev-constraint-dynamic="1.2.17" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.2.17" rev-constraint-default="1.2.17" rev-constraint-dynamic="1.2.17" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="log4j" type="bundle" ext="jar" status="no" details="" size="489884" time="0" location="/home/leejy/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.17.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/log4j/log4j/1.2.17/log4j-1.2.17.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-logging" name="commons-logging" >
+			<revision name="1.1.1" status="release" pubdate="20071127052410" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/logging" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="8">
+				<metadata-artifact status="no" details="" size="3941" time="0" location="/home/leejy/.ivy2/cache/commons-logging/commons-logging/ivy-1.1.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.1.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="commons-el" name="commons-el" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.0.3" callerrev="1.0"/>
+				<caller organisation="commons-beanutils" name="commons-beanutils-core" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.1.1" callerrev="1.8.0"/>
+				<caller organisation="commons-beanutils" name="commons-beanutils" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.0.3" callerrev="1.7.0"/>
+				<caller organisation="commons-configuration" name="commons-configuration" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.1.1" callerrev="1.6"/>
+				<caller organisation="net.java.dev.jets3t" name="jets3t" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.1.1" callerrev="0.6.1"/>
+				<caller organisation="commons-digester" name="commons-digester" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.1" callerrev="1.8"/>
+				<caller organisation="commons-httpclient" name="commons-httpclient" conf="compile, runtime" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.0.4" callerrev="3.1"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.1.1" rev-constraint-default="1.1.1" rev-constraint-dynamic="1.1.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-logging" type="jar" ext="jar" status="no" details="" size="60686" time="0" location="/home/leejy/.ivy2/cache/commons-logging/commons-logging/jars/commons-logging-1.1.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="javax.servlet.jsp" name="jsp-api" >
+			<revision name="2.1" status="release" pubdate="20060717200956" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="50">
+				<metadata-artifact status="no" details="" size="2281" time="0" location="/home/leejy/.ivy2/cache/javax.servlet.jsp/jsp-api/ivy-2.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/javax/servlet/jsp/jsp-api/2.1/jsp-api-2.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jsp-api" type="jar" ext="jar" status="no" details="" size="100636" time="0" location="/home/leejy/.ivy2/cache/javax.servlet.jsp/jsp-api/jars/jsp-api-2.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/javax/servlet/jsp/jsp-api/2.1/jsp-api-2.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="tomcat" name="jasper-runtime" >
+			<revision name="5.5.23" status="release" pubdate="20080129154522" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="48">
+				<metadata-artifact status="no" details="" size="2857" time="0" location="/home/leejy/.ivy2/cache/tomcat/jasper-runtime/ivy-5.5.23.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/tomcat/jasper-runtime/5.5.23/jasper-runtime-5.5.23.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="5.5.23" rev-constraint-default="5.5.23" rev-constraint-dynamic="5.5.23" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="5.5.23" rev-constraint-default="5.5.23" rev-constraint-dynamic="5.5.23" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jasper-runtime" type="jar" ext="jar" status="no" details="" size="76844" time="0" location="/home/leejy/.ivy2/cache/tomcat/jasper-runtime/jars/jasper-runtime-5.5.23.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/tomcat/jasper-runtime/5.5.23/jasper-runtime-5.5.23.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-el" name="commons-el" >
+			<revision name="1.0" status="release" pubdate="20051109072050" resolver="maven2" artresolver="default" homepage="http://jakarta.apache.org/commons/el/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="49">
+				<license name="The Apache Software License, Version 2.0" url="/LICENSE.txt"/>
+				<metadata-artifact status="no" details="" size="2907" time="0" location="/home/leejy/.ivy2/cache/commons-el/commons-el/ivy-1.0.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-el/commons-el/1.0/commons-el-1.0.pom"/>
+				<caller organisation="tomcat" name="jasper-runtime" conf="compile, runtime" rev="1.0" rev-constraint-default="1.0" rev-constraint-dynamic="1.0" callerrev="5.5.23"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.0" rev-constraint-default="1.0" rev-constraint-dynamic="1.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-el" type="jar" ext="jar" status="no" details="" size="112341" time="0" location="/home/leejy/.ivy2/cache/commons-el/commons-el/jars/commons-el-1.0.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-el/commons-el/1.0/commons-el-1.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="tomcat" name="jasper-compiler" >
+			<revision name="5.5.23" status="release" pubdate="20080129154522" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="47">
+				<metadata-artifact status="no" details="" size="2843" time="0" location="/home/leejy/.ivy2/cache/tomcat/jasper-compiler/ivy-5.5.23.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/tomcat/jasper-compiler/5.5.23/jasper-compiler-5.5.23.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="5.5.23" rev-constraint-default="5.5.23" rev-constraint-dynamic="5.5.23" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jasper-compiler" type="jar" ext="jar" status="no" details="" size="408133" time="0" location="/home/leejy/.ivy2/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/tomcat/jasper-compiler/5.5.23/jasper-compiler-5.5.23.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.sun.jersey" name="jersey-server" >
+			<revision name="1.8" status="release" pubdate="20110624213452" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="26">
+				<metadata-artifact status="no" details="" size="5893" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey/jersey-server/ivy-1.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-server/1.8/jersey-server-1.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jersey-server" type="bundle" ext="jar" status="no" details="" size="694352" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey/jersey-server/bundles/jersey-server-1.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-server/1.8/jersey-server-1.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.sun.jersey" name="jersey-json" >
+			<revision name="1.8" status="release" pubdate="20110624213453" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="16">
+				<metadata-artifact status="no" details="" size="5423" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey/jersey-json/ivy-1.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-json/1.8/jersey-json-1.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jersey-json" type="bundle" ext="jar" status="no" details="" size="147933" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey/jersey-json/bundles/jersey-json-1.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-json/1.8/jersey-json-1.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.sun.xml.bind" name="jaxb-impl" >
+			<revision name="2.2.3-1" status="release" pubdate="20110118193154" resolver="maven2" artresolver="default" homepage="http://jaxb.java.net/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="19">
+				<license name="CDDL 1.1" url="https://glassfish.java.net/public/CDDL+GPL_1_1.html"/>
+				<license name="GPL2 w/ CPE" url="https://glassfish.java.net/public/CDDL+GPL_1_1.html"/>
+				<metadata-artifact status="no" details="" size="2827" time="0" location="/home/leejy/.ivy2/cache/com.sun.xml.bind/jaxb-impl/ivy-2.2.3-1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/sun/xml/bind/jaxb-impl/2.2.3-1/jaxb-impl-2.2.3-1.pom"/>
+				<caller organisation="com.sun.jersey" name="jersey-json" conf="compile, runtime" rev="2.2.3-1" rev-constraint-default="2.2.3-1" rev-constraint-dynamic="2.2.3-1" callerrev="1.8"/>
+				<artifacts>
+					<artifact name="jaxb-impl" type="jar" ext="jar" status="no" details="" size="890168" time="0" location="/home/leejy/.ivy2/cache/com.sun.xml.bind/jaxb-impl/jars/jaxb-impl-2.2.3-1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/sun/xml/bind/jaxb-impl/2.2.3-1/jaxb-impl-2.2.3-1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="javax.xml.bind" name="jaxb-api" >
+			<revision name="2.2.2" status="release" pubdate="20101213124445" resolver="maven2" artresolver="default" homepage="https://jaxb.dev.java.net/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="20">
+				<license name="CDDL 1.1" url="https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html"/>
+				<license name="GPL2 w/ CPE" url="https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html"/>
+				<metadata-artifact status="no" details="" size="3044" time="0" location="/home/leejy/.ivy2/cache/javax.xml.bind/jaxb-api/ivy-2.2.2.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.2.2/jaxb-api-2.2.2.pom"/>
+				<caller organisation="com.sun.xml.bind" name="jaxb-impl" conf="compile, runtime" rev="2.2.2" rev-constraint-default="2.2.2" rev-constraint-dynamic="2.2.2" callerrev="2.2.3-1"/>
+				<artifacts>
+					<artifact name="jaxb-api" type="jar" ext="jar" status="no" details="" size="105134" time="0" location="/home/leejy/.ivy2/cache/javax.xml.bind/jaxb-api/jars/jaxb-api-2.2.2.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.2.2/jaxb-api-2.2.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="javax.activation" name="activation" >
+			<revision name="1.1" status="release" pubdate="20060503084829" resolver="maven2" artresolver="default" homepage="http://java.sun.com/products/javabeans/jaf/index.jsp" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="21">
+				<license name="Common Development and Distribution License (CDDL) v1.0" url="https://glassfish.dev.java.net/public/CDDLv1.0.html"/>
+				<metadata-artifact status="no" details="" size="2812" time="0" location="/home/leejy/.ivy2/cache/javax.activation/activation/ivy-1.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/javax/activation/activation/1.1/activation-1.1.pom"/>
+				<caller organisation="javax.xml.bind" name="jaxb-api" conf="compile, runtime" rev="1.1" rev-constraint-default="1.1" rev-constraint-dynamic="1.1" callerrev="2.2.2"/>
+				<artifacts>
+					<artifact name="activation" type="jar" ext="jar" status="no" details="" size="62983" time="0" location="/home/leejy/.ivy2/cache/javax.activation/activation/jars/activation-1.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/javax/activation/activation/1.1/activation-1.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.codehaus.jettison" name="jettison" >
+			<revision name="1.1" status="release" pubdate="20090421015050" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="17">
+				<metadata-artifact status="no" details="" size="2912" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jettison/jettison/ivy-1.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.1/jettison-1.1.pom"/>
+				<caller organisation="com.sun.jersey" name="jersey-json" conf="compile, runtime" rev="1.1" rev-constraint-default="1.1" rev-constraint-dynamic="1.1" callerrev="1.8"/>
+				<artifacts>
+					<artifact name="jettison" type="bundle" ext="jar" status="no" details="" size="67758" time="0" location="/home/leejy/.ivy2/cache/org.codehaus.jettison/jettison/bundles/jettison-1.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.1/jettison-1.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="stax" name="stax-api" >
+			<revision name="1.0.1" status="release" pubdate="20060901023914" resolver="maven2" artresolver="default" homepage="http://stax.codehaus.org/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="18">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2406" time="0" location="/home/leejy/.ivy2/cache/stax/stax-api/ivy-1.0.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/stax/stax-api/1.0.1/stax-api-1.0.1.pom"/>
+				<caller organisation="org.codehaus.jettison" name="jettison" conf="compile, runtime" rev="1.0.1" rev-constraint-default="1.0.1" rev-constraint-dynamic="1.0.1" callerrev="1.1"/>
+				<artifacts>
+					<artifact name="stax-api" type="jar" ext="jar" status="no" details="" size="26514" time="0" location="/home/leejy/.ivy2/cache/stax/stax-api/jars/stax-api-1.0.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/stax/stax-api/1.0.1/stax-api-1.0.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.sun.jersey" name="jersey-core" >
+			<revision name="1.8" status="release" pubdate="20110624213356" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="15">
+				<metadata-artifact status="no" details="" size="5059" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey/jersey-core/ivy-1.8.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-core/1.8/jersey-core-1.8.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.8" rev-constraint-default="1.8" rev-constraint-dynamic="1.8" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jersey-core" type="bundle" ext="jar" status="no" details="" size="458233" time="0" location="/home/leejy/.ivy2/cache/com.sun.jersey/jersey-core/bundles/jersey-core-1.8.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/sun/jersey/jersey-core/1.8/jersey-core-1.8.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="junit" name="junit" >
+			<revision name="4.8.2" status="release" pubdate="20101005175127" resolver="maven2" artresolver="default" homepage="http://junit.org" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="30">
+				<license name="Common Public License Version 1.0" url="http://www.opensource.org/licenses/cpl1.0.txt"/>
+				<metadata-artifact status="no" details="" size="2599" time="0" location="/home/leejy/.ivy2/cache/junit/junit/ivy-4.8.2.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/junit/junit/4.8.2/junit-4.8.2.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="4.8.2" rev-constraint-default="4.8.2" rev-constraint-dynamic="4.8.2" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="junit" type="jar" ext="jar" status="no" details="" size="237344" time="0" location="/home/leejy/.ivy2/cache/junit/junit/jars/junit-4.8.2.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/junit/junit/4.8.2/junit-4.8.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.mortbay.jetty" name="jetty" >
+			<revision name="6.1.26.cloudera.2" status="release" pubdate="20120901030706" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="13">
+				<metadata-artifact status="no" details="" size="7312" time="0" location="/home/leejy/.ivy2/cache/org.mortbay.jetty/jetty/ivy-6.1.26.cloudera.2.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/mortbay/jetty/jetty/6.1.26.cloudera.2/jetty-6.1.26.cloudera.2.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="6.1.26.cloudera.2" rev-constraint-default="6.1.26.cloudera.2" rev-constraint-dynamic="6.1.26.cloudera.2" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="6.1.26.cloudera.2" rev-constraint-default="6.1.26.cloudera.2" rev-constraint-dynamic="6.1.26.cloudera.2" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jetty" type="jar" ext="jar" status="no" details="" size="540209" time="0" location="/home/leejy/.ivy2/cache/org.mortbay.jetty/jetty/jars/jetty-6.1.26.cloudera.2.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/mortbay/jetty/jetty/6.1.26.cloudera.2/jetty-6.1.26.cloudera.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.mortbay.jetty" name="jetty-util" >
+			<revision name="6.1.26.cloudera.2" status="release" pubdate="20120901030641" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="14">
+				<metadata-artifact status="no" details="" size="7243" time="0" location="/home/leejy/.ivy2/cache/org.mortbay.jetty/jetty-util/ivy-6.1.26.cloudera.2.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/mortbay/jetty/jetty-util/6.1.26.cloudera.2/jetty-util-6.1.26.cloudera.2.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="6.1.26.cloudera.2" rev-constraint-default="6.1.26.cloudera.2" rev-constraint-dynamic="6.1.26.cloudera.2" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.mortbay.jetty" name="jetty" conf="compile, runtime" rev="6.1.26.cloudera.2" rev-constraint-default="6.1.26.cloudera.2" rev-constraint-dynamic="6.1.26.cloudera.2" callerrev="6.1.26.cloudera.2"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="6.1.26.cloudera.2" rev-constraint-default="6.1.26.cloudera.2" rev-constraint-dynamic="6.1.26.cloudera.2" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="jetty-util" type="jar" ext="jar" status="no" details="" size="177417" time="0" location="/home/leejy/.ivy2/cache/org.mortbay.jetty/jetty-util/jars/jetty-util-6.1.26.cloudera.2.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/mortbay/jetty/jetty-util/6.1.26.cloudera.2/jetty-util-6.1.26.cloudera.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="javax.servlet" name="servlet-api" >
+			<revision name="2.5" status="release" pubdate="20060717200957" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="12">
+				<metadata-artifact status="no" details="" size="2289" time="0" location="/home/leejy/.ivy2/cache/javax.servlet/servlet-api/ivy-2.5.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/javax/servlet/servlet-api/2.5/servlet-api-2.5.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="2.5" rev-constraint-default="2.5" rev-constraint-dynamic="2.5" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="tomcat" name="jasper-runtime" conf="compile, runtime" rev="2.5" rev-constraint-default="2.5" rev-constraint-dynamic="2.4" callerrev="5.5.23"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.5" rev-constraint-default="2.5" rev-constraint-dynamic="2.5" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="servlet-api" type="jar" ext="jar" status="no" details="" size="105112" time="0" location="/home/leejy/.ivy2/cache/javax.servlet/servlet-api/jars/servlet-api-2.5.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-net" name="commons-net" >
+			<revision name="3.1" status="release" pubdate="20120215034231" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/net/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="11">
+				<metadata-artifact status="no" details="" size="8006" time="0" location="/home/leejy/.ivy2/cache/commons-net/commons-net/ivy-3.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-net/commons-net/3.1/commons-net-3.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="3.1" rev-constraint-default="3.1" rev-constraint-dynamic="3.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-net" type="jar" ext="jar" status="no" details="" size="273370" time="0" location="/home/leejy/.ivy2/cache/commons-net/commons-net/jars/commons-net-3.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-net/commons-net/3.1/commons-net-3.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-io" name="commons-io" >
+			<revision name="2.1" status="release" pubdate="20111004063236" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/io/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="10">
+				<metadata-artifact status="no" details="" size="7649" time="0" location="/home/leejy/.ivy2/cache/commons-io/commons-io/ivy-2.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-io/commons-io/2.1/commons-io-2.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-io" type="jar" ext="jar" status="no" details="" size="163151" time="0" location="/home/leejy/.ivy2/cache/commons-io/commons-io/jars/commons-io-2.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-io/commons-io/2.1/commons-io-2.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-codec" name="commons-codec" >
+			<revision name="1.4" status="release" pubdate="20090810062217" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/codec/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="9">
+				<metadata-artifact status="no" details="" size="4984" time="0" location="/home/leejy/.ivy2/cache/commons-codec/commons-codec/ivy-1.4.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-codec/commons-codec/1.4/commons-codec-1.4.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.4" rev-constraint-default="1.4" rev-constraint-dynamic="1.4" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="net.java.dev.jets3t" name="jets3t" conf="compile, runtime" rev="1.4" rev-constraint-default="1.4" rev-constraint-dynamic="1.3" callerrev="0.6.1"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-auth" conf="compile, runtime" rev="1.4" rev-constraint-default="1.4" rev-constraint-dynamic="1.4" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="commons-httpclient" name="commons-httpclient" conf="compile, runtime" rev="1.4" rev-constraint-default="1.4" rev-constraint-dynamic="1.2" callerrev="3.1"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.4" rev-constraint-default="1.4" rev-constraint-dynamic="1.4" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-codec" type="jar" ext="jar" status="no" details="" size="58160" time="0" location="/home/leejy/.ivy2/cache/commons-codec/commons-codec/jars/commons-codec-1.4.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-httpclient" name="commons-httpclient" >
+			<revision name="3.1" status="release" pubdate="20070821224407" resolver="maven2" artresolver="default" homepage="http://jakarta.apache.org/httpcomponents/httpclient-3.x/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="7">
+				<license name="Apache License" url="http://www.apache.org/licenses/LICENSE-2.0"/>
+				<metadata-artifact status="no" details="" size="3255" time="0" location="/home/leejy/.ivy2/cache/commons-httpclient/commons-httpclient/ivy-3.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1.pom"/>
+				<caller organisation="net.java.dev.jets3t" name="jets3t" conf="compile, runtime" rev="3.1" rev-constraint-default="3.1" rev-constraint-dynamic="3.1" callerrev="0.6.1"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="3.1" rev-constraint-default="3.1" rev-constraint-dynamic="3.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-httpclient" type="jar" ext="jar" status="no" details="" size="305001" time="0" location="/home/leejy/.ivy2/cache/commons-httpclient/commons-httpclient/jars/commons-httpclient-3.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="xmlenc" name="xmlenc" >
+			<revision name="0.52" status="release" pubdate="20061124112444" resolver="maven2" artresolver="default" homepage="http://xmlenc.sourceforge.net" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="6">
+				<license name="The BSD License" url="http://www.opensource.org/licenses/bsd-license.php"/>
+				<metadata-artifact status="no" details="" size="2333" time="0" location="/home/leejy/.ivy2/cache/xmlenc/xmlenc/ivy-0.52.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/xmlenc/xmlenc/0.52/xmlenc-0.52.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="0.52" rev-constraint-default="0.52" rev-constraint-dynamic="0.52" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="0.52" rev-constraint-default="0.52" rev-constraint-dynamic="0.52" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="xmlenc" type="jar" ext="jar" status="no" details="" size="15010" time="0" location="/home/leejy/.ivy2/cache/xmlenc/xmlenc/jars/xmlenc-0.52.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/xmlenc/xmlenc/0.52/xmlenc-0.52.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.commons" name="commons-math" >
+			<revision name="2.1" status="release" pubdate="20100328114801" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/math/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="5">
+				<metadata-artifact status="no" details="" size="5887" time="0" location="/home/leejy/.ivy2/cache/org.apache.commons/commons-math/ivy-2.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/apache/commons/commons-math/2.1/commons-math-2.1.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.1" rev-constraint-default="2.1" rev-constraint-dynamic="2.1" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-math" type="jar" ext="jar" status="no" details="" size="832410" time="0" location="/home/leejy/.ivy2/cache/org.apache.commons/commons-math/jars/commons-math-2.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/apache/commons/commons-math/2.1/commons-math-2.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="commons-cli" name="commons-cli" >
+			<revision name="1.2" status="release" pubdate="20090320050832" resolver="maven2" artresolver="default" homepage="http://commons.apache.org/cli/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="4">
+				<metadata-artifact status="no" details="" size="4450" time="0" location="/home/leejy/.ivy2/cache/commons-cli/commons-cli/ivy-1.2.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/commons-cli/commons-cli/1.2/commons-cli-1.2.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="1.2" rev-constraint-default="1.2" rev-constraint-dynamic="1.2" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="1.2" rev-constraint-default="1.2" rev-constraint-dynamic="1.2" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="commons-cli" type="jar" ext="jar" status="no" details="" size="41123" time="0" location="/home/leejy/.ivy2/cache/commons-cli/commons-cli/jars/commons-cli-1.2.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.apache.hadoop" name="hadoop-annotations" >
+			<revision name="2.0.0-cdh4.2.0" status="release" pubdate="20140311081244" resolver="cloudera-releases" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="2">
+				<metadata-artifact status="no" details="" size="68383" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-annotations/ivy-2.0.0-cdh4.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-annotations/2.0.0-cdh4.2.0/hadoop-annotations-2.0.0-cdh4.2.0.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-common" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-core" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-client" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-common" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-shuffle" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-server-nodemanager" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-yarn-api" conf="compile, runtime" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-mapreduce-client-common" conf="default, compile, runtime, master" rev="2.0.0-cdh4.2.0" rev-constraint-default="2.0.0-cdh4.2.0" rev-constraint-dynamic="2.0.0-cdh4.2.0" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hadoop-annotations" type="jar" ext="jar" status="no" details="" size="16536" time="0" location="/home/leejy/.ivy2/cache/org.apache.hadoop/hadoop-annotations/jars/hadoop-annotations-2.0.0-cdh4.2.0.jar">
+						<origin-location is-local="false" location="https://repository.cloudera.com/artifactory/cdh-releases-rcs/org/apache/hadoop/hadoop-annotations/2.0.0-cdh4.2.0/hadoop-annotations-2.0.0-cdh4.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.google.guava" name="guava" >
+			<revision name="11.0.2" status="release" pubdate="20120222230217" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="default, compile, master(*), compile(*), runtime, runtime(*), master" position="0">
+				<metadata-artifact status="no" details="" size="4014" time="0" location="/home/leejy/.ivy2/cache/com.google.guava/guava/ivy-11.0.2.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/google/guava/guava/11.0.2/guava-11.0.2.pom"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-hdfs" conf="default, compile, runtime, master" rev="11.0.2" rev-constraint-default="11.0.2" rev-constraint-dynamic="11.0.2" callerrev="2.0.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hive" name="hive-shims" conf="hadoop0.23.shim" rev="11.0.2" rev-constraint-default="11.0.2" rev-constraint-dynamic="11.0.2" callerrev="0.10.0-cdh4.2.0"/>
+				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="default, compile, runtime, master" rev="11.0.2" rev-constraint-default="11.0.2" rev-constraint-dynamic="11.0.2" callerrev="2.0.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="guava" type="jar" ext="jar" status="no" details="" size="1648200" time="0" location="/home/leejy/.ivy2/cache/com.google.guava/guava/jars/guava-11.0.2.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/google/guava/guava/11.0.2/guava-11.0.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.google.code.findbugs" name="jsr305" >
+			<revision name="1.3.9" status="release" pubdate="20090825072822" resolver="maven2" artresolver="default" homepage="http://findbugs.sourceforge.net/" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="3">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2393" time="0" location="/home/leejy/.ivy2/cache/com.google.code.findbugs/jsr305/ivy-1.3.9.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.pom"/>
+				<caller organisation="com.google.guava" name="guava" conf="compile, runtime" rev="1.3.9" rev-constraint-default="1.3.9" rev-constraint-dynamic="1.3.9" callerrev="11.0.2"/>
+				<artifacts>
+					<artifact name="jsr305" type="jar" ext="jar" status="no" details="" size="33015" time="0" location="/home/leejy/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+	</dependencies>
+</ivy-report>

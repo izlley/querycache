@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="ivy-report.xsl"?>
+<ivy-report version="1.0">
+	<info
+		organisation="org.apache.hive"
+		module="hive-pdk"
+		revision="0.10.0-cdh4.2.0"
+		conf="default"
+		confs="default"
+		date="20140520170847"/>
+	<dependencies>
+		<module organisation="org.apache.hive" name="hive-cli" >
+			<revision name="0.10.0-cdh4.2.0" status="integration" pubdate="20140520111303" resolver="local" artresolver="default" homepage="http://hive.apache.org" downloaded="false" searched="false" default="false" conf="default, compile, master, hadoop23.compile" position="0">
+				<license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="3630" time="0" location="/home/leejy/.ivy2/cache/org.apache.hive/hive-cli/ivy-0.10.0-cdh4.2.0.xml" searched="false" origin-is-local="true" origin-location="/home/leejy/.ivy2/local/org.apache.hive/hive-cli/0.10.0-cdh4.2.0/ivys/ivy.xml"/>
+				<caller organisation="org.apache.hive" name="hive-pdk" conf="default, compile, master, hadoop23.compile" rev="0.10.0-cdh4.2.0" rev-constraint-default="0.10.0-cdh4.2.0" rev-constraint-dynamic="0.10.0-cdh4.2.0" callerrev="0.10.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="hive-cli" type="jar" ext="jar" status="no" details="" size="32652" time="0" location="/home/leejy/.ivy2/cache/org.apache.hive/hive-cli/jars/hive-cli-0.10.0-cdh4.2.0.jar">
+						<origin-location is-local="true" location="/home/leejy/.ivy2/local/org.apache.hive/hive-cli/0.10.0-cdh4.2.0/jars/hive-cli.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="junit" name="junit" >
+			<revision name="4.10" status="release" pubdate="20110930041223" resolver="maven2" artresolver="default" homepage="http://junit.org" downloaded="false" searched="false" default="false" conf="default, compile, runtime, master" position="1">
+				<license name="Common Public License Version 1.0" url="http://www.opensource.org/licenses/cpl1.0.txt"/>
+				<metadata-artifact status="no" details="" size="2944" time="0" location="/home/leejy/.ivy2/cache/junit/junit/ivy-4.10.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/junit/junit/4.10/junit-4.10.pom"/>
+				<caller organisation="org.apache.hive" name="hive-pdk" conf="default, compile, master, hadoop23.compile" rev="4.10" rev-constraint-default="4.10" rev-constraint-dynamic="4.10" callerrev="0.10.0-cdh4.2.0"/>
+				<artifacts>
+					<artifact name="junit" type="jar" ext="jar" status="no" details="" size="253160" time="0" location="/home/leejy/.ivy2/cache/junit/junit/jars/junit-4.10.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/junit/junit/4.10/junit-4.10.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.hamcrest" name="hamcrest-core" >
+			<revision name="1.1" status="release" pubdate="20070719041143" resolver="maven2" artresolver="default" homepage="" downloaded="false" searched="false" default="false" conf="compile, master(*), runtime, compile(*), runtime(*), master" position="2">
+				<metadata-artifact status="no" details="" size="4631" time="0" location="/home/leejy/.ivy2/cache/org.hamcrest/hamcrest-core/ivy-1.1.xml" searched="false" origin-is-local="false" origin-location="http://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.pom"/>
+				<caller organisation="junit" name="junit" conf="default, compile, runtime, master" rev="1.1" rev-constraint-default="1.1" rev-constraint-dynamic="1.1" callerrev="4.10"/>
+				<artifacts>
+					<artifact name="hamcrest-core" type="jar" ext="jar" status="no" details="" size="76643" time="0" location="/home/leejy/.ivy2/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.1.jar">
+						<origin-location is-local="false" location="http://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+	</dependencies>
+</ivy-report>

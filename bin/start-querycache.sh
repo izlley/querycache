@@ -17,13 +17,13 @@ done
 # setup your environment. If $QC_HOME is undefined
 # this script will set it to the current working directory.
 
-export JAVA_HOME=${JAVA_HOME-/usr/java/default}
+export JAVA_HOME=${JAVA_HOME-/app/jdk}
 if [ ! -d $JAVA_HOME ] ; then
     echo "Error! JAVA_HOME must be set to the location of your JDK!"
     exit 1
 fi
 
-JAVA=${JAVA-'java'}
+JAVA=${JAVA-${JAVA_HOME}/bin/java}
 
 if [ -z $QC_HOME ]; then
     this=${0/-/} # login-shells often have leading '-' chars
@@ -58,7 +58,7 @@ if [ -z $DRIVER_DIR ]; then
     DRIVER_DIR=$QC_HOME/lib/driver
 fi
 
-JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms2g -Xmx20g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/log/querycache-gc-$(date +%Y%m%d-%H%M%S).log"}
+JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms5g -Xmx5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/log/querycache-gc-$(date +%Y%m%d-%H%M%S).log"}
 export QC_CONF_DIR=$QC_HOME/conf
 export QC_LIB_DIR=$QC_HOME/lib
 export PATH=$QC_HOME/bin:$PATH
@@ -83,4 +83,3 @@ echo "JVMARGS                = $JVMARGS"
 
 echo "start Querycache..."
 exec nohup $JAVA $JVMARGS -classpath "$CLASSPATH" com.skplanet.querycache.server.QueryCacheServer "$@" > /dev/null 2>&1 &
- 
