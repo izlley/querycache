@@ -1,4 +1,4 @@
-Apache Querycache (TM) @VERSION@
+Querycache (TM) @VERSION@
 ======================
 
 The Querycache (TM) is a smart distributed cache for storing 
