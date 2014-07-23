@@ -51,7 +51,7 @@ public class Analyzer {
     try {
       analResult.queryStmt_ = (QueryStmt) parser.parse().value;
       if (analResult.queryStmt_ == null) return;
-      LOG.debug("User=" + user_ + ", QueryStmt: QueryType=" + analResult.queryStmt_.type.toString() +
+      LOG.info("User=" + user_ + ", QueryStmt: QueryType=" + analResult.queryStmt_.type.toString() +
              ", [limit,filter,nested,join,with,invalidateall]=[" + analResult.queryStmt_.isLimit+","+
              analResult.queryStmt_.isFilterCond+","+analResult.queryStmt_.isNested+","+analResult.queryStmt_.isJoin+
              ","+analResult.queryStmt_.isWith+","+analResult.queryStmt_.isInvalidateAll+"]"+

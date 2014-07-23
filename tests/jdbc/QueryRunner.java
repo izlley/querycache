@@ -18,7 +18,7 @@ public class QueryRunner {
   static String gQuery = "";
 
   static enum ConnType {
-    IMPALA_JDBC, HIVE_JDBC, PHOENIX_JDBC, MYSQL_JDBC,
+    EDA_IMPALA, DAAS_IMPALA, EDA_HIVE, DAAS_PHOENIX,
   }
   
   static Random randomGenerator = new Random();
@@ -61,7 +61,7 @@ public class QueryRunner {
     long maxTime = 0;
     String sPort = "8655";
     String sQuery = "";
-    ConnType sConnType = ConnType.IMPALA_JDBC;
+    ConnType sConnType = ConnType.EDA_IMPALA;
     List<Long> sProfile = new ArrayList<Long>();
     long[] sHistogram = new long[21];
     Connection con = null;
@@ -75,14 +75,14 @@ public class QueryRunner {
         gQuery = args[++i];
       } else if (args[i].equals("-type")) {
         String type = args[++i];
-        if (type.equals("impala")) {
-          sConnType = ConnType.IMPALA_JDBC;
-        } else if (type.equals("hive")) {
-          sConnType = ConnType.HIVE_JDBC;
-        } else if (type.equals("bdb")) {
-          sConnType = ConnType.PHOENIX_JDBC;
-        } else if (type.equals("mysql")) {
-          sConnType = ConnType.MYSQL_JDBC;
+        if (type.equals("eda-impala")) {
+          sConnType = ConnType.EDA_IMPALA;
+        } else if (type.equals("daas-impala")) {
+          sConnType = ConnType.DAAS_IMPALA;
+        } else if (type.equals("eda-hive")) {
+          sConnType = ConnType.EDA_HIVE;
+        } else if (type.equals("daas-phoenix")) {
+          sConnType = ConnType.DAAS_PHOENIX;
         } else {
           doExit();
         }
@@ -126,19 +126,18 @@ public class QueryRunner {
     }
 
     switch (sConnType) {
-      case IMPALA_JDBC:
-        sUrl = "jdbc:impala://" + sHost + ":" + sPort;
+      case EDA_IMPALA:
+        sUrl = "jdbc:eda-impala://" + sHost + ":" + sPort;
         break;
-      case HIVE_JDBC:
-        sUrl = "jdbc:hive://" + sHost + ":" + sPort;
+      case DAAS_IMPALA:
+        sUrl = "jdbc:daas-impala://" + sHost + ":" + sPort;
         break;
-      case PHOENIX_JDBC:
+      case EDA_HIVE:
+        sUrl = "jdbc:eda-hive://" + sHost + ":" + sPort;
+        break;
+      case DAAS_PHOENIX:
         // sUrl = "jdbc:bdb://127.0.0.1:8655";
-        sUrl = "jdbc:bdb://" + sHost + ":" + sPort;
-        break;
-      case MYSQL_JDBC:
-        // sUrl = "jdbc:mysql://127.0.0.1:8655?user=hive&password=hive";
-        sUrl = "jdbc:mysql://" + sHost + ":" + sPort;
+        sUrl = "jdbc:daas-phoenix://" + sHost + ":" + sPort;
         break;
       default:
         break;
@@ -395,7 +394,7 @@ public class QueryRunner {
 
   private static void doExit() {
     System.out
-        .println("Usage: -type [impala|hive|phoenix|mysql]\n" +
+        .println("Usage: -type [daas-impala|eda-impala|eda-hive|daas-phoenix]\n" +
                  "       -query <query_str>\n" +
                  "       -limit <limit_cnt>\n" +
                  "       -loopcnt <#cnt>\n" + 
@@ -410,3 +409,4 @@ public class QueryRunner {
     System.exit(1);
   }
 }
+

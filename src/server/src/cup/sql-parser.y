@@ -1466,45 +1466,57 @@ from_clause ::=
 table_ref_list ::=
   table_ref:tbl
   {:
-    parser.queryStmt.tableRefs.add(
-      new AbstractMap.SimpleEntry<TableName, Privilege>(
-        tbl, Privilege.SELECT));
+    if (tbl != null) {
+      parser.queryStmt.tableRefs.add(
+        new AbstractMap.SimpleEntry<TableName, Privilege>(
+          tbl, Privilege.SELECT));
+    }
   :}
   | table_ref_list COMMA table_ref:tbl
   {:
-    parser.queryStmt.tableRefs.add(
-      new AbstractMap.SimpleEntry<TableName, Privilege>(
-        tbl, Privilege.SELECT));
+    if (tbl != null) {
+      parser.queryStmt.tableRefs.add(
+        new AbstractMap.SimpleEntry<TableName, Privilege>(
+          tbl, Privilege.SELECT));
+    }
     parser.queryStmt.isJoin = true;
   :}
   | table_ref_list KW_CROSS KW_JOIN opt_plan_hints table_ref:tbl
   {:
-    parser.queryStmt.tableRefs.add(
-      new AbstractMap.SimpleEntry<TableName, Privilege>(
-        tbl, Privilege.SELECT));
+    if (tbl != null) {
+      parser.queryStmt.tableRefs.add(
+        new AbstractMap.SimpleEntry<TableName, Privilege>(
+          tbl, Privilege.SELECT));
+    }
     parser.queryStmt.isJoin = true;
   :}
   | table_ref_list join_operator opt_plan_hints table_ref:tbl
   {:
-    parser.queryStmt.tableRefs.add(
-      new AbstractMap.SimpleEntry<TableName, Privilege>(
-        tbl, Privilege.SELECT));
+    if (tbl != null) {
+      parser.queryStmt.tableRefs.add(
+        new AbstractMap.SimpleEntry<TableName, Privilege>(
+          tbl, Privilege.SELECT));
+    }
     parser.queryStmt.isJoin = true;
   :}
   | table_ref_list join_operator opt_plan_hints table_ref:tbl
     KW_ON expr
   {:
-    parser.queryStmt.tableRefs.add(
-      new AbstractMap.SimpleEntry<TableName, Privilege>(
-        tbl, Privilege.SELECT));
+    if (tbl != null) {
+      parser.queryStmt.tableRefs.add(
+        new AbstractMap.SimpleEntry<TableName, Privilege>(
+          tbl, Privilege.SELECT));
+    }
     parser.queryStmt.isJoin = true;
   :}
   | table_ref_list join_operator opt_plan_hints table_ref:tbl
     KW_USING LPAREN ident_list RPAREN
   {:
-    parser.queryStmt.tableRefs.add(
-      new AbstractMap.SimpleEntry<TableName, Privilege>(
-        tbl, Privilege.SELECT));
+    if (tbl != null) {
+      parser.queryStmt.tableRefs.add(
+        new AbstractMap.SimpleEntry<TableName, Privilege>(
+          tbl, Privilege.SELECT));
+    }
     parser.queryStmt.isJoin = true;
   :}
   ;
