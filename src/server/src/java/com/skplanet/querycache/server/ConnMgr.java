@@ -255,7 +255,13 @@ public class ConnMgr {
     private ConnNode allocConn() {
       // 1. get a ConNode from the FreeList
       // O(1)
-      ConnNode sConn = sFreeList.remove(0);
+      ConnNode sConn = null;
+      try {
+        sConn = sFreeList.remove(0);
+      } catch (IndexOutOfBoundsException e) {
+        // if there is no remaining connection, set null
+        sConn = null;
+      }
       
       // 2. if no ConNode in the ConnPool, make connection explicitly
       if (sConn == null) {
@@ -267,7 +273,7 @@ public class ConnMgr {
           try {
             // Every time builUrl is called, it returns different address for distributing connections
             url = buildUrl();
-            sConn.initialize(connProp,
+            sConn2.initialize(connProp,
                              sConnIdGen.addAndGet(1L),
                              url);
             LOG.info("Add " + (i + 1) + "st ConnNode for ConnPool to " + url);
