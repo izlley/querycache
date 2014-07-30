@@ -91,29 +91,38 @@ public class ObjectPool {
   
   private void initObjPool(int aInd) {
     LOG.info("Supplying obj[" + aInd + "] to the ObjectPool...");
+    List<Object> sObjs = sObjList.get(aInd);
     switch (aInd) {
       case 0:
         for (int i = sObjList.get(aInd).size(); i < sMaxPoolSize; i++) {
           // append : O(1)
-          sObjList.get(aInd).add((Object)new TRowSet());
+          synchronized(sObjs) {
+            sObjList.get(aInd).add((Object)new TRowSet());
+          }
         }
         break;
       case 1:
         for (int i = sObjList.get(aInd).size(); i < sMaxPoolSize; i++) {
-          sObjList.get(aInd).add((Object)new TRow());
+          synchronized(sObjs) {
+            sObjList.get(aInd).add((Object)new TRow());
+          }
         }
         break;
       case 2:
         // we need lots of Cell objects, so approximatively multiply by 2.
         for (int i = sObjList.get(aInd).size(); 
              i < (sMaxPoolSize * sCellCoeff); i++) {
-          sObjList.get(aInd).add((Object)new TColumnValue());
+          synchronized(sObjs) {
+            sObjList.get(aInd).add((Object)new TColumnValue());
+          }
         }
         break;
       case 3:
         for (int i = sObjList.get(aInd).size(); 
             i < (sMaxPoolSize * sCellCoeff); i++) {
-         sObjList.get(aInd).add((Object)new TStringValue());
+          synchronized(sObjs) {
+            sObjList.get(aInd).add((Object)new TStringValue());
+          }
        }
       default:
         break;
@@ -122,14 +131,16 @@ public class ObjectPool {
   
   public Object getObject(int aInd) {
     try {
+      Object sObj = null;
       // get(ind) : O(1)
       // remove first element : O(1)
       List<Object> sObjs = sObjList.get(aInd);
-      Object sObj = null;
       // TODO: Is there any lock-free linked-list?
       //       This looks very promising: http://concurrencykit.org/
       synchronized(sObjs) {
-        sObj = sObjs.remove(0);
+        if (sObjs.size() > 0) {
+          sObj = sObjs.remove(0);
+        }
       }
       return sObj;
     } catch (IndexOutOfBoundsException e) {
