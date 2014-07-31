@@ -15,6 +15,7 @@ import java.util.Scanner;
 import java.io.FileReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -330,7 +331,7 @@ public class QueryRunner {
               .write("-Avg latency(millis) : " + sumTime / successCnt + '\n');
           bwriter.write("-Min latency(millis) : " + minTime + '\n');
           bwriter.write("-Max latency(millis) : " + maxTime + '\n');
-          bwriter.write("-TPS                 : " + ((double)loopCnt/((double)sumTime/1000.)));
+          bwriter.write("-TPS                 : " + ((double)loopCnt/((double)sumTime/1000.)) + '\n');
         }
         
         totSuccessCnt.addAndGet(successCnt);
@@ -494,6 +495,9 @@ public class QueryRunner {
     // and finish all existing threads in the queue
     executor.shutdown();
     
+    if (!executor.awaitTermination(300, TimeUnit.SECONDS))
+      System.err.println("ERROR : ThreadPool did not terminate");
+    
     //
     // Summary test results
     //
@@ -505,7 +509,7 @@ public class QueryRunner {
       FileWriter fw = new FileWriter(file.getAbsolutePath());
       BufferedWriter summaryWriter = new BufferedWriter(fw);
       DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-      summaryWriter.write("#### Summary (" + dateFormat.format(new Date()) + " ####\n");
+      summaryWriter.write("#### Summary (" + dateFormat.format(new Date()) + ") ####\n");
       summaryWriter.write("1. requests : " + (totSuccessCnt.get() + totFailureCnt.get() +
           totWarmupCnt.get()) + '\n');
       summaryWriter.write("2. success  : " + totSuccessCnt.get() + '\n');
