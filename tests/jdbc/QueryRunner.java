@@ -41,7 +41,7 @@ public class QueryRunner {
   private static ExecType type = ExecType.SINGLE_QUERY;
   private static final int HIST_SIZE = 21;
   // fileds for summary info
-  private static final String summaryFileName = "summary.res";
+  private static String summaryFileName = "summary.res";
   private static AtomicLong totSuccessCnt = new AtomicLong(0L);
   private static AtomicLong totFailureCnt = new AtomicLong(0L);
   private static AtomicLong totWarmupCnt = new AtomicLong(0L);
@@ -405,54 +405,60 @@ public class QueryRunner {
       doExit();
     }
 
-    for (int i = 0; i < args.length; i++) {
-      if (args[i].equals("-query")) {
-        sQuery = args[++i];
-      } else if (args[i].equals("-urlprefix")) {
-        urlPrefix = args[++i];
-      } else if (args[i].equals("-urlpostfix")) {
-        urlPostfix = args[++i];
-      } else if (args[i].equals("-limit")) {
-        sLimit = " limit " + args[++i];
-      } else if (args[i].equals("-fetchsize")) {
-        isFetchsize = true;
-        fetchSize = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("-maxrows")) {
-        isMaxrows = true;
-        maxRows = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("-silence")) {
-        isSilence = true;
-      } else if (args[i].equals("-loopcnt")) {
-        loopCnt = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("-upper")) {
-        upperLimit = Long.parseLong(args[++i]);
-      } else if (args[i].equals("-histogram_interval")) {
-        histogramInerval = Long.parseLong(args[++i]);
-      }  else if (args[i].equals("-host")) {
-        sHost = args[++i];
-      }  else if (args[i].equals("-user")) {
-        sUser = args[++i];
-      } else if (args[i].equals("-port")) {
-        sPort = args[++i];
-      } else if (args[i].equals("-multiclients")) {
-        numThreads = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("-resultfilename")) {
-        sResFilePrefix = args[++i];
-      } else if (args[i].equals("-warmupcnt")) {
-        warmupCnt = Integer.parseInt(args[++i]);
-      } else if (args[i].equals("-pkquery")) {
-        pkQuery = args[++i];
-        type = ExecType.GEN_QUERY_BY_PK_QUERY;
-      } else if (args[i].equals("-pkfile")) {
-        pkFilePath = args[++i];
-        type = ExecType.GEN_QUERY_BY_PK_FILE;
-      } else if (args[i].equals("-jdbcclassname")) {
-        className = args[++i];
-      } else if (args[i].equals("-help")) {
-        doExit();
-      } else {
-        doExit();
+    try {
+      for (int i = 0; i < args.length; i++) {
+        if (args[i].equals("-query")) {
+          sQuery = args[++i];
+        } else if (args[i].equals("-urlprefix")) {
+          urlPrefix = args[++i];
+        } else if (args[i].equals("-urlpostfix")) {
+          urlPostfix = args[++i];
+        } else if (args[i].equals("-limit")) {
+          sLimit = " limit " + args[++i];
+        } else if (args[i].equals("-fetchsize")) {
+          isFetchsize = true;
+          fetchSize = Integer.parseInt(args[++i]);
+        } else if (args[i].equals("-maxrows")) {
+          isMaxrows = true;
+          maxRows = Integer.parseInt(args[++i]);
+        } else if (args[i].equals("-silence")) {
+          isSilence = true;
+        } else if (args[i].equals("-loopcnt")) {
+          loopCnt = Integer.parseInt(args[++i]);
+        } else if (args[i].equals("-upper")) {
+          upperLimit = Long.parseLong(args[++i]);
+        } else if (args[i].equals("-histogram_interval")) {
+          histogramInerval = Long.parseLong(args[++i]);
+        } else if (args[i].equals("-host")) {
+          sHost = args[++i];
+        } else if (args[i].equals("-user")) {
+          sUser = args[++i];
+        } else if (args[i].equals("-port")) {
+          sPort = args[++i];
+        } else if (args[i].equals("-multiclients")) {
+          numThreads = Integer.parseInt(args[++i]);
+        } else if (args[i].equals("-resultfilename")) {
+          sResFilePrefix = args[++i];
+        } else if (args[i].equals("-warmupcnt")) {
+          warmupCnt = Integer.parseInt(args[++i]);
+        } else if (args[i].equals("-pkquery")) {
+          pkQuery = args[++i];
+          type = ExecType.GEN_QUERY_BY_PK_QUERY;
+        } else if (args[i].equals("-pkfile")) {
+          pkFilePath = args[++i];
+          type = ExecType.GEN_QUERY_BY_PK_FILE;
+        } else if (args[i].equals("-jdbcclassname")) {
+          className = args[++i];
+        } else if (args[i].equals("-summaryfile")) {
+          summaryFileName = args[++i];
+        } else if (args[i].equals("-help")) {
+          doExit();
+        } else {
+          doExit();
+        }
       }
+    } catch (ArrayIndexOutOfBoundsException e) {
+      doExit();
     }
     
     if (sQuery.isEmpty() || sHost.isEmpty() || sPort.isEmpty() ||
@@ -513,41 +519,44 @@ public class QueryRunner {
       if (!file.exists()) {
         file.createNewFile();
       }
-      FileWriter fw = new FileWriter(file.getAbsolutePath());
+      FileWriter fw = new FileWriter(file.getAbsolutePath(), true);
       BufferedWriter summaryWriter = new BufferedWriter(fw);
       DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-      summaryWriter.write("#### Summary (" + dateFormat.format(new Date()) + ") ####\n");
-      summaryWriter.write("1. requests : " + (totSuccessCnt.get() + totFailureCnt.get() +
+      summaryWriter.append("#### Summary (" + dateFormat.format(new Date()) + ") ####\n");
+      String argset = "";
+      for(String elem:args){ argset += elem + " ";}
+      summaryWriter.append("0. command  : " + argset );
+      summaryWriter.append("1. requests : " + (totSuccessCnt.get() + totFailureCnt.get() +
           totWarmupCnt.get()) + '\n');
-      summaryWriter.write("2. success  : " + totSuccessCnt.get() + '\n');
-      summaryWriter.write("3. failed   : " + totFailureCnt.get() + '\n');
-      summaryWriter.write("4. warmup   : " + totWarmupCnt.get() + '\n');
+      summaryWriter.append("2. success  : " + totSuccessCnt.get() + '\n');
+      summaryWriter.append("3. failed   : " + totFailureCnt.get() + '\n');
+      summaryWriter.append("4. warmup   : " + totWarmupCnt.get() + '\n');
       if (totSuccessCnt.get() > 0) {
         summaryWriter
-            .write("5. Avg latency(millis) : " + totSumTime.get() / totSuccessCnt.get() + '\n');
-        summaryWriter.write("6. Min latency(millis) : " + totMinTime + '\n');
-        summaryWriter.write("7. Max latency(millis) : " + totMaxTime + '\n');
-        summaryWriter.write("8. TPS                 : " + 
+            .append("5. Avg latency(millis) : " + totSumTime.get() / totSuccessCnt.get() + '\n');
+        summaryWriter.append("6. Min latency(millis) : " + totMinTime + '\n');
+        summaryWriter.append("7. Max latency(millis) : " + totMaxTime + '\n');
+        summaryWriter.append("8. TPS                 : " + 
           ((double)(totSuccessCnt.get() + totFailureCnt.get())/((double)totMaxSumTime/1000.)) + '\n');
       }
 
       //
       // print latency histogram
       //
-      summaryWriter.write("9. Latency histogram\n");
+      summaryWriter.write("9. Latency histogram : time ranges(millis) and count\n");
       for (int i = 0; i < totHistogram.length; i++) {
         if (i == (totHistogram.length - 1)) {
-          summaryWriter.write(String.format("| %3d ~    |\n",
+          summaryWriter.append(String.format("| %3d ~    |\n",
               i * histogramInerval));
         } else {
-          summaryWriter.write(String.format("| %3d ~ %3d ",
+          summaryWriter.append(String.format("| %3d ~ %3d ",
               i * histogramInerval, histogramInerval * (i + 1) - 1));
         }
       }
       for (int i = 0; i < totHistogram.length; i++) {
-        summaryWriter.write(String.format("| %9d ", totHistogram[i]));
+        summaryWriter.append(String.format("| %9d ", totHistogram[i]));
       }
-      summaryWriter.write("|\n\n");
+      summaryWriter.append("|\n\n");
       summaryWriter.close();
     } catch (IOException e) {
       System.err.println("ERROR : Can't write a summary file :" + e);
@@ -620,6 +629,7 @@ public class QueryRunner {
                  "       -multiclients <thread_num>\n" +
                  "       -resultfilename <filename>\n" +
                  "       -warmupcnt <#cnt>\n" +
+                 "       -summaryfile <filename>\n" +
                  "       -silence\n");
     System.exit(1);
   }
