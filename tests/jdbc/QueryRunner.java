@@ -13,79 +13,397 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 import java.io.FileReader;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class QueryRunner {
-  static String gQuery = "";
+  private static String gQuery = "";
+  private static String sUrl = "";
+  private static String sUser ="";
+  private static String sResFilePrefix = "test.res";
+  private static boolean isFetchsize = false;
+  private static boolean isMaxrows = false;
+  private static boolean isSilence = false;
+  private static int fetchSize = 1024;
+  private static int maxRows = 1024;
+  private static int loopCnt = 1;
+  private static int numThreads = 1;
+  private static int warmupCnt = 0;
+  private static long upperLimit = 0;
+  private static long histogramInerval = 50;
+  private static List<String> pkCols = new ArrayList<String>(1000000);
+  private static ExecType type = ExecType.SINGLE_QUERY;
+  private static final int HIST_SIZE = 21;
+  // fileds for summary info
+  private static final String summaryFileName = "summary.res";
+  private static AtomicLong totSuccessCnt = new AtomicLong(0L);
+  private static AtomicLong totFailureCnt = new AtomicLong(0L);
+  private static AtomicLong totWarmupCnt = new AtomicLong(0L);
+  private static AtomicLong totSumTime = new AtomicLong(0L);
+  private static long totMaxTime = 0;
+  private static long totMinTime = 0;
+  private static long[] totHistogram = new long[HIST_SIZE];
 
-  static enum ConnType {
-    EDA_IMPALA, DAAS_IMPALA, EDA_HIVE, DAAS_PHOENIX,
+  private static enum ExecType {
+    SINGLE_QUERY, GEN_QUERY_BY_PK_FILE, GEN_QUERY_BY_PK_QUERY,
   }
-  
-  static Random randomGenerator = new Random();
-  
-  static String loadFilePath = "/home/1000632/jdbc_test/mbrid.res";
 
-  private static void loadDataFromFile(String aPath) {
-    int i = 0;
-    try {
-      Scanner in = new Scanner(new FileReader(aPath));
-      while (in.hasNext()) {
-        //gData[i++] = in.next();
+  private static class PerfTestWorker implements Runnable {
+    private int threadId;
+    
+    PerfTestWorker(int threadId) {
+      this.threadId = threadId;
+    }
+    
+    @Override
+    public void run() {
+      Random randomGenerator = new Random();
+      int  upperCnt = 0;
+      long startTime = 0;
+      long endTime = 0;
+      long totalTime = 0;
+      long sumTime = 0;
+      long successCnt = 0;
+      long failedCnt = 0;
+      long minTime = Long.MAX_VALUE;
+      long maxTime = 0;
+      List<Long> sProfile = new ArrayList<Long>();
+      long[] sHistogram = new long[HIST_SIZE];
+      String sQuery = "";
+      Connection con = null;
+      BufferedWriter bwriter = null;
+      try {
+        File file = new File(sResFilePrefix + "-" + threadId);
+        if (!file.exists()) {
+          file.createNewFile();
+        }
+        FileWriter fw = new FileWriter(file.getAbsolutePath());
+        bwriter = new BufferedWriter(fw);
+      } catch (IOException e) {
+        System.err.println("ERROR : Can't crete a file :" + e);
+        System.exit(1);
       }
-    } catch (Exception e) {
-      System.out.println("file read error" + e.getMessage());
+      
+      for (int idx = 1; idx <= loopCnt; idx++) {
+        try {
+          if (gQuery.isEmpty()) {
+            System.err.println("ERROR : no query info");
+            doExit();
+          } else {
+            sQuery = gQuery;
+            if (type == ExecType.GEN_QUERY_BY_PK_FILE || type == ExecType.GEN_QUERY_BY_PK_QUERY) {
+              String pkval = pkCols.get(randomGenerator.nextInt(pkCols.size()));
+              sQuery = sQuery.replace("?", pkval);
+            }
+          }
+          
+          //
+          // Connect to DB server
+          //
+          bwriter.write("Connecting...\n");
+          startTime = System.currentTimeMillis();
+          con = DriverManager.getConnection(sUrl, sUser.isEmpty()?null:sUser, null);
+          endTime = System.currentTimeMillis();
+          sProfile.add(endTime - startTime);
+
+          //
+          // Create stmt
+          //
+          startTime = System.currentTimeMillis();
+          Statement stmt = con.createStatement();
+          endTime = System.currentTimeMillis();
+          sProfile.add(endTime - startTime);
+
+          //if (isMaxrows == true) {
+          //  stmt.setMaxRows(maxRows);
+          //}
+          //if (isFetchsize == true) {
+          //  stmt.setFetchSize(fetchSize);
+          //}
+
+          //
+          // Exec query
+          //
+          bwriter.write("Executing...\n");
+          startTime = System.currentTimeMillis();
+          boolean isSelect = stmt.execute(sQuery);
+          //ResultSet rs = stmt.execute(sQuery + sLimit);
+          endTime = System.currentTimeMillis();
+          sProfile.add(endTime - startTime);
+
+          // case of insert/ddl query
+          if (isSelect == false) {
+            // dummy insert
+            sProfile.add(0L);
+            sProfile.add(0L);
+          }
+          
+          if (isSelect) {
+            bwriter.write("Fetching results...\n");
+            bwriter.write("---------Print the results---------\n");
+            //
+            // getMetadata
+            //
+            startTime = System.currentTimeMillis();
+            ResultSet rs = stmt.getResultSet();
+            ResultSetMetaData rsmd = rs.getMetaData();
+
+            /* Print col names */
+            int sColCnt = rsmd.getColumnCount();
+            if (!isSilence) {
+              String sColnames = "";
+              for (int i = 1; i <= sColCnt; i++) {
+                sColnames += rsmd.getColumnName(i);
+                sColnames += "  ";
+              }
+              bwriter.write(sColnames + '\n');
+            }
+
+            endTime = System.currentTimeMillis();
+            sProfile.add(endTime - startTime);
+
+            //
+            // Fetch rows
+            //
+            startTime = System.currentTimeMillis();
+            /*
+             * boolean last = rs.last(); int rowcount = rs.getRow();
+             * System.out.println("LAST = " + last + ", ROWCNT = " + rowcount);
+             */
+
+            while (rs.next()) {
+              for (int i = 1; i <= sColCnt; i++) {
+                int type = rsmd.getColumnType(i);
+                switch (type) {
+                  case Types.VARCHAR:
+                  case Types.CHAR:
+                    if (!isSilence) {
+                      bwriter.write(rs.getString(i));
+                    } else {
+                      rs.getString(i);
+                    }
+                    break;
+                  case Types.BIGINT:
+                    if (!isSilence) {
+                      bwriter.write(String.valueOf(rs.getLong(i)));
+                    } else {
+                      rs.getLong(i);
+                    }
+                    break;
+                  case Types.INTEGER:
+                  case Types.TINYINT:
+                    if (!isSilence) {
+                      bwriter.write(String.valueOf(rs.getInt(i)));
+                    } else {
+                      rs.getInt(i);
+                    }
+                    break;
+                  case Types.FLOAT:
+                  case Types.DOUBLE:
+                    if (!isSilence) {
+                      bwriter.write(String.valueOf(rs.getDouble(i)));
+                    } else {
+                      rs.getDouble(i);
+                    }
+                    break;
+                }
+
+                if (!isSilence) {
+                  bwriter.write("  ");
+                }
+              }
+              if (!isSilence) {
+                bwriter.write('\n');
+              }
+            }
+            endTime = System.currentTimeMillis();
+            sProfile.add(endTime - startTime);
+            bwriter.write("-----------------------------------\n");
+          }
+          
+          //
+          // Close
+          //
+          bwriter.write("Closing...\n");
+          startTime = System.currentTimeMillis();
+          stmt.close();
+          con.close();
+          endTime = System.currentTimeMillis();
+          sProfile.add(endTime - startTime);
+          con = null;
+          
+          if (warmupCnt >= idx) {
+            bwriter.write("# A WARMING UP TX\n");
+            sProfile.clear();
+            continue;
+          }
+          
+          for (int i = 0; i < sProfile.size(); i++) {
+            totalTime += sProfile.get(i);
+          }
+          sumTime += totalTime;
+          successCnt++;
+          
+          if (maxTime < totalTime)
+            maxTime = totalTime;
+          if (minTime > totalTime)
+            minTime = totalTime;
+          
+          if (totalTime < 1000) {
+            sHistogram[(int)(totalTime/histogramInerval)] += 1;
+          } else {
+            sHistogram[20] += 1;
+          }
+
+          if (totalTime > upperLimit) {
+            upperCnt++;
+            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            bwriter.write(dateFormat.format(new Date()) + ": #" + upperCnt +" TX PROFILE info.\n" +
+                               "  -Query : " + sQuery + '\n');
+            for (int i = 0; i < sProfile.size(); i++) {
+              switch (i) {
+                case 0:
+                  bwriter.write("    -Connection time elapsed : "
+                    + sProfile.get(i) + "ms\n");
+                break;
+                case 1:
+                  bwriter.write("    -Get Stmt time elapsed : "
+                    + sProfile.get(i) + "ms\n");
+                break;
+                case 2:
+                  bwriter.write("    -ExecuteQuery time elapsed : "
+                    + sProfile.get(i) + "ms\n");
+                break;
+                case 3:
+                  bwriter.write("    -GetMeta time elapsed : "
+                    + sProfile.get(i) + "ms\n");
+                break;
+                case 4:
+                  bwriter.write("    -Fetch time elapsed : "
+                    + sProfile.get(i) + "ms\n");
+                break;
+                case 5:
+                  bwriter.write("    -Close time elapsed : "
+                    + sProfile.get(i) + "ms\n");
+                break;
+              }
+            }
+            bwriter.write("    >>Total time elapsed :" + totalTime + "ms\n");
+          }
+        } catch (SQLException e) {
+          System.err.println("ERROR : SQL exception occured" + e);
+          failedCnt++;
+        } catch (IOException e) {
+          System.err.println("ERROR : Can't write data to the file :" + e);
+          System.exit(1);
+        }
+        finally {
+          try {
+            bwriter.write("Finalizing...\n");
+            if (con != null) {
+              con.close();
+            }
+            sProfile.clear();
+            totalTime = 0;
+          } catch (SQLException e) {
+            System.err.println("ERROR : SQL exception occured" + e);
+          } catch (IOException e) {
+            System.err.println("ERROR : Can't write data to the file :" + e);
+            System.exit(1);
+          }
+        }
+      }
+      
+      try {
+        bwriter.write("#### Summary ####\n");
+        bwriter.write("-# requests : " + loopCnt + '\n');
+        bwriter.write("-# success  : " + successCnt + '\n');
+        bwriter.write("-# failed   : " + failedCnt + '\n');
+        bwriter.write("-# warmup   : " + warmupCnt + '\n');
+        if (successCnt > 0) {
+          bwriter
+              .write("-Avg latency(millis) : " + sumTime / successCnt + '\n');
+          bwriter.write("-Min latency(millis) : " + minTime + '\n');
+          bwriter.write("-Max latency(millis) : " + maxTime + '\n');
+          bwriter.write("-TPS                 : " + ((double)loopCnt/((double)sumTime/1000.)));
+        }
+        
+        totSuccessCnt.addAndGet(successCnt);
+        totFailureCnt.addAndGet(failedCnt);
+        totWarmupCnt.addAndGet(warmupCnt);
+        totSumTime.addAndGet(sumTime);
+        setTotMinTime(minTime);
+        setTotMaxTime(maxTime);
+
+        //
+        // print latency histogram
+        //
+        bwriter.write("#### Latency histogram ####\n");
+        for (int i = 0; i < sHistogram.length; i++) {
+          if (i == (sHistogram.length - 1)) {
+            bwriter.write(String.format("| %3d ~    |\n",
+                i * histogramInerval));
+          } else {
+            bwriter.write(String.format("| %3d ~ %3d ",
+                i * histogramInerval, histogramInerval * (i + 1) - 1));
+          }
+        }
+        for (int i = 0; i < sHistogram.length; i++) {
+          bwriter.write(String.format("| %9d ", sHistogram[i]));
+        }
+        addTotHistogram(sHistogram);
+        bwriter.write("|\n");
+        bwriter.close();
+      } catch (IOException e) {
+        System.err.println("ERROR : Can't crete a file :" + e);
+        System.exit(1);
+      }
+    }
+    
+    private static synchronized void setTotMinTime(long val) {
+      if (totMinTime > val)
+        totMinTime = val;
+    }
+    
+    private static synchronized void setTotMaxTime(long val) {
+      if (totMaxTime < val)
+        totMaxTime = val;
+    }
+    
+    private static synchronized void addTotHistogram(long vals[]) {
+      for(int i = 0; i < vals.length; i++) {
+        totHistogram[i] += vals[i];
+      }
     }
   }
   
   public static void main(String[] args) throws InterruptedException {
-    String sLimit = "";
-    String sUrl = "";
-    String sHost = "localhost";
-    String sUser ="";
-    int fetchSize = 1024;
-    int maxRows = 1024;
-    int loopCnt = 1;
-    int upperCnt = 0;
-    boolean isFetchsize = false;
-    boolean isMaxrows = false;
-    boolean isSilence = false;
-    long startTime = 0;
-    long endTime = 0;
-    long totalTime = 0;
-    long sumTime = 0;
-    long upperLimit = 0;
-    long histogramInerval = 50;
-    long successCnt = 0;
-    long failedCnt = 0;
-    long minTime = Long.MAX_VALUE;
-    long maxTime = 0;
-    String sPort = "8655";
+    String urlPrefix = "";
+    String urlPostfix = "";
     String sQuery = "";
-    ConnType sConnType = ConnType.EDA_IMPALA;
-    List<Long> sProfile = new ArrayList<Long>();
-    long[] sHistogram = new long[21];
-    Connection con = null;
-
+    String pkQuery = "";
+    String pkFilePath = "";
+    String sLimit = "";
+    String sHost = "localhost";
+    String sPort = "";
+    String className = "com.skplanet.querycache.jdbc.QCDriver";
+    
     if (args.length < 2) {
       doExit();
     }
 
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-query")) {
-        gQuery = args[++i];
-      } else if (args[i].equals("-type")) {
-        String type = args[++i];
-        if (type.equals("eda-impala")) {
-          sConnType = ConnType.EDA_IMPALA;
-        } else if (type.equals("daas-impala")) {
-          sConnType = ConnType.DAAS_IMPALA;
-        } else if (type.equals("eda-hive")) {
-          sConnType = ConnType.EDA_HIVE;
-        } else if (type.equals("daas-phoenix")) {
-          sConnType = ConnType.DAAS_PHOENIX;
-        } else {
-          doExit();
-        }
+        sQuery = args[++i];
+      } else if (args[i].equals("-urlprefix")) {
+        urlPrefix = args[++i];
+      } else if (args[i].equals("-urlpostfix")) {
+        urlPostfix = args[++i];
       } else if (args[i].equals("-limit")) {
         sLimit = " limit " + args[++i];
       } else if (args[i].equals("-fetchsize")) {
@@ -108,6 +426,20 @@ public class QueryRunner {
         sUser = args[++i];
       } else if (args[i].equals("-port")) {
         sPort = args[++i];
+      } else if (args[i].equals("-multiclients")) {
+        numThreads = Integer.parseInt(args[++i]);
+      } else if (args[i].equals("-resultfilename")) {
+        sResFilePrefix = args[++i];
+      } else if (args[i].equals("-warmupcnt")) {
+        warmupCnt = Integer.parseInt(args[++i]);
+      } else if (args[i].equals("-pkquery")) {
+        pkQuery = args[++i];
+        type = ExecType.GEN_QUERY_BY_PK_QUERY;
+      } else if (args[i].equals("-pkfile")) {
+        pkFilePath = args[++i];
+        type = ExecType.GEN_QUERY_BY_PK_FILE;
+      } else if (args[i].equals("-jdbcclassname")) {
+        className = args[++i];
       } else if (args[i].equals("-help")) {
         doExit();
       } else {
@@ -115,289 +447,158 @@ public class QueryRunner {
       }
     }
     
-    if (sHost.isEmpty()) {
+    if (sQuery.isEmpty() || sHost.isEmpty() || sPort.isEmpty() ||
+        numThreads < 1 || urlPrefix.isEmpty()) {
       doExit();
     }
+    
+    //
+    // set query
+    //
+    gQuery = sQuery + sLimit;
 
+    //
+    // load a specific jdbc driver
+    //
     try {
-      Class.forName("com.skplanet.querycache.jdbc.QCDriver");
+      Class.forName(className);
     } catch (ClassNotFoundException e) {
       System.out.println("Class not found " + e);
     }
 
-    switch (sConnType) {
-      case EDA_IMPALA:
-        sUrl = "jdbc:eda-impala://" + sHost + ":" + sPort;
+    //
+    // make the url string
+    //
+    sUrl = urlPrefix + sHost + ":" + sPort + "/" + urlPostfix;
+    
+    //
+    // pre-execute phase : run the pk query to get pk column values
+    //
+    switch (type) {
+      case GEN_QUERY_BY_PK_QUERY:
+        loadPKColumnByQuery(pkQuery);
         break;
-      case DAAS_IMPALA:
-        sUrl = "jdbc:daas-impala://" + sHost + ":" + sPort;
-        break;
-      case EDA_HIVE:
-        sUrl = "jdbc:eda-hive://" + sHost + ":" + sPort;
-        break;
-      case DAAS_PHOENIX:
-        // sUrl = "jdbc:bdb://127.0.0.1:8655";
-        sUrl = "jdbc:daas-phoenix://" + sHost + ":" + sPort;
+      case GEN_QUERY_BY_PK_FILE:
+        loadPKColumnByFile(pkFilePath);
         break;
       default:
         break;
     }
 
-    for (int idx = 1; idx <= loopCnt; idx++) {
-      try {
-        if (gQuery.isEmpty()) {
-          // generate query
-          sQuery = "SELECT BNFT_VALUE FROM SW_CUST_BENEFIT WHERE MBR_ID= '" +
-            randomGenerator.nextInt(24000000) + "'";
-        } else {
-          sQuery = gQuery;
-        }
-        
-        //
-        // Connect to Querycache server
-        //
-        System.out.println("Connecting...");
-        startTime = System.currentTimeMillis();
-        con = DriverManager.getConnection(sUrl, sUser.isEmpty()?null:sUser, null);
-        endTime = System.currentTimeMillis();
-        sProfile.add(endTime - startTime);
-
-        //
-        // Create stmt
-        //
-        startTime = System.currentTimeMillis();
-        Statement stmt = con.createStatement();
-        endTime = System.currentTimeMillis();
-        sProfile.add(endTime - startTime);
-
-        //if (isMaxrows == true) {
-        //  stmt.setMaxRows(maxRows);
-        //}
-        //if (isFetchsize == true) {
-        //  stmt.setFetchSize(fetchSize);
-        //}
-
-        //
-        // Exec query
-        //
-        System.out.println("Executing...");
-        startTime = System.currentTimeMillis();
-        boolean isSelect = stmt.execute(sQuery + sLimit);
-        //ResultSet rs = stmt.execute(sQuery + sLimit);
-        endTime = System.currentTimeMillis();
-        sProfile.add(endTime - startTime);
-
-        // case of insert/ddl query
-        if (isSelect == false) {
-          // dummy insert
-          sProfile.add(0L);
-          sProfile.add(0L);
-        }
-        
-        if (isSelect) {
-          System.out.println("Fetching results...");
-          System.out.println("---------Print the results---------");
-          //
-          // getMetadata
-          //
-          startTime = System.currentTimeMillis();
-          ResultSet rs = stmt.getResultSet();
-          ResultSetMetaData rsmd = rs.getMetaData();
-
-          /* Print col names */
-          int sColCnt = rsmd.getColumnCount();
-          if (!isSilence) {
-            String sColnames = "";
-            if (!isSilence) {
-              for (int i = 1; i <= sColCnt; i++) {
-                sColnames += rsmd.getColumnName(i);
-                sColnames += "  ";
-              }
-              System.out.println(sColnames);
-            }
-          }
-
-          endTime = System.currentTimeMillis();
-          sProfile.add(endTime - startTime);
-
-          //
-          // Fetch rows
-          //
-          startTime = System.currentTimeMillis();
-          /*
-           * boolean last = rs.last(); int rowcount = rs.getRow();
-           * System.out.println("LAST = " + last + ", ROWCNT = " + rowcount);
-           */
-
-          while (rs.next()) {
-            for (int i = 1; i <= sColCnt; i++) {
-              int type = rsmd.getColumnType(i);
-              /*
-               * if (!isSilence) {System.out.print(rs.getString("i1"));} else
-               * {rs.getString("i1");} if (!isSilence) {System.out.print("  ");}
-               * if (!isSilence) {System.out.print(rs.getString("i2"));} else
-               * {rs.getString("j2");}
-               */
-              switch (type) {
-                case Types.VARCHAR:
-                case Types.CHAR:
-                  if (!isSilence) {
-                    System.out.print(rs.getString(i));
-                  } else {
-                    rs.getString(i);
-                  }
-                  break;
-                case Types.BIGINT:
-                  if (!isSilence) {
-                    System.out.print(rs.getLong(i));
-                  } else {
-                    rs.getLong(i);
-                  }
-                  break;
-                case Types.INTEGER:
-                case Types.TINYINT:
-                  if (!isSilence) {
-                    System.out.print(rs.getInt(i));
-                  } else {
-                    rs.getInt(i);
-                  }
-                  break;
-                case Types.FLOAT:
-                case Types.DOUBLE:
-                  if (!isSilence) {
-                    System.out.print(rs.getDouble(i));
-                  } else {
-                    rs.getDouble(i);
-                  }
-                  break;
-              }
-
-              if (!isSilence) {
-                System.out.print("  ");
-              }
-            }
-            if (!isSilence) {
-              System.out.println();
-            }
-          }
-          endTime = System.currentTimeMillis();
-          sProfile.add(endTime - startTime);
-          System.out.println("-----------------------------------");
-        }
-        
-        //
-        // Close
-        //
-        System.out.println("Closing...");
-        startTime = System.currentTimeMillis();
-        stmt.close();
-        con.close();
-        endTime = System.currentTimeMillis();
-        sProfile.add(endTime - startTime);
-        con = null;
-
-        for (int i = 0; i < sProfile.size(); i++) {
-          totalTime += sProfile.get(i);
-        }
-        sumTime += totalTime;
-        successCnt++;
-        
-        if (maxTime < totalTime)
-          maxTime = totalTime;
-        if (minTime > totalTime)
-          minTime = totalTime;
-        
-        if (totalTime < 1000) {
-          sHistogram[(int)(totalTime/histogramInerval)] += 1;
-        } else {
-          sHistogram[20] += 1;
-        }
-
-        if (totalTime > upperLimit) {
-          upperCnt++;
-          DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-          System.out.println(dateFormat.format(new Date()) + ": #" + upperCnt +" TX PROFILE info.\n" +
-                             "  -Query : " + sQuery);
-          for (int i = 0; i < sProfile.size(); i++) {
-            switch (i) {
-              case 0:
-              System.out.println("    -Connection time elapsed : "
-                  + sProfile.get(i) + "ms");
-              break;
-              case 1:
-              System.out.println("    -Get Stmt time elapsed : "
-                  + sProfile.get(i) + "ms");
-              break;
-              case 2:
-              System.out.println("    -ExecuteQuery time elapsed : "
-                  + sProfile.get(i) + "ms");
-              break;
-              case 3:
-              System.out.println("    -GetMeta time elapsed : "
-                  + sProfile.get(i) + "ms");
-              break;
-              case 4:
-              System.out.println("    -Fetch time elapsed : "
-                  + sProfile.get(i) + "ms");
-              break;
-              case 5:
-              System.out.println("    -Close time elapsed : "
-                  + sProfile.get(i) + "ms");
-              break;
-            }
-          }
-          System.out.println("    >>Total time elapsed :" + totalTime + "ms");
-        }
-      } catch (SQLException e) {
-        System.out.println("SQL exception occured" + e);
-        failedCnt++;
-      } finally {
-        System.out.println("Finalizing...");
-        try {
-          if (con != null) {
-            con.close();
-          }
-          sProfile.clear();
-          totalTime = 0;
-        } catch (SQLException e) {
-          System.out.println("SQL exception occured" + e);
-        }
-      }
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    for (int i = 0; i < numThreads; i++) {
+      Runnable worker = new PerfTestWorker(i+1);
+      executor.execute(worker);
     }
-    
-    System.out.println("#### Summary ####");
-    System.out.println("-# requests : " + loopCnt);
-    System.out.println("-# success  : " + successCnt);
-    System.out.println("-# failed   : " + failedCnt);
-    if (successCnt > 0) {
-      System.out.println("-Avg latency(millis) : " + sumTime/successCnt);
-      System.out.println("-Min latency(millis) : " + minTime);
-      System.out.println("-Max latency(millis) : " + maxTime);
-    }
+    // This will make the executor accept no new threads
+    // and finish all existing threads in the queue
+    executor.shutdown();
     
     //
-    // print latency histogram
+    // Summary test results
     //
-    System.out.println("#### Latency histogram ####");
-    for (int i = 0; i < sHistogram.length; i++) {
-      if (i == (sHistogram.length - 1)) {
-        System.out.format("| %3d ~    |\n", i*histogramInerval);
-      } else {
-        System.out.format("| %3d ~ %3d ", i*histogramInerval, histogramInerval*(i+1)-1);
+    try {
+      File file = new File(summaryFileName);
+      if (!file.exists()) {
+        file.createNewFile();
       }
+      FileWriter fw = new FileWriter(file.getAbsolutePath());
+      BufferedWriter summaryWriter = new BufferedWriter(fw);
+      DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+      summaryWriter.write("#### Summary (" + dateFormat.format(new Date()) + " ####\n");
+      summaryWriter.write("1. requests : " + (totSuccessCnt.get() + totFailureCnt.get() +
+          totWarmupCnt.get()) + '\n');
+      summaryWriter.write("2. success  : " + totSuccessCnt.get() + '\n');
+      summaryWriter.write("3. failed   : " + totFailureCnt.get() + '\n');
+      summaryWriter.write("4. warmup   : " + totWarmupCnt.get() + '\n');
+      if (totSuccessCnt.get() > 0) {
+        summaryWriter
+            .write("5. Avg latency(millis) : " + totSumTime.get() / totSuccessCnt.get() + '\n');
+        summaryWriter.write("6. Min latency(millis) : " + totMinTime + '\n');
+        summaryWriter.write("7. Max latency(millis) : " + totMaxTime + '\n');
+        summaryWriter.write("8. TPS                 : " + ((double)(totSuccessCnt.get() + totFailureCnt.get() +
+            totWarmupCnt.get())/((double)totSumTime.get()/1000.)));
+      }
+
+      //
+      // print latency histogram
+      //
+      summaryWriter.write("9. Latency histogram\n");
+      for (int i = 0; i < totHistogram.length; i++) {
+        if (i == (totHistogram.length - 1)) {
+          summaryWriter.write(String.format("| %3d ~    |\n",
+              i * histogramInerval));
+        } else {
+          summaryWriter.write(String.format("| %3d ~ %3d ",
+              i * histogramInerval, histogramInerval * (i + 1) - 1));
+        }
+      }
+      for (int i = 0; i < totHistogram.length; i++) {
+        summaryWriter.write(String.format("| %9d ", totHistogram[i]));
+      }
+      summaryWriter.write("|\n\n");
+      summaryWriter.close();
+    } catch (IOException e) {
+      System.err.println("ERROR : Can't write a summary file :" + e);
+      System.exit(1);
     }
-    for (int i = 0; i < sHistogram.length; i++) {
-      System.out.format("| %9d ", sHistogram[i]);
-    }
-    System.out.print("|\n");
+    
+    System.out.println("Finished all threads");
   }
 
+  private static void loadPKColumnByQuery(String prepareQuery) {
+    Connection connection = null;
+    Statement  statement = null;
+
+    try {
+      connection = DriverManager.getConnection(sUrl);
+      statement = connection.createStatement();
+      ResultSet resultSet = statement.executeQuery(prepareQuery);
+      while (resultSet.next()) {
+        pkCols.add(resultSet.getString(1));
+      }   
+      System.out.println("-the num of PK columns = " + pkCols.size());
+    } catch (SQLException e) {
+      System.err.println("ERROR : Pk query execution failed.");
+      e.printStackTrace();
+      System.exit(1);
+    } finally {
+      try {
+        if (statement != null) {
+          statement.close();
+        }   
+        if (connection != null) {
+          connection.close();
+        }   
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private static void loadPKColumnByFile(String aPath) {
+    try {
+      Scanner in = new Scanner(new FileReader(aPath));
+      while (in.hasNext()) {
+        pkCols.add(in.next());
+      }
+      in.close();
+      System.out.println("-the num of PK columns = " + pkCols.size());
+    } catch (Exception e) {
+      System.err.println("ERROR : file read error" + e.getMessage());
+      System.exit(1);
+    }
+  }
+  
   private static void doExit() {
     System.out
-        .println("Usage: -type [daas-impala|eda-impala|eda-hive|daas-phoenix]\n" +
+        .println("Usage: -urlprefix <name(e.g. hive, mysql, phoenix)>\n" +
                  "       -query <query_str>\n" +
+                 "       -jdbcclassname <fullclassname>\n" +
                  "       -limit <limit_cnt>\n" +
                  "       -loopcnt <#cnt>\n" + 
+                 "       -pkquery <pkquery_str>\n" +
+                 "       -pkfile <pkfile_path>\n" +
                  "       -upper <num(millisec)>\n" +
                  "       -fetchsize <fetch_num>\n" +
                  "       -maxrows <maxrow_num>\n" +
@@ -405,8 +606,10 @@ public class QueryRunner {
                  "       -histogram_interval <time_milli>\n" +
                  "       -user <user_id>\n" +
                  "       -port <port_num>\n" +
-                 "       -silence");
+                 "       -multiclients <thread_num>\n" +
+                 "       -resultfilename <filename>\n" +
+                 "       -warmupcnt <#cnt>\n" +
+                 "       -silence\n");
     System.exit(1);
   }
 }
-
