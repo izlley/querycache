@@ -46,6 +46,7 @@ public class QueryRunner {
   private static AtomicLong totFailureCnt = new AtomicLong(0L);
   private static AtomicLong totWarmupCnt = new AtomicLong(0L);
   private static AtomicLong totSumTime = new AtomicLong(0L);
+  private static long totMaxSumTime = 0;
   private static long totMaxTime = 0;
   private static long totMinTime = 0;
   private static long[] totHistogram = new long[HIST_SIZE];
@@ -338,6 +339,7 @@ public class QueryRunner {
         totFailureCnt.addAndGet(failedCnt);
         totWarmupCnt.addAndGet(warmupCnt);
         totSumTime.addAndGet(sumTime);
+        setTotMaxSumTime(sumTime);
         setTotMinTime(minTime);
         setTotMaxTime(maxTime);
 
@@ -374,6 +376,11 @@ public class QueryRunner {
     private static synchronized void setTotMaxTime(long val) {
       if (totMaxTime < val)
         totMaxTime = val;
+    }
+    
+    private static synchronized void setTotMaxSumTime(long val) {
+      if (totMaxSumTime < val)
+        totMaxSumTime = val;
     }
     
     private static synchronized void addTotHistogram(long vals[]) {
@@ -520,8 +527,8 @@ public class QueryRunner {
             .write("5. Avg latency(millis) : " + totSumTime.get() / totSuccessCnt.get() + '\n');
         summaryWriter.write("6. Min latency(millis) : " + totMinTime + '\n');
         summaryWriter.write("7. Max latency(millis) : " + totMaxTime + '\n');
-        summaryWriter.write("8. TPS                 : " + ((double)(totSuccessCnt.get() + totFailureCnt.get() +
-            totWarmupCnt.get())/((double)totSumTime.get()/1000.)) + '\n');
+        summaryWriter.write("8. TPS                 : " + 
+          ((double)(totSuccessCnt.get() + totFailureCnt.get())/((double)totMaxSumTime/1000.)) + '\n');
       }
 
       //
