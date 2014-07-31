@@ -521,7 +521,7 @@ public class QueryRunner {
         summaryWriter.write("6. Min latency(millis) : " + totMinTime + '\n');
         summaryWriter.write("7. Max latency(millis) : " + totMaxTime + '\n');
         summaryWriter.write("8. TPS                 : " + ((double)(totSuccessCnt.get() + totFailureCnt.get() +
-            totWarmupCnt.get())/((double)totSumTime.get()/1000.)));
+            totWarmupCnt.get())/((double)totSumTime.get()/1000.)) + '\n');
       }
 
       //
