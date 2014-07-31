@@ -525,7 +525,7 @@ public class QueryRunner {
       summaryWriter.append("#### Summary (" + dateFormat.format(new Date()) + ") ####\n");
       String argset = "";
       for(String elem:args){ argset += elem + " ";}
-      summaryWriter.append("0. command  : " + argset );
+      summaryWriter.append("0. command  : " + argset + '\n' );
       summaryWriter.append("1. requests : " + (totSuccessCnt.get() + totFailureCnt.get() +
           totWarmupCnt.get()) + '\n');
       summaryWriter.append("2. success  : " + totSuccessCnt.get() + '\n');
