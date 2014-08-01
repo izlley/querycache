@@ -48,7 +48,7 @@ public class QueryRunner {
   private static AtomicLong totSumTime = new AtomicLong(0L);
   private static long totMaxSumTime = 0;
   private static long totMaxTime = 0;
-  private static long totMinTime = 0;
+  private static long totMinTime = Long.MAX_VALUE;
   private static long[] totHistogram = new long[HIST_SIZE];
 
   private static enum ExecType {
@@ -483,7 +483,7 @@ public class QueryRunner {
     //
     // make the url string
     //
-    sUrl = urlPrefix + sHost + ":" + sPort + "/" + urlPostfix;
+    sUrl = urlPrefix + sHost + ":" + sPort + urlPostfix;
     
     //
     // pre-execute phase : run the pk query to get pk column values
@@ -612,7 +612,8 @@ public class QueryRunner {
   
   private static void doExit() {
     System.out
-        .println("Usage: -urlprefix <name(e.g. hive, mysql, phoenix)>\n" +
+        .println("Usage: -urlprefix <url_string_prefix>\n" +
+                 "       -urlpostfix <url_string_postfix>\n" +
                  "       -query <query_str>\n" +
                  "       -jdbcclassname <fullclassname>\n" +
                  "       -limit <limit_cnt>\n" +
