@@ -121,12 +121,12 @@ public class QueryRunner {
           endTime = System.currentTimeMillis();
           sProfile.add(endTime - startTime);
 
-          //if (isMaxrows == true) {
-          //  stmt.setMaxRows(maxRows);
-          //}
-          //if (isFetchsize == true) {
-          //  stmt.setFetchSize(fetchSize);
-          //}
+          if (isMaxrows == true) {
+            stmt.setMaxRows(maxRows);
+          }
+          if (isFetchsize == true) {
+            stmt.setFetchSize(fetchSize);
+          }
 
           //
           // Exec query
