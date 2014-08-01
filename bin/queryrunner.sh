@@ -51,6 +51,10 @@ export QC_CONF_DIR=$QC_HOME/conf
 export QC_LIB_DIR=$QC_HOME/lib
 export PATH=$QC_HOME/bin:$PATH
 
+for jar in `ls ${QC_LIB_DIR}/driver/*.jar`; do
+      CLASSPATH=${CLASSPATH}:$jar
+done
+
 CLASSPATH=$QC_HOME/examples:$QC_HOME/lib:$CLASSPATH
 CLASSPATH=${QC_LIB_DIR}/querycache-jdbc-0.10.0.jar:${QC_LIB_DIR}/slf4j-api-1.6.4.jar:${QC_LIB_DIR}/commons-logging-1.0.4.jar:${QC_LIB_DIR}/slf4j-simple-1.6.4.jar:${CLASSPATH}
 export CLASSPATH
