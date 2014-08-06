@@ -20,6 +20,8 @@ import com.skplanet.querycache.server.auth.Privilege;
  */
 public class Analyzer {
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
+  public static final Logger authzAuditLog = LoggerFactory
+      .getLogger(Analyzer.class.getName() + ".authzAudit");
   private String stmt_;
   private final String user_;
   private final String connType_;
@@ -51,7 +53,7 @@ public class Analyzer {
     try {
       analResult.queryStmt_ = (QueryStmt) parser.parse().value;
       if (analResult.queryStmt_ == null) return;
-      LOG.info("User=" + user_ + ", QueryStmt: QueryType=" + analResult.queryStmt_.type.toString() +
+      LOG.debug("User=" + user_ + ", QueryStmt: QueryType=" + analResult.queryStmt_.type.toString() +
              ", [limit,filter,nested,join,with,invalidateall]=[" + analResult.queryStmt_.isLimit+","+
              analResult.queryStmt_.isFilterCond+","+analResult.queryStmt_.isNested+","+analResult.queryStmt_.isJoin+
              ","+analResult.queryStmt_.isWith+","+analResult.queryStmt_.isInvalidateAll+"]"+
@@ -78,47 +80,84 @@ public class Analyzer {
   void checkAuthorization(Analyzer.AnalysisResult analResult)
       throws AuthorizationException {
     Preconditions.checkNotNull(analResult.queryStmt_);
-    
+    String authzlog = "";
+    String auditquery = stmt_.replace('\t',' ').replace('\n',' ');
     PrivilegeRequestBuilder pb = new PrivilegeRequestBuilder();
     AuthorizationLoader authLoader = connMgr_.getAuthLoader(connType_);
     
-    // 1. check Datastore privilege
-    for (Map.Entry<String, Privilege> ds : analResult.queryStmt_.dataStoreRefs) {
-      authLoader.checkAccess(user_, pb.onServer(ds.getKey()).allOf(ds.getValue()).toRequest());
-    }
-    pb.clear();
-    // 2. check Database privilege
-    for (Map.Entry<DatabaseName, Privilege> db : analResult.queryStmt_.databaseRefs) {
-      authLoader.checkAccess(user_, pb.onDb(db.getKey().getDb())
-        .allOf(db.getValue()).toRequest());
-    }
-    pb.clear();
-    // 3. check Table privilege
-    for (Map.Entry<TableName, Privilege> table : analResult.queryStmt_.tableRefs) {
-      if (analResult.queryStmt_.withRefs.contains(table.getKey().getTable()) &&
-          table.getKey().getDb().equals("default"))
-        continue;
-      authLoader.checkAccess(user_, pb.onTable(table.getKey().getDb(), table.getKey().getTable())
-        .allOf(table.getValue()).toRequest());
-    }
-    pb.clear();
-    // 4. check View privilege
-    for (Map.Entry<TableName, Privilege> vw : analResult.queryStmt_.viewRefs) {
-      authLoader.checkAccess(user_, pb.onTable(vw.getKey().getDb(), vw.getKey().getTable())
-        .allOf(vw.getValue()).toRequest());
-    }
-    pb.clear();
-    // 5. check Function privilege
-    for (Map.Entry<FuncName, Privilege> func : analResult.queryStmt_.functionRefs) {
-      if (!authLoader.isUDFExist(func.getKey().getFunc()))
-        continue;
-      authLoader.checkAccess(user_, pb.onFunction(func.getKey().getDb(), func.getKey().getFunc())
-        .allOf(func.getValue()).toRequest());
-    }
-    pb.clear();
-    // 6. check URI privilege
-    for (Map.Entry<String, Privilege> uri : analResult.queryStmt_.uriPathRefs) {
-      authLoader.checkAccess(user_, pb.onURI(uri.getKey()).allOf(uri.getValue()).toRequest());
+    try {
+      // 1. check Datastore privilege
+      for (Map.Entry<String, Privilege> ds : analResult.queryStmt_.dataStoreRefs) {
+        authzlog = user_ + "\t" + analResult.queryStmt_.type.toString() + "\t"
+          + ds.getValue().toString() + "\t" + ds.getValue() + "\t\t\t\t"
+          + connType_ + "\t\t\t" + auditquery + "}";
+        authLoader.checkAccess(user_,
+            pb.onServer(ds.getKey()).allOf(ds.getValue()).toRequest());
+        authzAuditLog.info("{true\t" + authzlog);
+      }
+      pb.clear();
+      // 2. check Database privilege
+      for (Map.Entry<DatabaseName, Privilege> db : analResult.queryStmt_.databaseRefs) {
+        authzlog = user_ + "\t" + analResult.queryStmt_.type.toString() + "\t"
+          + db.getValue().toString() + "\t" + db.getKey().getDs() + "\t"
+          + db.getKey().getDb() + "\t\t\t" + connType_ + "\t\t\t" + auditquery
+          + "}";
+        authLoader.checkAccess(user_,
+            pb.onDb(db.getKey().getDb()).allOf(db.getValue()).toRequest());
+        authzAuditLog.info("{true\t" + authzlog);
+      }
+      pb.clear();
+      // 3. check Table privilege
+      for (Map.Entry<TableName, Privilege> table : analResult.queryStmt_.tableRefs) {
+        if (analResult.queryStmt_.withRefs.contains(table.getKey().getTable())
+            && table.getKey().getDb().equals("default"))
+          continue;
+        authzlog = user_ + "\t" + analResult.queryStmt_.type.toString() + "\t"
+          + table.getValue().toString() + "\t\t" + table.getKey().getDb() + "\t"
+          + table.getKey().getTable() + "\t\t" + connType_ + "\t\t\t" + auditquery + "}";
+        authLoader.checkAccess(user_,
+          pb.onTable(table.getKey().getDb(), table.getKey().getTable())
+            .allOf(table.getValue()).toRequest());
+        authzAuditLog.info("{true\t" + authzlog);
+      }
+      pb.clear();
+      // 4. check View privilege
+      for (Map.Entry<TableName, Privilege> vw : analResult.queryStmt_.viewRefs) {
+        authzlog = user_ + "\t" + analResult.queryStmt_.type.toString() + "\t"
+          + vw.getValue().toString() + "\t\t" + vw.getKey().getDb() + "\t\t\t"
+          + connType_ + "\t" + vw.getKey().getTable() + "\t\t" + auditquery + "}";
+        authLoader.checkAccess(
+          user_,
+          pb.onTable(vw.getKey().getDb(), vw.getKey().getTable())
+            .allOf(vw.getValue()).toRequest());
+        authzAuditLog.info("{true\t" + authzlog);
+      }
+      pb.clear();
+      // 5. check Function privilege
+      for (Map.Entry<FuncName, Privilege> func : analResult.queryStmt_.functionRefs) {
+        if (!authLoader.isUDFExist(func.getKey().getFunc()))
+          continue;
+        authzlog = user_ + "\t" + analResult.queryStmt_.type.toString() + "\t"
+          + func.getValue().toString() + "\t\t" + func.getKey().getDb() + "\t\t\t"
+          + connType_ + "\t\t" + func.getKey().getFunc() + "\t" + auditquery + "}";
+        authLoader.checkAccess(user_,
+          pb.onFunction(func.getKey().getDb(), func.getKey().getFunc())
+            .allOf(func.getValue()).toRequest());
+        authzAuditLog.info("{true\t" + authzlog);
+      }
+      pb.clear();
+      // 6. check URI privilege
+      for (Map.Entry<String, Privilege> uri : analResult.queryStmt_.uriPathRefs) {
+        authzlog = user_ + "\t" + analResult.queryStmt_.type.toString() + "\t"
+          + uri.getValue().toString() + "\t\t\t\t" + uri.getKey() + "\t" + connType_
+          + "\t\t\t" + auditquery + "}";
+        authLoader.checkAccess(user_,
+            pb.onURI(uri.getKey()).allOf(uri.getValue()).toRequest());
+        authzAuditLog.info("{true\t" + authzlog);
+      }
+    } catch (AuthorizationException e) {
+      authzAuditLog.info("{false\t" + authzlog);
+      throw e;
     }
   }
 }
