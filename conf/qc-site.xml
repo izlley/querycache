@@ -48,13 +48,13 @@
 
 <property>
   <name>qc.connpool.gc.hive</name>
-  <value>true</value>
+  <value>false</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.impala</name>
-  <value>true</value>
+  <value>false</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
@@ -112,7 +112,7 @@
 
 <property>
   <name>qc.storage.jdbc.drivers</name>
-  <value>impala,hive</value>
+  <value>phoenix,impala,hive</value>
   <description>if hive is running in test mode, prefixes the output table by this string</description>
 </property>
 
@@ -161,7 +161,8 @@
 
 <property>
   <name>qc.storage.jdbc.drivers.address.phoenix</name>
-  <value>211.234.235.55</value>
+  <value>bdb001,bdb002,bdb003</value>
+  <!--value>211.234.235.55</value-->
   <description></description>
 </property>
 
@@ -276,6 +277,17 @@
 
 <property>
   <name>qc.authorization.impala</name>
+  <value>SENTRY</value>
+  <description>
+    Client authorization types.
+       NONE: no authorization check
+       SENTRY: Apache Sentry authorization
+       CUSTOM: Custom authorization provider
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.hive</name>
   <value>SENTRY</value>
   <description>
     Client authorization types.
