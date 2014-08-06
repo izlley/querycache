@@ -77,8 +77,9 @@ public class ConnMgr {
                 for (int i = 0; i < maxSize; i++) {
                   ConnNode sConn = new ConnNode();
                   try {
+                    boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
                     // Every time builUrl is called, returns different address for distributing connections
-                    url = buildUrl();
+                    url = buildUrl(isPhoenix);
                     sConn.initialize(connProp,
                                      sConnIdGen.addAndGet(1L),
                                      url);
@@ -195,8 +196,9 @@ public class ConnMgr {
       for (int i = 0; i < initSize; i++) {
         ConnNode sConn = new ConnNode();
         try {
+          boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
           // Every time builUrl is called, returns different address for distributing connections
-          url = buildUrl();
+          url = buildUrl(isPhoenix);
           sConn.initialize(connProp,
                            sConnIdGen.addAndGet(1L),
                            url);
@@ -271,8 +273,9 @@ public class ConnMgr {
         for (int i = 0; i < retryCnt; i++) {
           ConnNode sConn2 = new ConnNode();
           try {
+            boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
             // Every time builUrl is called, it returns different address for distributing connections
-            url = buildUrl();
+            url = buildUrl(isPhoenix);
             sConn2.initialize(connProp,
                              sConnIdGen.addAndGet(1L),
                              url);
@@ -337,20 +340,27 @@ public class ConnMgr {
       return CORE_RESULT.CORE_SUCCESS;
     }
     
-    private String buildUrl() {
+    private String buildUrl(boolean isPhoenix) {
       short sInd = 0;
-      synchronized(this){
-        sInd = (connProp.connAddr.length - 1 <= connAddrIndex)? 
-          connAddrIndex = 0 : ++connAddrIndex;
+      String sUrl = "";
+      if (isPhoenix) {
+        sUrl = connProp.connUrlPrefix;
+        for (short i = 0; i < connProp.connAddr.length; i++) {
+          sUrl += connProp.connAddr[i];
+          if (i != connProp.connAddr.length - 1)
+            sUrl += ',';
+        }
+        sUrl += ":" + connProp.connPort;
+      } else {
+        synchronized (this) {
+          sInd = (connProp.connAddr.length - 1 <= connAddrIndex) ? connAddrIndex = 0
+              : ++connAddrIndex;
+        }
+        sUrl = connProp.connUrlPrefix + connProp.connAddr[sInd] + ":"
+            + connProp.connPort;
       }
-      String sUrl =
-        connProp.connUrlPrefix +
-        connProp.connAddr[sInd] +
-        ":" + connProp.connPort;
-
-      if (!connProp.connUrlSuffix.isEmpty()) {
+      if (!connProp.connUrlSuffix.isEmpty())
         sUrl += "/" + connProp.connUrlSuffix;
-      }
       return sUrl;
     }
   }
