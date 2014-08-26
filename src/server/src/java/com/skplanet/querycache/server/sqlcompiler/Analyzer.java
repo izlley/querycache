@@ -13,6 +13,7 @@ import com.skplanet.querycache.server.auth.AuthorizationLoader;
 import com.skplanet.querycache.server.auth.Privilege;
 import com.skplanet.querycache.server.auth.PrivilegeRequestBuilder;
 import com.skplanet.querycache.server.common.AnalyzerException;
+import com.skplanet.querycache.server.util.RuntimeProfile.QueryProfile;
 import com.skplanet.querycache.server.auth.Privilege;
 
 /**
@@ -43,7 +44,7 @@ public class Analyzer {
     }
   }
   
-  public void analyzer(String stmt, boolean isAuthCheck) throws AuthorizationException, AnalyzerException {
+  public void analyzer(String stmt, QueryProfile profile, boolean isAuthCheck) throws AuthorizationException, AnalyzerException {
     this.stmt_ = stmt;
     analResult = new AnalysisResult();
     
@@ -66,6 +67,8 @@ public class Analyzer {
              "], With=" + analResult.queryStmt_.withRefs.toString() +
              ", Function=[" + analResult.queryStmt_.toStringfunctionRefs() +
              "], Uris=" + analResult.queryStmt_.uriPathRefs.toString());
+      // set profiling data
+      profile.queryType = analResult.queryStmt_.type;
       if (isAuthCheck) {
         checkAuthorization(analResult);
       }
@@ -159,5 +162,9 @@ public class Analyzer {
       authzAuditLog.info("{false\t" + authzlog);
       throw e;
     }
+  }
+  
+  public AnalysisResult getAnalysisResult() {
+    return analResult;
   }
 }

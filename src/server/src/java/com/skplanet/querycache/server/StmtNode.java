@@ -4,35 +4,34 @@ import java.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.skplanet.querycache.server.util.RuntimeProfile.QueryProfile;
+
 public class StmtNode {
   private static final Logger LOG = LoggerFactory.getLogger(StmtNode.class);
   
   //for debug
   long sumLatency = 0;
-  
   long sStmtId = 0;
   Statement sHStmt = null;
   boolean sHasResultSet = false;
   ResultSet sRS = null;
-  String sQuery = "";
-  long rowCnt = 0;
-  State sState = State.CLOSED;
+  QueryProfile profile = null;
   
   public static enum State {
     INIT,
-    RUNNING,
-    FETCHING,
-    CLOSED,
+    EXEC,
+    GETMETA,
+    FETCH,
+    CLOSE,
     ERROR
   }
   
   public void initialize(long aStmtId, Connection aConn) throws SQLException {
     this.sStmtId = aStmtId;
     this.sHStmt = aConn.createStatement();
-    this.sState = State.INIT;
     this.sHasResultSet = false;
     this.sRS = null;
-    this.sQuery = "";
-    this.rowCnt = 0;
+    this.profile = new QueryProfile();
+    profile.stmtState = State.INIT;
   }
 }

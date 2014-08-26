@@ -7,7 +7,7 @@ import java.util.Map;
 import com.skplanet.querycache.server.auth.Privilege;
 
 public class QueryStmt {
-  QueryType type = QueryType.OTHERS;
+  public  QueryType type = QueryType.OTHERS;
   boolean isLimit = false;
   boolean isFilterCond = false;
   boolean isNested = false;

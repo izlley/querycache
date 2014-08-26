@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.skplanet.querycache.server.util.RuntimeProfile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +16,8 @@ public class ConnNode {
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
   
   // for debug 
-  // 0:open/1:exec/2:getmeta/3:fetch/4:stmtclose/5:connclose
-  long[] latency = {0,0,0,0,0,0,0,0,0,0};
-  long[] execPofile = null;
-  long[] fetchProfile = null;
+  // 0:open/1:connclose
+  long[] latency = {-1,-1};
   
   long sConnId = 0;
   Connection sHConn = null;
@@ -27,8 +26,8 @@ public class ConnNode {
   private String url;
   
   // for checking authentication&authorization
-  String user;
-  private String password;
+  String user = null;
+  private String password = null;
   
   //TODO : use hashcode instead of long
   private final AtomicLong sStmtIdGen = new AtomicLong(0L);
@@ -82,12 +81,23 @@ public class ConnNode {
     }
     StmtNode sStmt = new StmtNode();
     sStmt.initialize(sId, this.sHConn);
+    // setting query profile
+    sStmt.profile.queryId = sConnId + ":" + sId;
+    sStmt.profile.user = this.user;
+    sStmt.profile.startTime = System.currentTimeMillis();
+    
     if (sStmtMap.put(sId, sStmt) != null) {
       LOG.warn("There is same statement id in StmtPool" + "(" + sConnType + 
-          ":" + sId + ")");
+        ":" + sId + ")");
     }
     LOG.info("The statement is added.-Type:" + sConnType + ", -ConnId:" + 
-        this.sConnId + ", StmtId:" + sId + ", -# of Stmts:" + sStmtMap.size());
+      this.sConnId + ", StmtId:" + sId + ", -# of Stmts:" + sStmtMap.size());
+    
+    if (CLIHandler.gConnMgr.queryProfile.addRunningQuery(sStmt.profile.queryId, sStmt.profile)
+        != null) {
+      LOG.warn("There is same query-id in RunningProfileMap " + "(queryId:" + 
+        sStmt.profile.queryId + ")");
+    }
     return sStmt;
   }
   
@@ -107,6 +117,7 @@ public class ConnNode {
   public void closeAllStmts() throws SQLException {
     LOG.debug("Closing all statements in ConNode Id -" + sConnType +
         ":" + sConnId);
+    String sQueryId;
 
     Iterator<ConcurrentHashMap.Entry<Long, StmtNode>> iterator =
       sStmtMap.entrySet().iterator();
@@ -116,6 +127,10 @@ public class ConnNode {
     while (iterator.hasNext()) {
       ConcurrentHashMap.Entry<Long, StmtNode> sEntry = iterator.next();
       sEntry.getValue().sHStmt.close();
+      // move QueryProfile to completeQueryProfile Map
+      sQueryId = this.sConnId + ":" + sEntry.getValue().sStmtId;
+      CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, StmtNode.State.CLOSE);
       iterator.remove();
     }
     LOG.info("All statements are closed.-Type:" + sConnType + ", -ConnId:"
@@ -128,5 +143,9 @@ public class ConnNode {
   
   public String getPassword() {
     return password;
+  }
+  
+  public String getUrl() {
+    return url;
   }
 }

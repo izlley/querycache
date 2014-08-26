@@ -17,6 +17,7 @@ import com.skplanet.querycache.server.auth.AuthorizationConfig;
 import com.skplanet.querycache.server.auth.AuthorizationLoader;
 import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
 import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
+import com.skplanet.querycache.server.util.RuntimeProfile;
 
 public class ConnMgr {
   private static final Logger LOG = LoggerFactory.getLogger(ConnMgr.class);
@@ -137,10 +138,12 @@ public class ConnMgr {
                 ConnNode conn = iter.next();
                 try {
                   stmt = conn.sHConn.createStatement();
+                  String query = QueryCacheServer.conf.get(
+                    QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY,
+                    QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT);
                   // execute call need communication with storage server.
-                  stmt.execute(QueryCacheServer.conf.get(
-                      QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY,
-                      QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT));
+                  stmt.execute(query);
+                  LOG.debug("ConnPool GC: execut query, url=" + conn.getUrl() + ",query=" + query);
                 } catch (SQLException e) {
                   // only handling the connection error
                   if (e.getSQLState().equals("08S01")) {
@@ -191,7 +194,7 @@ public class ConnMgr {
       if (connProp.setConnProperties(aConnType, aProtoType) != CORE_RESULT.CORE_SUCCESS)
         return CORE_RESULT.CORE_FAILURE;
       String url = "";
-      
+      LOG.info("Initializing the connection pool of " + aConnType + "...");
       // TODO: How can we handle url kv options? just ignore these?
       for (int i = 0; i < initSize; i++) {
         ConnNode sConn = new ConnNode();
@@ -320,6 +323,8 @@ public class ConnMgr {
       // close all statements in the ConnNode
       try {
         sConn.closeAllStmts();
+        sConn.user = null;
+        sConn.setPassword(null);
       } catch (SQLException e1) {
         LOG.error("Statement close error :" + e1.getMessage(), e1);
         // close this connection forcely
@@ -365,11 +370,12 @@ public class ConnMgr {
     }
   }
 
-  // This Array contain ConnMgrofOnes of all of connection types.
-  private Map<String, ConnMgrofOne> connMgrofAll;
+  // This Array contains ConnMgrofOnes of all of connection types.
+  private Map<String, ConnMgrofOne> connMgrofAll = new HashMap<String, ConnMgrofOne>();
+  // This contains running and completed query's profiling data
+  public RuntimeProfile queryProfile = new RuntimeProfile();
 
   CORE_RESULT initialize() {
-    connMgrofAll = new HashMap<String, ConnMgrofOne>();
     String[] sDrivers = QueryCacheServer.conf.getStrings(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS);
     // initialize jdbc connpools
     for (String driver: sDrivers) {
