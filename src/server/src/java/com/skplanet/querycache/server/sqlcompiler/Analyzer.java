@@ -31,7 +31,7 @@ public class Analyzer {
   private AnalysisResult analResult;
   
   public Analyzer(String user, String connType, ConnMgr connMgr) {
-    this.user_ = user;
+    this.user_ = (user == null)? "" : user;
     this.connType_ = connType;
     this.connMgr_ = connMgr;
   }
