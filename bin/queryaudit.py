@@ -27,9 +27,9 @@ def callback(filename, lines):
         for line in lines:
             jsonlog = re.search('{.*}',line).group(0)
             if jsonlog != '':
-                #print_log(jsonlog)
                 logdate = line[:23]
-                jsondata = json.loads(jsonlog)
+                #escaping backslash character
+                jsondata = json.loads(jsonlog.replace('\\','\\\\\\\\'))
                 hostname = socket.gethostname()
                 queryid = jsondata['queryid']
                 user = jsondata['user']
@@ -47,7 +47,6 @@ def callback(filename, lines):
                     writestr1 += logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
                         query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
                         start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\n'
-                    makeHDFSDir(HDFS_LOG_BASE_DIR + date1.replace('-','/'))
 		else:
 		    if date1 == line[:10]:
                         writestr1 += logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
@@ -56,7 +55,6 @@ def callback(filename, lines):
                     else:
                         if date2 == '':
                             date2 = line[:10]
-                            makeHDFSDir(HDFS_LOG_BASE_DIR + date2.replace('-','/'))
                         writestr2 += logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
                             query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
                             start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\n'
@@ -67,6 +65,7 @@ def callback(filename, lines):
 	    print_log('INFO: write query audit log.');
             f.write(writestr1) 
             f.close()
+            makeHDFSDir(HDFS_LOG_BASE_DIR + date1.replace('-','/'))
             write2HDFS(writestr1, LOG_DIR + TMP_LOG_FILE,
                 HDFS_LOG_BASE_DIR + date1.replace('-','/') + '/' + hostname + '.tsv')
             os.remove(LOG_DIR + TMP_LOG_FILE)
@@ -75,6 +74,7 @@ def callback(filename, lines):
             print_log('INFO: write next day query audit log.');
             f.write(writestr2) 
             f.close()
+            makeHDFSDir(HDFS_LOG_BASE_DIR + date2.replace('-','/'))
             write2HDFS(writestr2, LOG_DIR + TMP_LOG_FILE2,
                 HDFS_LOG_BASE_DIR + date2.replace('-','/') + '/' + hostname + '.tsv')
             os.remove(LOG_DIR + TMP_LOG_FILE2)
