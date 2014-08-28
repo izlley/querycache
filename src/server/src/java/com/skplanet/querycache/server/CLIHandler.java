@@ -302,25 +302,21 @@ public class CLIHandler implements TCLIService.Iface {
             aReq.sessionHandle.sessionId.driverType, gConnMgr);
           compiler.analyzer(aReq.statement, sStmt.profile, isAuthCheck);
         } catch (AuthorizationException e) {
-          if (isAuthCheck) {
-            LOG.error("Authorization error:" + e.getMessage() +
-                "\n  -Error Query: " + aReq.statement, e);
-            sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
-            sResp.status.setErrorMessage(e.getMessage());
-            gConnMgr.queryProfile.moveRunToCompleteProfileMap(
-              sQueryId, State.ERROR);
-            return sResp;
-          }
+          LOG.error("Authorization error:" + e.getMessage() +
+            "\n  -Error Query: " + aReq.statement, e);
+          sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+          sResp.status.setErrorMessage(e.getMessage());
+          gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+            sQueryId, State.ERROR);
+          return sResp;
         } catch (AnalyzerException e) {
-          if (isSyntaxCheck) {
-            LOG.error("Query syntax error:" + e.getMessage() +
-                "\n  -Error Query: " + aReq.statement, e);
-            sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
-            sResp.status.setErrorMessage(e.getMessage());
-            gConnMgr.queryProfile.moveRunToCompleteProfileMap(
-              sQueryId, State.ERROR);
-            return sResp;
-          }
+          LOG.error("Query analyzer error:" + e.getMessage() +
+            "\n  -Error Query: " + aReq.statement, e);
+          sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+          sResp.status.setErrorMessage(e.getMessage());
+          gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+            sQueryId, State.ERROR);
+          return sResp;
         }
       }
       if (profileLvl > 1)
