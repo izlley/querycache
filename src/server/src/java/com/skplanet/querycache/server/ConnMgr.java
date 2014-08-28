@@ -319,7 +319,12 @@ public class ConnMgr {
     
     private CORE_RESULT closeConn(long aConnId) {
       ConnNode sConn = sUsingMap.remove(aConnId);
-      
+      if (sConn == null) {
+        LOG.warn(
+          "ConnMgrofOne.removeConn(): There is no connection in ConnPool mapping to the id"
+          + "(" + aConnId + ")");
+        return CORE_RESULT.CORE_SUCCESS;
+      }
       // close all statements in the ConnNode
       try {
         sConn.closeAllStmts();

@@ -271,6 +271,7 @@
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/httpclient-4.2.5.jar"/>
       <fileset file="${thirdparty.dir}/hive-${hive.version}/lib/httpcore-4.2.5.jar"/>
       <fileset file="${thirdparty.dir}/otherdrivers/mysql-connector-${mysql.connector.version}.jar"/>
+      <fileset file="${build.dir.querycache}/jdbc/querycache-jdbc-${version}.jar"/>
     </copy>
     <copy todir="${target.example.dir}" preservelastmodified="true" flatten="true">
       <fileset dir="${tests.dir}"  >

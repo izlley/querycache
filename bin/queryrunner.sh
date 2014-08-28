@@ -56,7 +56,7 @@ for jar in `ls ${QC_LIB_DIR}/driver/*.jar`; do
 done
 
 CLASSPATH=$QC_HOME/examples:$QC_HOME/lib:$CLASSPATH
-CLASSPATH=${QC_LIB_DIR}/querycache-jdbc-0.10.0.jar:${QC_LIB_DIR}/slf4j-api-1.6.4.jar:${QC_LIB_DIR}/commons-logging-1.0.4.jar:${QC_LIB_DIR}/slf4j-simple-1.6.4.jar:${CLASSPATH}
+CLASSPATH=${QC_LIB_DIR}/slf4j-api-1.6.4.jar:${QC_LIB_DIR}/commons-logging-1.0.4.jar:${QC_LIB_DIR}/slf4j-simple-1.6.4.jar:${CLASSPATH}
 export CLASSPATH
 
 echo "----------------ENV----------------" 
