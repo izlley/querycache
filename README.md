@@ -1,4 +1,4 @@
-Querycache (TM) 0.10.0
+Querycache (TM) 0.10.2
 ======================
 
 The Querycache (TM) is a smart distributed cache for storing 
