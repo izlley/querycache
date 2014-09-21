@@ -33,10 +33,11 @@ public class RuntimeProfile {
   private static Map<String, QueryProfile> completeQueryProfile = Collections
     .synchronizedMap(new LinkedHashMap<String, QueryProfile>(completeQueryMaxCnt));
   
-  private static SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss"); 
+  private static SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   
   public static class QueryProfile {
     public String queryId = null;
+    public String connType = null;
     public String user = null;
     public QueryType queryType = null;
     public String queryStr = null;
@@ -47,7 +48,7 @@ public class RuntimeProfile {
     // 0:exec/1:getmeta/2:fetch/3:stmtclose
     public long[] timeHistogram = {0,0,0,0};
     public long[] execProfile   = null;
-    public long[] fetchProfile  = null;
+    public long[] fetchProfile  = {0,0,0,-1,-1,-1,-1,0,0,-1,-1};
   }
   
   private Runnable resetNumRequestsThread = new Runnable() {
@@ -111,6 +112,7 @@ public class RuntimeProfile {
         entry.endTime = System.currentTimeMillis();
       addCompletedQuery(qid, entry);
       queryAuditLog.info("{\"queryid\":\"" + entry.queryId + "\"," +
+        "\"connect_type\":\"" + entry.connType + "\"," +
         "\"user\":\"" + entry.user + "\"," +
         "\"query_type\":\"" + ((entry.queryType!=null)?entry.queryType.toString():"") + "\"," +
         "\"query_str\":\"" + entry.queryStr.replace('"', '\'') + "\"," +

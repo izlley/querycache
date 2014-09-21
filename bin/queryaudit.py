@@ -32,6 +32,7 @@ def callback(filename, lines):
                 jsondata = json.loads(jsonlog.replace('\\','\\\\\\\\'))
                 hostname = socket.gethostname()
                 queryid = jsondata['queryid']
+                conn_type = jsondata['connect_type']
                 user = jsondata['user']
                 query_type = jsondata['query_type']
                 query_str = jsondata['query_str']
@@ -46,24 +47,27 @@ def callback(filename, lines):
                     date1 = line[:10]
                     writestr1 += logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
                         query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
-                        start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\n'
+                        start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\t' + \
+                        conn_type + '\n'
 		else:
 		    if date1 == line[:10]:
                         writestr1 += logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
                             query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
-                            start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\n'
+                            start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\t' + \
+                            conn_type + '\n'
                     else:
                         if date2 == '':
                             date2 = line[:10]
                         writestr2 += logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
                             query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
-                            start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\n'
+                            start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\t' + \
+                            conn_type + '\n'
             else:
                 print_log('ERROR: Incompatible format of line is received');
         if len(writestr1) > 0:
             f = open(LOG_DIR + TMP_LOG_FILE, 'w')
 	    print_log('INFO: write query audit log.');
-            f.write(writestr1) 
+            f.write(writestr1.encode('utf-8')) 
             f.close()
             makeHDFSDir(HDFS_LOG_BASE_DIR + date1.replace('-','/'))
             write2HDFS(writestr1, LOG_DIR + TMP_LOG_FILE,
@@ -72,7 +76,7 @@ def callback(filename, lines):
         if len(writestr2) > 0:
             f = open(LOG_DIR + TMP_LOG_FILE2, 'w')
             print_log('INFO: write next day query audit log.');
-            f.write(writestr2) 
+            f.write(writestr2.encode('utf-8')) 
             f.close()
             makeHDFSDir(HDFS_LOG_BASE_DIR + date2.replace('-','/'))
             write2HDFS(writestr2, LOG_DIR + TMP_LOG_FILE2,

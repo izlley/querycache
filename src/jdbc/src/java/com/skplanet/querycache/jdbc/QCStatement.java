@@ -27,7 +27,7 @@ public class QCStatement implements java.sql.Statement {
   private TOperationHandle stmtHandle;
   private final TSessionHandle sessHandle;
   private final Map<String,String> sessConf = new HashMap<String,String>();
-  private int fetchSize = 50;
+  private int fetchSize = 1024;
   private boolean isScrollableResultset = false;
   /**
    * We need to keep a reference to the result set to support the following:

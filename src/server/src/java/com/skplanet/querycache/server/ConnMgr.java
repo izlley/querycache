@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -102,8 +103,8 @@ public class ConnMgr {
                       "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
                   }
                 }
-                LOG.info("FreeList resizing from " + maxSize + " to "
-                    + sFreelistMaxSize.get());
+                LOG.info("FreeList resizing from " + currSize + " to "
+                    + (currSize + addedCnt));
               }
             } catch (InterruptedException e) {
               // Deliberately ignore
@@ -152,12 +153,14 @@ public class ConnMgr {
                     LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
                   }
                 } finally {
-                  try {
-                    stmt.close();
-                  } catch (SQLException e) {
-                    // just ignore
-                    LOG.warn("ConnPool GC: closing stmt error (connId:" + conn.sConnId + ")" +
-                      ", " + e.getMessage());
+                  if (stmt != null) {
+                    try {
+                      stmt.close();
+                    } catch (SQLException e) {
+                      // just ignore
+                      LOG.warn("ConnPool GC: closing stmt error (connId:" + conn.sConnId + ")" +
+                        ", " + e.getMessage());
+                    }
                   }
                 }
               }

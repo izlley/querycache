@@ -21,10 +21,13 @@ package com.skplanet.querycache.server;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
-import org.apache.thrift.TException;
 
 // Generated code
 import com.skplanet.querycache.thrift.*;
@@ -43,13 +46,19 @@ import com.skplanet.querycache.server.sqlcompiler.AuthorizationException;
 
 public class CLIHandler implements TCLIService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
-  
-  private final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
+  private static final int _defFetchSize = 1024;
+  public final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
     QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
   private final boolean isSyntaxCheck =
     QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_QUERY_SYNTAX_CHECK,
       QCConfigKeys.QC_QUERY_SYNTAX_CHECK_DEFAULT);
 
+  private static ExecutorService _threadPool = new ThreadPoolExecutor(
+    QueryCacheServer.conf.getInt(QCConfigKeys.QC_THREADPOOL_INIT_SIZE,
+      QCConfigKeys.QC_THREADPOOL_INIT_SIZE_DEFAULT),
+    QueryCacheServer.conf.getInt(QCConfigKeys.QC_THREADPOOL_MAX_SIZE,
+      QCConfigKeys.QC_THREADPOOL_MAX_SIZE_DEFAULT),
+    60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
   public static ConnMgr gConnMgr = new ConnMgr();
   
   private ObjectPool gObjPool =
@@ -279,6 +288,7 @@ public class CLIHandler implements TCLIService.Iface {
       sStmt = sConn.allocStmt();
       // set profiling data
       sStmt.profile.stmtState = StmtNode.State.EXEC;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = timeArr;
       sStmt.profile.queryStr = aReq.statement.replace('\n',' ').replace('\t',' ');
       sStmtId = sStmt.sStmtId;
@@ -325,6 +335,11 @@ public class CLIHandler implements TCLIService.Iface {
       //
       // 4. execute query
       //
+      try {
+      sStmt.sHStmt.setFetchSize(_defFetchSize);
+      } catch (SQLFeatureNotSupportedException e) {
+        //ignore
+      }
       boolean sIsRS = sStmt.sHStmt.execute(aReq.statement);
       if (profileLvl > 1)
         timeArr[i++] = System.currentTimeMillis();
@@ -568,28 +583,32 @@ public class CLIHandler implements TCLIService.Iface {
           }
           profile += "\n    -Getmeta   : " + sStmt.profile.timeHistogram[1]
               + "\n    -Fetch     : " + sStmt.profile.timeHistogram[2];
+          //1-0=sumGetConn,2-1=sumGetStmt,3=endGetStmt,4-3=initFetcher,5-4=getMeta,6-5=1stFetch,
+          //7=sumNext,8=sumGetCol,9=lastNext,10=EndTS
           if (profileLvl > 1 && sStmt.profile.fetchProfile != null) {
-            profile += "\n      - #1. GetConn      : "
+            profile += "\n      - #1. GetConn(sum) : "
                 + (sStmt.profile.fetchProfile[1] - sStmt.profile.fetchProfile[0])
-                + "\n      - #2. GetStmt      : "
+                + "\n      - #2. GetStmt(sum) : "
                 + (sStmt.profile.fetchProfile[2] - sStmt.profile.fetchProfile[1])
-                + "\n      - #3. GetMeta      : "
-                + (sStmt.profile.fetchProfile[3] - sStmt.profile.fetchProfile[2]);
+                + "\n      - #3. InitFetcher  : "
+                + (sStmt.profile.fetchProfile[4] - sStmt.profile.fetchProfile[3])
+                + "\n      - #4. GetMeta      : "
+                + (sStmt.profile.fetchProfile[5] - sStmt.profile.fetchProfile[4]);
             switch (profileLvl) {
               case 2:
-                profile += "\n      - #4. Fetch        : "
-                    + (sStmt.profile.fetchProfile[4] - sStmt.profile.fetchProfile[3]);
+                profile += "\n      - #5. Fetch        : "
+                    + (sStmt.profile.fetchProfile[6] - sStmt.profile.fetchProfile[5]);
                 break;
               case 3:
-                profile += "\n      - #4. Fetch"
+                profile += "\n      - #5. Fetch"
                     + "\n            - First fetch   : "
-                    + (sStmt.profile.fetchProfile[4] - sStmt.profile.fetchProfile[3])
+                    + (sStmt.profile.fetchProfile[6] - sStmt.profile.fetchProfile[5])
                     + "\n            - FetchRows(sum): "
-                    + (sStmt.profile.fetchProfile[5])
+                    + (sStmt.profile.fetchProfile[7])
                     + "\n            - GetCols(sum)  : "
-                    + (sStmt.profile.fetchProfile[6])
-                    + "\n      - #5. Build resp   : "
-                    + (sStmt.profile.fetchProfile[8] - sStmt.profile.fetchProfile[7]);
+                    + (sStmt.profile.fetchProfile[8])
+                    + "\n      - #6. Build resp   : "
+                    + (sStmt.profile.fetchProfile[10] - sStmt.profile.fetchProfile[9]);
                 break;
               default:
                 break;
@@ -775,13 +794,14 @@ struct TGetResultSetMetadataResp {
     // unlimited
     3: required i64 maxRows = -1
   }
-
   struct TFetchResultsResp {
     1: required TStatus status
     2: optional bool hasMoreRows
     3: optional Data.TRowSet results
+    4: optional i64 numofrows
   }
   struct TRowSet {
+    // 0-based
     1: required i64 startRowOffset
     2: required list<TRow> rows
     3: optional TTableSchema schema
@@ -804,15 +824,14 @@ struct TGetResultSetMetadataResp {
   public TFetchResultsResp FetchResults(TFetchResultsReq aReq) {
     LOG.debug("FetchResults is requested.");
     long startTime = 0;
-    long endTime, midTime;
-    //1-0=getConn,2-1=getStmt,3-2=getMeta,4-3=1stFetch,5=avgFetch,6=avgGetCol,7=lastTS
-    long timeArr[] = {-1,-1,-1,-1,-1,0,0,-1};
-    int  j = 0, k = 0;
-    long sRowCount = 0;
+    long tmpTime = 0;
+    long endTime = 0;
+    int  j = 0;
+    long fetchSize = aReq.getMaxRows();
     String sQueryId = null;
     
     if (profileLvl > 0) {
-      timeArr[j++] = startTime = System.currentTimeMillis();
+      startTime = System.currentTimeMillis();
     }
     
     TFetchResultsResp sResp = new TFetchResultsResp();
@@ -837,7 +856,7 @@ struct TGetResultSetMetadataResp {
       return sResp;
     }
     if (profileLvl > 1)
-      timeArr[j++] = System.currentTimeMillis();
+      tmpTime = System.currentTimeMillis();
     
     //
     // 2. get Stmt
@@ -853,10 +872,12 @@ struct TGetResultSetMetadataResp {
         sQueryId, State.ERROR);
       return sResp;
     }
-    // set profiling data
-    sStmt.profile.fetchProfile = timeArr;
-    sStmt.profile.stmtState = StmtNode.State.FETCH;
     
+    //1-0=sumGetConn,2-1=sumGetStmt,3=endGetStmt,4-3=initFetcher,5-4=getMeta,6-5=1stFetch,
+    //7=sumNext,8=sumGetCol,9=lastNext,10=EndTS
+    long timeArr[] = sStmt.profile.fetchProfile;
+    sStmt.profile.stmtState = StmtNode.State.FETCH;
+
     if (sStmt.sHasResultSet != true) {
       LOG.error("FetchResults error : The statement has no ResultSet." +
         " (id:" + sStmtId + ")");
@@ -866,168 +887,57 @@ struct TGetResultSetMetadataResp {
         sQueryId, State.ERROR);
       return sResp;
     }
-    if (profileLvl > 1)
-      timeArr[j++] = System.currentTimeMillis();
+    if (profileLvl > 1) {
+      timeArr[j++] += startTime; //index-0
+      timeArr[j++] += tmpTime; //index-1
+      tmpTime = System.currentTimeMillis();
+      timeArr[j++] += tmpTime; //index-2
+      if (timeArr[j++] == -1)
+        timeArr[j-1] = tmpTime; // index-3
+    }
     
-    //
-    // 3. Fetch each row and save to TRowSet
-    //
+    RowFetcher rowFetcher = sStmt.allocRowProducer(sQueryId, this);
     try {
-      ResultSet sRS = sStmt.sRS;
-      ResultSetMetaData sMeta = sRS.getMetaData();
-      /*
-      if ( sRS.isAfterLast() == true ) {
-        LOG.error("FetchResults error : The statement has no ResultSet." +
-            " (id:" + sStmtId + ")");
-          sResp.status.statusCode = TStatusCode.ERROR_STATUS;
-          sResp.status.errorMessage = "FetchResults error : The statement has no ResultSet.";
-          return sResp;
-      }*/
-      
-      TRowSet sRowSet = (TRowSet)gObjPool.getObject(TargetObjs.TROWSET);
-      if (sRowSet == null) {
-        sRowSet = new TRowSet();
+      //if (rowFetcher.getAndSetIfInit(FetchState.FETCHING) == FetchState.INIT) {
+    if (rowFetcher._isFetching.compareAndSet(false, true)) {
+        _threadPool.execute(rowFetcher);
       }
-      // 0-based
-      sRowSet.clear();
-      // to cope with no rows returned case
-      sRowSet.rows = new ArrayList<TRow>();
-      
-      int sColCnt = sMeta.getColumnCount();
-      if (profileLvl > 1)
-        timeArr[j++] = System.currentTimeMillis(); // T0
-      
-      // TODO: Below code block should be more optimized for performance
-      k = j;
-      while (sRS.next()) {
-        ++sRowCount;
-        TRow sRow = (TRow)gObjPool.getObject(TargetObjs.TROW);
-        if (sRow == null) {
-          sRow = new TRow();
-        }
-        if (profileLvl > 2) {
-          midTime = System.currentTimeMillis(); // T1
-          if (sRowCount == 1) {
-            // put first-fetch TS
-            timeArr[j++] = midTime;
-            k = j;
-          }
-          j = k;
-          // put the sum of T1 to calculate avg time of next()
-          timeArr[j++] += midTime;
-        }
-        for (int i = 1; i <= sColCnt; i++) {
-          TColumnValue sCell = (TColumnValue)gObjPool.getObject(TargetObjs.TCOLUMNVALUE);
-          if (sCell == null) {
-            sCell = new TColumnValue();
-          }
-          TTypeId sQCType = mapSQL2QCType(sMeta.getColumnType(i));
-          switch (sQCType) {
-            case CHAR:
-            case STRING:
-            case BINARY:
-            case DECIMAL:
-              String value = sRS.getString(i);
-              TStringValue sStrV = (TStringValue)gObjPool.getObject(TargetObjs.TSTRINGVALUE);
-              if (sStrV != null) {
-                sCell.setStringVal(sStrV.setValue(value));
-              } else {
-                sCell.setStringVal(new TStringValue().setValue(value));
-              }
-              break;
-            case BIGINT:
-              sCell.setI64Val(sRS.getLong(i));
-              break;
-            case TIMESTAMP:
-              // TIMESTAMP -> long
-              Timestamp sTS = sRS.getTimestamp(i);
-              sCell.setI64Val(sTS.getTime());
-              break;
-            case BOOLEAN:
-              sCell.setBoolVal(sRS.getBoolean(i));
-              break;
-            case DOUBLE:
-            case FLOAT:
-              sCell.setDoubleVal(sRS.getDouble(i));
-              break;
-            case INT:
-              sCell.setI32Val(sRS.getInt(i));
-              break;
-            case SMALLINT:
-              sCell.setI16Val(sRS.getShort(i));
-              break;
-            case TINYINT:
-              sCell.setByteVal(sRS.getByte(i));
-              break;
-            case DATE:
-            case UNSUPPORTED:
-            case UNKNOWN:
-            default:
-              sCell.clear();
-              break;
-          }
-          sRow.addToColVals(sCell);
-        }
-        sRowSet.addToRows(sRow);
-        if (profileLvl > 2) {
-          midTime = System.currentTimeMillis(); // T2
-          // put the sum of T2 to calculate avg time of get cols
-          timeArr[j++] += midTime;
-          // we also need TS of the last T2
-          timeArr[j++] = midTime;
-        }
-      }
-      
-      if (profileLvl > 2) {
-        if (sRowCount > 0) {
-          // calculate sum time of next and get cols
-          // sum of next() = (sum from i=2 to n of TS1 - sum from i=1 to n-1 of TS2)
-          // sum of get cols = (sum from i=1 to n of TS3 - sum from i=1 to n of TS2)
-          midTime = timeArr[k];
-          timeArr[k] =
-            ((timeArr[k]-timeArr[k-1])-(timeArr[k+1]-timeArr[k+2]));
-          timeArr[k+1] = (timeArr[k+1] - midTime);
-        }
-      }
-
-      sResp.hasMoreRows = false;
-      sResp.results = sRowSet;
-      sStmt.profile.rowCnt = sRowCount;
-      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
-    } catch (SQLException e) {
-      LOG.error("FetchResults error (" + e.getSQLState() + ") :" + e.getMessage(), e);
+    } catch (RejectedExecutionException e) {
+      LOG.error("FetchResults error : Producer thread unable to be executed.");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
-      sResp.status.sqlState = e.getSQLState();
-      sResp.status.errorCode = e.getErrorCode();
-      sResp.status.errorMessage = e.getMessage();
-      if (e.getSQLState().equals("08S01")) {
-        // remove failed ConnNode in the ConnPool
-        gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
-        LOG.warn("FetchResults: Removing a failed connection (connId:" + sConn.sConnId + ")");
-      }
+      sResp.status.errorMessage = "FetchResults error : Producer thread unable to be executed.";
       gConnMgr.queryProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
+    List<TRow> rowsFromProducer = rowFetcher.getRows(fetchSize);
+    TRowSet sRowSet = (TRowSet)gObjPool.getObject(TargetObjs.TROWSET);
+    if (sRowSet == null) {
+      sRowSet = new TRowSet();
+    }
+    // 0-based
+    sRowSet.clear();
+    if (rowsFromProducer == null) {
+      // to cope with no rows returned case
+      sRowSet.rows = new ArrayList<TRow>();
+    } else {
+      sRowSet.rows = rowsFromProducer;
+    }
+    
+    sResp.setHasMoreRows(rowFetcher._hasMoreRows.get());
+    sResp.setResults(sRowSet);
+    sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+
     if (profileLvl > 0) {
-      endTime = System.currentTimeMillis(); // T3
-      LOG.info("FetchResults PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
-        + aReq.operationHandle.operationId.driverType + ", Fetch time elapsed="
-        + (endTime-startTime) + "ms");
-      sStmt.profile.timeHistogram[2] = endTime-startTime;
-      if (profileLvl > 1) {
-        if (profileLvl > 2 && sRowCount == 0) {
-          timeArr[j++] = endTime;
-          timeArr[j++] = timeArr[j++] = 0;
-          timeArr[j++] = endTime;
-        }
-        timeArr[j++] = endTime;
-      }
+      endTime = System.currentTimeMillis();
+      LOG.info("Consumer fetchResults PROFILE: QueryId=" + sQueryId + ", Type="
+        + aReq.operationHandle.operationId.driverType + ", RowCnt=" + sRowSet.rows.size()
+        + ", Fetch time elapsed=" + (endTime-startTime) + "ms");
     }
     return sResp;
   }
   
-  private TTypeId mapSQL2QCType(int aJDBCType) {
+  public TTypeId mapSQL2QCType(int aJDBCType) {
     TTypeId sInterT;
     switch (aJDBCType) {
       case java.sql.Types.BIGINT:
@@ -1105,6 +1015,10 @@ struct TGetResultSetMetadataResp {
         break;
     }
     return sInterT;
+  }
+  
+  public ObjectPool getObjPool() {
+    return gObjPool;
   }
   /*
   private ConnType convertSesstypeToConntype (TSessionType aSessType) {

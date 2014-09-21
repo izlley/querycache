@@ -377,7 +377,7 @@ struct TFetchResultsReq {
 
 struct TFetchResultsResp {
   1: required TStatus status
-  2: optional bool hasMoreRows
+  2: required bool hasMoreRows
   3: optional Data.TRowSet results
   4: optional i64 numofrows
 }

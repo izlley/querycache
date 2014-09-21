@@ -45,8 +45,7 @@ public class QCQueryResultSet extends QCBaseResultSet {
   private boolean emptyResultSet = false;
   private boolean isScrollable = false;
   private boolean fetchFirst = false;
-  // TODO: this flag will be deprecated after supporting divided fetch
-  private boolean noMoreRows4Next = false;
+  private boolean hasMoreRows = true;
 
   public static class Builder {
 
@@ -208,7 +207,8 @@ public class QCQueryResultSet extends QCBaseResultSet {
     if (isClosed) {
       throw new SQLException("Resultset is closed");
     }
-    if (noMoreRows4Next || emptyResultSet || (maxRows > 0 && rowsFetched >= maxRows)) {
+    if (emptyResultSet || (maxRows > 0 && rowsFetched >= maxRows) ||
+        (!hasMoreRows && fetchedRowsItr != null && !fetchedRowsItr.hasNext())) {
       return false;
     }
 
@@ -229,6 +229,7 @@ public class QCQueryResultSet extends QCBaseResultSet {
         Utils.verifySuccessWithInfo(fetchResp.getStatus());
         fetchedRows = fetchResp.getResults().getRows();
         fetchedRowsItr = fetchedRows.iterator();
+        hasMoreRows = fetchResp.hasMoreRows;
       }
 
       String rowStr = "";
@@ -239,10 +240,6 @@ public class QCQueryResultSet extends QCBaseResultSet {
       }
 
       rowsFetched++;
-      
-      if (!fetchedRowsItr.hasNext()) {
-        noMoreRows4Next = true;
-      }
       
       if (LOG.isDebugEnabled()) {
         LOG.debug("Fetched row string: " + rowStr);

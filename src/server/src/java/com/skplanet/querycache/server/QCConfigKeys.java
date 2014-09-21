@@ -58,4 +58,8 @@ public class QCConfigKeys {
   public static final long    QC_AUTHORIZATION_POLICY_RELOAD_CYCLE_MILLI_DEFAULT = 5 * 60 * 1000;
   public static final String  QC_QUERY_PROFILE_COMPLETE_RETENTION_CNT = "qc.query.profile.complete.retention.count";
   public static final int     QC_QUERY_PROFILE_COMPLETE_RETENTION_CNT_DEFAULT = 50;
+  public static final String  QC_THREADPOOL_INIT_SIZE = "qc.threadpool.init.size";
+  public static final int     QC_THREADPOOL_INIT_SIZE_DEFAULT = 0;
+  public static final String  QC_THREADPOOL_MAX_SIZE = "qc.threadpool.max.size";
+  public static final int     QC_THREADPOOL_MAX_SIZE_DEFAULT = Integer.MAX_VALUE;
 }

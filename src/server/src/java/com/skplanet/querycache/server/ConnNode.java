@@ -1,13 +1,9 @@
 package com.skplanet.querycache.server;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicInteger;
-import com.skplanet.querycache.server.util.RuntimeProfile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +17,7 @@ public class ConnNode {
   
   long sConnId = 0;
   Connection sHConn = null;
-  private String sConnType;
+  String sConnType;
   private State  sState;
   private String url;
   
@@ -46,7 +42,7 @@ public class ConnNode {
       throws SQLException, LinkageError, ClassNotFoundException {
     Class.forName(aConnType.connPkgPath);
     this.sConnId = aId;
-    if (aConnType.connUserId.isEmpty()) {
+    if (aConnType.connUserId == null) {
       this.sHConn = DriverManager.getConnection(aUrl);
     } else {
       this.sHConn = DriverManager.getConnection(aUrl,
@@ -80,7 +76,7 @@ public class ConnNode {
       sId = sStmtIdGen.addAndGet(1L);
     }
     StmtNode sStmt = new StmtNode();
-    sStmt.initialize(sId, this.sHConn);
+    sStmt.initialize(this, sId, this.sHConn);
     // setting query profile
     sStmt.profile.queryId = sConnId + ":" + sId;
     sStmt.profile.user = this.user;
@@ -106,6 +102,8 @@ public class ConnNode {
     LOG.info("The statement is closed.-Type:" + sConnType + ", -ConnId:" +
         this.sConnId + ",StmtId:" + aStmtId + ",-# of Stmts:" + sStmtMap.size());
     if (sStmt != null) {
+      if (sStmt.rowProducer != null)
+        sStmt.rowProducer.close();
       sStmt.sHStmt.close();
     } else {
       LOG.debug("The statement is already closed." + "(" +
