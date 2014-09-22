@@ -60,6 +60,7 @@ public class QCConnection implements java.sql.Connection {
   private static final String QC_USE_SSL = "ssl";
   private static final String QC_SSL_TRUST_STORE = "sslTrustStore";
   private static final String QC_SSL_TRUST_STORE_PASSWORD = "trustStorePassword";
+  private static final String QC_SO_TIMEOUT = "socketTimeout";
 
   private TTransport transport;
   private TCLIService.Iface client;
@@ -68,6 +69,7 @@ public class QCConnection implements java.sql.Connection {
   private TSessionHandle sessHandle = null;
   private final List<TProtocolVersion> supportedProtocols = new LinkedList<TProtocolVersion>();
   private int loginTimeout = 0;
+  private int socketTimeout = 0;
 
   /**
    * TODO: - parse uri (use java.net.URI?).
@@ -95,10 +97,13 @@ public class QCConnection implements java.sql.Connection {
       connParams.getSessionVars().put(QC_AUTH_TYPE,
           info.getProperty(QC_AUTH_TYPE));
     }
+    if (connParams.getQCConfs().containsKey(QC_SO_TIMEOUT)) {
+      socketTimeout = Integer.parseInt(connParams.getQCConfs().get(QC_SO_TIMEOUT));
+      connParams.getQCConfs().remove(QC_SO_TIMEOUT);
+    }
 
     openTransport(uri, connParams.getHost(), connParams.getPort(),
         connParams.getSessionVars());
-
 
     // currently only V1 is supported
     supportedProtocols.add(TProtocolVersion.QUERYCACHE_CLI_PROTOCOL_V1);
@@ -122,11 +127,17 @@ public class QCConnection implements java.sql.Connection {
 
   private void openTransport(String uri, String host, int port,
       Map<String, String> sessConf) throws SQLException {
-    transport = new TSocket(host, port, loginTimeout);
+    // With this socketTimeout option set to a non-zero timeout, a read() call on
+    // the InputStream associated with this Socket will block for only this amount of time.
+    // If the timeout expires, a java.net.SocketTimeoutException is raised,
+    // though the Socket is still valid. The timeout must be > 0. 
+    // A timeout of zero is interpreted as an infinite timeout.
+    transport = new TSocket(host, port, socketTimeout);
 
     // TProtocol protocol = new TBinaryProtocol(transport);
     TProtocol protocol = new TCompactProtocol(transport);
     client = new TCLIService.Client(protocol);
+    
     try {
       transport.open();
     } catch (TTransportException e) {
