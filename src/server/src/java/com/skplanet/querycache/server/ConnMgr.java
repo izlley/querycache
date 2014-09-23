@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import com.skplanet.querycache.server.auth.AuthorizationConfig;
 import com.skplanet.querycache.server.auth.AuthorizationLoader;
 import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
-import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
 import com.skplanet.querycache.server.util.RuntimeProfile;
 
 public class ConnMgr {
@@ -72,11 +70,12 @@ public class ConnMgr {
               int  addedCnt = 0;
               String url = "";
               if (currSize < (int)(maxSize * sFreelistThreshold)) {
-                LOG.info("Resizing more ConnNode in the ConnPool, Type = "
-                  + connProp.connTypeName + ", current size = "
-                  + currSize + ", max size = " + maxSize);
-                // resizing connpool to x2
-                for (int i = 0; i < maxSize; i++) {
+                LOG.info("Resizing worker: Resizing more ConnNode in the ConnPool, Type="
+                  + connProp.connTypeName + ", current freesize="
+                  + currSize + ", current usingsize=" + sUsingMap.size()
+                  + ", max size=" + maxSize);
+                // resizing connpool
+                for (int i = (int)maxSize; i < ((maxSize * 3) / 2 + 1); i++) {
                   ConnNode sConn = new ConnNode();
                   try {
                     boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
@@ -85,30 +84,34 @@ public class ConnMgr {
                     sConn.initialize(connProp,
                                      sConnIdGen.addAndGet(1L),
                                      url);
-                    LOG.info("Add " + (addedCnt + 1) + "st ConnNode for ConnPool to " + url);
+                    LOG.info("Resizing worker: Add " + (addedCnt + 1) + "th ConnNode for ConnPool to " + url);
                     // append to the FreeList : O(1)
                     sFreeList.add(sConn);
                     sFreelistMaxSize.addAndGet(1);
                     addedCnt++;
                   } catch (SQLException e) {
                     LOG.error(
-                      "Connection error to (" + url + ") " + ":" + e.getMessage(), e);
+                      "Resizing worker: Connection error to (" + url + ") " + ":" + e.getMessage(), e);
                     // I don't wanna infinite loop here.
                     //i--;
                   } catch (LinkageError e) {
                     LOG.error(
-                      "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
+                      "Resizing worker: Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
                   } catch (ClassNotFoundException e) {
                     LOG.error(
-                      "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
+                      "Resizing worker: Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
                   }
                 }
-                LOG.info("FreeList resizing from " + currSize + " to "
+                LOG.info("Resizing worker: FreeList resizing from " + currSize + " to "
                     + (currSize + addedCnt));
               }
             } catch (InterruptedException e) {
               // Deliberately ignore
               interrupted = true;
+            } catch (Exception e) {
+              // just ignore
+              LOG.error("Resizing worker: [" + connProp.connTypeName + "] Resising thread error :"
+                + e.getMessage(), e);
             }
           }
         } finally {
@@ -122,7 +125,7 @@ public class ConnMgr {
     // It's a checker thread running in the background to detect failed connections 
     // and remove those connections.
     // TODO: If a client abort a connection abnormally, the qc server does not know 
-    //   whether it's a normal close case or not. Therefore, this connection is retained forever.
+    //   whether it's a normal close case or not. Therefore, those connections are retained forever.
     //   We also need gc for removing these zombie connections periodically.
     private Runnable sGCThread = new Runnable() {
       public void run() {
@@ -132,11 +135,12 @@ public class ConnMgr {
           while (true) {
             try {
               Thread.sleep(sGCCycle);
-              LOG.info("[" + connProp.connTypeName + "] ConnPool GC activated...");
-              // is this thread-safe? it doesn't matter
-              for (Iterator<ConnNode> iter = sFreeList.iterator(); iter.hasNext();) {
+              LOG.info("ConnPool GC: [" + connProp.connTypeName + "] ConnPool GC activated...");
+              int currSize = sFreeList.size();
+              for (int i = 0; i < currSize; i++) {
+                // it's not good for performance, but we can avoid ConcurrentModificationException(CME)
+                ConnNode conn = sFreeList.get(i);
                 Statement stmt = null;
-                ConnNode conn = iter.next();
                 try {
                   stmt = conn.sHConn.createStatement();
                   String query = QueryCacheServer.conf.get(
@@ -149,7 +153,7 @@ public class ConnMgr {
                   // only handling the connection error
                   if (e.getSQLState().equals("08S01")) {
                     // remove failed ConnNode in the ConnPool
-                    iter.remove();
+                    sFreeList.remove(i);
                     LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
                   }
                 } finally {
@@ -164,10 +168,15 @@ public class ConnMgr {
                   }
                 }
               }
-              LOG.info("[" + connProp.connTypeName + "] ConnPool size after GC : " + sFreeList.size());
+              LOG.info("ConnPool GC: [" + connProp.connTypeName + "] ConnPool size after GC : " + sFreeList.size());
             } catch (InterruptedException e) {
               // Deliberately ignore
               interrupted = true;
+            } catch (IndexOutOfBoundsException e) {
+              // just ignore
+            } catch (Exception e) {
+              // just ignore
+              LOG.error("ConnPool GC: [" + connProp.connTypeName + "] GC thread error :" + e.getMessage(), e);
             }
           }
         } finally {
