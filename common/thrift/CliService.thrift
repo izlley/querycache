@@ -113,6 +113,7 @@ struct TOpenSessionReq {
   4: optional string password 
 
   5: optional map<string, string> configuration
+  6: optional THostInfo hostInfo
 }
 
 struct TOpenSessionResp {
