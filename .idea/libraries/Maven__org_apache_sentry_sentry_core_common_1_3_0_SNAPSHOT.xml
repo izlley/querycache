@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.apache.sentry:sentry-core-common:1.3.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/sentry/sentry-core-common/1.3.0-SNAPSHOT/sentry-core-common-1.3.0-20141027.085525-1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/sentry/sentry-core-common/1.3.0-SNAPSHOT/sentry-core-common-1.3.0-20141027.085525-1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/sentry/sentry-core-common/1.3.0-SNAPSHOT/sentry-core-common-1.3.0-20141027.085525-1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
