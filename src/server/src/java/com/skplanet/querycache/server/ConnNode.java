@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.skplanet.querycache.cli.thrift.THostInfo;
+
 public class ConnNode {
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
   
@@ -24,6 +26,7 @@ public class ConnNode {
   // for checking authentication&authorization
   String user = null;
   private String password = null;
+  THostInfo clientInfo = null;
   
   //TODO : use hashcode instead of long
   private final AtomicLong sStmtIdGen = new AtomicLong(0L);

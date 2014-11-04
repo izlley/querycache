@@ -142,6 +142,7 @@ public class CLIHandler implements TCLIService.Iface {
     // TODO: 4. set connection properties by TOpenSessionReq.configuration
     sConn.user = user;
     sConn.setPassword(password);
+    sConn.clientInfo = aReq.getHostInfo();
     
     // 5. build TOpenSessionResp for responding to the client
     //sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
@@ -166,7 +167,7 @@ public class CLIHandler implements TCLIService.Iface {
   private void buildHostInfo(THostInfo aHostInfo) {
     try {
       aHostInfo.hostname = InetAddress.getLocalHost().getHostName();
-      aHostInfo.ipaddr = InetAddress.getLocalHost().toString();
+      aHostInfo.ipaddr = InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException e) {
       LOG.info("HostInfo can't be built properly.");
     }
@@ -287,10 +288,11 @@ public class CLIHandler implements TCLIService.Iface {
     try {
       sStmt = sConn.allocStmt();
       // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
       sStmt.profile.stmtState = StmtNode.State.EXEC;
       sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = timeArr;
-      sStmt.profile.queryStr = aReq.statement.replace('\n',' ').replace('\t',' ');
+      sStmt.profile.queryStr = aReq.statement.replace('\n',' ').replace('\r',' ').replace('\t',' ');
       sStmtId = sStmt.sStmtId;
       sQueryId = sConnId + ":" + sStmtId;
       // TODO: 2.5 set statement properties by TExecuteStatementReq.configuration

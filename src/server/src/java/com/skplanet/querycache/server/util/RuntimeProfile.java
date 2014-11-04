@@ -41,6 +41,7 @@ public class RuntimeProfile {
     public String user = null;
     public QueryType queryType = null;
     public String queryStr = null;
+    public String clientIp = null;
     public State stmtState = State.CLOSE;
     public long rowCnt = -1;
     public long startTime = 0;
@@ -114,6 +115,7 @@ public class RuntimeProfile {
       queryAuditLog.info("{\"queryid\":\"" + entry.queryId + "\"," +
         "\"connect_type\":\"" + entry.connType + "\"," +
         "\"user\":\"" + entry.user + "\"," +
+        "\"client_host\":\"" + entry.clientIp + "\"," +
         "\"query_type\":\"" + ((entry.queryType!=null)?entry.queryType.toString():"") + "\"," +
         "\"query_str\":\"" + entry.queryStr.replace('"', '\'') + "\"," +
         "\"stmt_state\":\"" + entry.stmtState.toString() + "\"," +

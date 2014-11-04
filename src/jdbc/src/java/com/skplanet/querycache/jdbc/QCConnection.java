@@ -1,6 +1,9 @@
 package com.skplanet.querycache.jdbc;
 
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -32,10 +35,14 @@ import javax.security.sasl.SaslException;
 import org.apache.thrift.transport.TSocket;
 import com.skplanet.querycache.cli.thrift.TCLIService;
 import com.skplanet.querycache.cli.thrift.TCloseSessionReq;
+import com.skplanet.querycache.cli.thrift.THostInfo;
 import com.skplanet.querycache.cli.thrift.TOpenSessionReq;
 import com.skplanet.querycache.cli.thrift.TOpenSessionResp;
 import com.skplanet.querycache.cli.thrift.TProtocolVersion;
 import com.skplanet.querycache.cli.thrift.TSessionHandle;
+import com.skplanet.querycache.server.QCConfigKeys;
+import com.skplanet.querycache.server.QueryCacheServer;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -132,7 +139,19 @@ public class QCConnection implements java.sql.Connection {
     // If the timeout expires, a java.net.SocketTimeoutException is raised,
     // though the Socket is still valid. The timeout must be > 0. 
     // A timeout of zero is interpreted as an infinite timeout.
-    transport = new TSocket(host, port, socketTimeout);
+    TSocket tsocket = new TSocket(host, port, socketTimeout);
+    try {
+      // Though the socket is closed and java consider it as close,
+      // the system keep the Socket in the state TIME_WAIT.
+      // Then the port used is actually still in use.
+      // This may generate a problem in the multi-threaded client program.
+      tsocket.getSocket().setReuseAddress(true);
+      tsocket.getSocket().setSoLinger(true, 0);
+    } catch (SocketException e) {
+      throw new SQLException("Enabling the SO_REUSEADDR socket option failed"
+          + e.getMessage(), " 08S01", e);
+    }
+    transport = tsocket;
 
     // TProtocol protocol = new TBinaryProtocol(transport);
     TProtocol protocol = new TCompactProtocol(transport);
@@ -150,6 +169,7 @@ public class QCConnection implements java.sql.Connection {
       throws SQLException {
     Map<String, String> sessVars = connParams.getSessionVars();
     TOpenSessionReq openReq = new TOpenSessionReq();
+    openReq.setHostInfo(buildHostInfo(new THostInfo()));
 
     try {
       openReq.url = connParams.getProtocol() + ":" + connParams.getService();
@@ -170,6 +190,16 @@ public class QCConnection implements java.sql.Connection {
     isClosed = false;
   }
 
+  private THostInfo buildHostInfo(THostInfo aHostInfo) {
+    try {
+      aHostInfo.hostname = InetAddress.getLocalHost().getHostName();
+      aHostInfo.ipaddr = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      // ignore
+    }
+    return aHostInfo;
+  }
+  
   // copy loginTimeout from driver manager. Thrift timeout needs to be in millis
   private void setupLoginTimeout() {
     long timeOut = TimeUnit.SECONDS.toMillis(DriverManager.getLoginTimeout());
