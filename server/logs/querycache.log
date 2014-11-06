@@ -1,0 +1,42 @@
+2014-10-31 15:04:48,295 WARN org.apache.hadoop.util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2014-10-31 15:04:48,368 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0xf0ec203 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 15:04:48,476 INFO org.apache.phoenix.metrics.Metrics: Initializing metrics system: phoenix
+2014-10-31 15:04:48,499 WARN org.apache.hadoop.metrics2.impl.MetricsConfig: Cannot locate configuration: tried hadoop-metrics2-phoenix.properties,hadoop-metrics2.properties
+2014-10-31 15:04:48,538 INFO org.apache.hadoop.metrics2.impl.MetricsSystemImpl: Scheduled snapshot period at 10 second(s).
+2014-10-31 15:04:48,538 INFO org.apache.hadoop.metrics2.impl.MetricsSystemImpl: phoenix metrics system started
+2014-10-31 15:04:48,661 INFO org.apache.hadoop.conf.Configuration.deprecation: hadoop.native.lib is deprecated. Instead, use io.native.lib.available
+2014-10-31 15:04:48,822 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x2b60063 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 15:04:49,024 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing master protocol: MasterService
+2014-10-31 15:04:49,024 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f230016
+2014-10-31 15:04:49,192 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x189bcf69 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 15:04:49,204 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing master protocol: MasterService
+2014-10-31 15:04:49,204 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f230017
+2014-10-31 16:05:58,594 WARN org.apache.hadoop.util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2014-10-31 16:05:58,675 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0xf0ec203 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 16:05:58,786 INFO org.apache.phoenix.metrics.Metrics: Initializing metrics system: phoenix
+2014-10-31 16:05:58,809 WARN org.apache.hadoop.metrics2.impl.MetricsConfig: Cannot locate configuration: tried hadoop-metrics2-phoenix.properties,hadoop-metrics2.properties
+2014-10-31 16:05:58,850 INFO org.apache.hadoop.metrics2.impl.MetricsSystemImpl: Scheduled snapshot period at 10 second(s).
+2014-10-31 16:05:58,850 INFO org.apache.hadoop.metrics2.impl.MetricsSystemImpl: phoenix metrics system started
+2014-10-31 16:05:58,975 INFO org.apache.hadoop.conf.Configuration.deprecation: hadoop.native.lib is deprecated. Instead, use io.native.lib.available
+2014-10-31 16:05:59,125 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x7ad364f8 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 16:05:59,330 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing master protocol: MasterService
+2014-10-31 16:05:59,330 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f230019
+2014-10-31 16:05:59,517 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x1d4e031e connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 16:05:59,529 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing master protocol: MasterService
+2014-10-31 16:05:59,529 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f23001a
+2014-10-31 16:05:59,654 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f230018
+2014-10-31 16:06:40,626 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f230015
+2014-10-31 16:06:49,301 WARN org.apache.hadoop.util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2014-10-31 16:06:49,373 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0xf0ec203 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 16:06:49,480 INFO org.apache.phoenix.metrics.Metrics: Initializing metrics system: phoenix
+2014-10-31 16:06:49,502 WARN org.apache.hadoop.metrics2.impl.MetricsConfig: Cannot locate configuration: tried hadoop-metrics2-phoenix.properties,hadoop-metrics2.properties
+2014-10-31 16:06:49,547 INFO org.apache.hadoop.metrics2.impl.MetricsSystemImpl: Scheduled snapshot period at 10 second(s).
+2014-10-31 16:06:49,547 INFO org.apache.hadoop.metrics2.impl.MetricsSystemImpl: phoenix metrics system started
+2014-10-31 16:06:49,667 INFO org.apache.hadoop.conf.Configuration.deprecation: hadoop.native.lib is deprecated. Instead, use io.native.lib.available
+2014-10-31 16:06:49,813 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x7ad364f8 connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 16:06:50,017 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing master protocol: MasterService
+2014-10-31 16:06:50,017 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f23001c
+2014-10-31 16:06:50,186 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x1d4e031e connecting to ZooKeeper ensemble=localhost:2181
+2014-10-31 16:06:50,200 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing master protocol: MasterService
+2014-10-31 16:06:50,200 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f23001d
+2014-10-31 16:06:52,498 INFO org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: Closing zookeeper sessionid=0x149647c8f23001b
