@@ -50,6 +50,7 @@ public class QueryRunner {
   private static long totMaxTime = 0;
   private static long totMinTime = Long.MAX_VALUE;
   private static long[] totHistogram = new long[HIST_SIZE];
+  private static long WAIT_TERM_TIME = 1800;
 
   private static enum ExecType {
     SINGLE_QUERY, GEN_QUERY_BY_PK_FILE, GEN_QUERY_BY_PK_QUERY,
@@ -508,7 +509,7 @@ public class QueryRunner {
     // and finish all existing threads in the queue
     executor.shutdown();
     
-    if (!executor.awaitTermination(300, TimeUnit.SECONDS))
+    if (!executor.awaitTermination(WAIT_TERM_TIME, TimeUnit.SECONDS))
       System.err.println("ERROR : ThreadPool did not terminate");
     
     //
