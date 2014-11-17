@@ -127,4 +127,32 @@
     <!--<version>0.1.0-SNAPSHOT</version>-->
     <!--</dependency>-->
     <!--</dependencies>-->
+
+    <profiles>
+        <profile>
+            <id>build-os-macos</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <name>mac os x</name>
+                </os>
+            </activation>
+            <properties>
+                <thrift.binary.path>/usr/local/bin/thrift</thrift.binary.path>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>build-os-linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <name>linux</name>
+                </os>
+            </activation>
+            <properties>
+                <thrift.binary.path>${pom.basedir}/../thirdparty/thrift-0.9.1/bin/thrift</thrift.binary.path>
+            </properties>
+        </profile>
+    </profiles>
 </project>
