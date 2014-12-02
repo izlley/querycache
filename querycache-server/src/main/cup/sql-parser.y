@@ -1049,7 +1049,7 @@ drop_db_stmt ::=
   {:
     parser.queryStmt.databaseRefs.add(
       new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(null,db_name), Privilege.DROP));
+        new DatabaseName(parser.datastore, db_name), Privilege.DROP));
   :}  
   ;
 
@@ -1298,13 +1298,13 @@ show_tables_stmt ::=
   {:
     parser.queryStmt.databaseRefs.add(
       new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(null,db), Privilege.ANY));
+        new DatabaseName(parser.datastore, db), Privilege.ANY));
   :}
   | KW_SHOW KW_TABLES KW_IN IDENT:db show_pattern
   {:
     parser.queryStmt.databaseRefs.add(
       new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(null,db), Privilege.ANY));
+        new DatabaseName(parser.datastore, db), Privilege.ANY));
   :}
   ;
 
@@ -1344,14 +1344,14 @@ show_functions_stmt ::=
   {:
     parser.queryStmt.databaseRefs.add(
       new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(null,db), Privilege.ANY));
+        new DatabaseName(parser.datastore, db), Privilege.ANY));
   :}
   | KW_SHOW opt_is_aggregate_fn KW_FUNCTIONS KW_IN IDENT:db
       show_pattern
   {:
     parser.queryStmt.databaseRefs.add(
       new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(null,db), Privilege.ANY));
+        new DatabaseName(parser.datastore, db), Privilege.ANY));
   :}
   ;
 
