@@ -48,7 +48,7 @@
   <property name="thirdparty.dir" value="${querycache.root}/../thirdparty"/>
 
   <!-- Thrift codegen properties -->
-  <property name="common.dir" value="${basedir}/../../common"/>
+  <property name="common.dir" value="${basedir}/../common"/>
   <property name="thrift.home" value="${thirdparty.dir}/thrift-${thrift.version}"/>
   <property name="thrift.args" value="-I ${thrift.home} --gen java:hashcode"/>
   <property name="thrift.gen.dir" value="${basedir}/generated-sources"/>

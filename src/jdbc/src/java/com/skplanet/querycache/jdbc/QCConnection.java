@@ -1,6 +1,8 @@
 package com.skplanet.querycache.jdbc;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -32,10 +34,12 @@ import javax.security.sasl.SaslException;
 import org.apache.thrift.transport.TSocket;
 import com.skplanet.querycache.cli.thrift.TCLIService;
 import com.skplanet.querycache.cli.thrift.TCloseSessionReq;
+import com.skplanet.querycache.cli.thrift.THostInfo;
 import com.skplanet.querycache.cli.thrift.TOpenSessionReq;
 import com.skplanet.querycache.cli.thrift.TOpenSessionResp;
 import com.skplanet.querycache.cli.thrift.TProtocolVersion;
 import com.skplanet.querycache.cli.thrift.TSessionHandle;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -76,7 +80,8 @@ public class QCConnection implements java.sql.Connection {
    */
   public QCConnection(String uri, Properties info) throws SQLException {
     Utils.JdbcConnectionParams connParams;
-    setupLoginTimeout();
+    //TODO: This timeout should be applied to only the login process not the query process.
+    //setupLoginTimeout();
     try {
       connParams = Utils.parseURL(uri);
     } catch (IllegalArgumentException e) {
@@ -150,6 +155,7 @@ public class QCConnection implements java.sql.Connection {
       throws SQLException {
     Map<String, String> sessVars = connParams.getSessionVars();
     TOpenSessionReq openReq = new TOpenSessionReq();
+    openReq.setHostInfo(buildHostInfo(new THostInfo()));
 
     try {
       openReq.url = connParams.getProtocol() + ":" + connParams.getService();
@@ -170,6 +176,16 @@ public class QCConnection implements java.sql.Connection {
     isClosed = false;
   }
 
+  private THostInfo buildHostInfo(THostInfo aHostInfo) {
+    try {
+      aHostInfo.hostname = InetAddress.getLocalHost().getHostName();
+      aHostInfo.ipaddr = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      // ignore
+    }
+    return aHostInfo;
+  }
+  
   // copy loginTimeout from driver manager. Thrift timeout needs to be in millis
   private void setupLoginTimeout() {
     long timeOut = TimeUnit.SECONDS.toMillis(DriverManager.getLoginTimeout());

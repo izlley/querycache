@@ -21,15 +21,25 @@ public class StmtNode {
     INIT,
     EXEC,
     GETMETA,
+    GETSCHEMAS,
+    GETCATALOGS,
+    GETTABLES,
+    GETTABLETYPES,
+    GETCOLUMNS,
+    GETTYPEINFO,
+    GETFUNCTIONS,
     FETCH,
     CLOSE,
+    CANCEL,
     ERROR
   }
   
-  public void initialize(ConnNode conn, long aStmtId, Connection aConn) throws SQLException {
+  public void initialize(ConnNode conn, long aStmtId, Connection aConn, boolean getstmt)
+    throws SQLException {
     this.conn = conn;
     this.sStmtId = aStmtId;
-    this.sHStmt = aConn.createStatement();
+    if (getstmt)
+      this.sHStmt = aConn.createStatement();
     this.sHasResultSet = false;
     this.sRS = null;
     this.profile = new QueryProfile();

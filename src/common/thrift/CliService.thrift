@@ -7,6 +7,10 @@ include "MetaData.thrift"
 
 enum TProtocolVersion {
   QUERYCACHE_CLI_PROTOCOL_V1,
+  QUERYCACHE_CLI_PROTOCOL_V2,
+  QUERYCACHE_CLI_PROTOCOL_V3,
+  QUERYCACHE_CLI_PROTOCOL_V4,
+  QUERYCACHE_CLI_PROTOCOL_V5
 }
 
 enum TStatusCode {
@@ -53,6 +57,7 @@ enum TOperationType {
   GET_TABLES,
   GET_TABLE_TYPES,
   GET_COLUMNS,
+  GET_FUNCTIONS,
   UNKNOWN,
 }
 
@@ -98,6 +103,25 @@ struct THostInfo {
   3: required i32 portnum
 }
 
+// A string identifier. This is interpreted literally.
+typedef string TIdentifier
+
+// A search pattern.
+//
+// Valid search pattern characters:
+// '_': Any single character.
+// '%': Any sequence of zero or more characters.
+// '\': Escape character used to include special characters,
+//      e.g. '_', '%', '\'. If a '\' precedes a non-special
+//      character it has no special meaning and is interpreted
+//      literally.
+typedef string TPattern
+
+
+// A search pattern or identifier. Used as input
+// parameter for many of the catalog functions.
+typedef string TPatternOrIdentifier
+
 /*
  * OpenSession()
  *
@@ -113,6 +137,7 @@ struct TOpenSessionReq {
   4: optional string password 
 
   5: optional map<string, string> configuration
+  6: optional THostInfo hostInfo
 }
 
 struct TOpenSessionResp {
@@ -382,6 +407,91 @@ struct TFetchResultsResp {
   4: optional i64 numofrows
 }
 
+// GetFunctions()
+//
+// Returns a list of functions supported by the data source. The
+// behavior of this function matches
+// java.sql.DatabaseMetaData.getFunctions() both in terms of
+// inputs and outputs.
+//
+// Result Set Columns:
+//
+// col1
+// name: FUNCTION_CAT
+// type: STRING
+// desc: Function catalog (may be null)
+//
+// col2
+// name: FUNCTION_SCHEM
+// type: STRING
+// desc: Function schema (may be null)
+//
+// col3
+// name: FUNCTION_NAME
+// type: STRING
+// desc: Function name. This is the name used to invoke the function.
+//
+// col4
+// name: REMARKS
+// type: STRING
+// desc: Explanatory comment on the function.
+//
+// col5
+// name: FUNCTION_TYPE
+// type: SMALLINT
+// desc: Kind of function. One of:
+//       * functionResultUnknown - Cannot determine if a return value or a table
+//                                 will be returned.
+//       * functionNoTable       - Does not a return a table.
+//       * functionReturnsTable  - Returns a table.
+//
+// col6
+// name: SPECIFIC_NAME
+// type: STRING
+// desc: The name which uniquely identifies this function within its schema.
+//       In this case this is the fully qualified class name of the class
+//       that implements this function.
+//
+struct TGetFunctionsReq {
+  // Session to run this request against
+  1: required TSessionHandle sessionHandle
+
+  // A catalog name; must match the catalog name as it is stored in the
+  // database; "" retrieves those without a catalog; null means
+  // that the catalog name should not be used to narrow the search.
+  2: optional TIdentifier catalogName
+
+  // A schema name pattern; must match the schema name as it is stored
+  // in the database; "" retrieves those without a schema; null means
+  // that the schema name should not be used to narrow the search.
+  3: optional TPatternOrIdentifier schemaName
+
+  // A function name pattern; must match the function name as it is stored
+  // in the database.
+  4: required TPatternOrIdentifier functionName
+}
+
+struct TGetFunctionsResp {
+  1: required TStatus status
+  2: optional TOperationHandle operationHandle
+}
+
+// GetLog()
+//
+// Fetch operation log from the server corresponding to
+// a particular OperationHandle.
+struct TGetLogReq {
+  // Operation whose log is requested
+  1: required TOperationHandle operationHandle
+}
+
+struct TGetLogResp {
+  1: required TStatus status
+
+  2: required string log
+
+}
+
 service TCLIService {
   TOpenSessionResp OpenSession(1:TOpenSessionReq req);
 
@@ -412,5 +522,9 @@ service TCLIService {
   TGetResultSetMetadataResp GetResultSetMetadata(1:TGetResultSetMetadataReq req);
 
   TFetchResultsResp FetchResults(1:TFetchResultsReq req);
+
+  TGetFunctionsResp GetFunctions(1:TGetFunctionsReq req);
+
+  TGetLogResp GetLog(1:TGetLogReq req);
 }
 

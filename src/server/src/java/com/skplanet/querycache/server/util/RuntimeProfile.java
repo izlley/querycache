@@ -36,16 +36,18 @@ public class RuntimeProfile {
   private static SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   
   public static class QueryProfile {
-    public String queryId = null;
-    public String connType = null;
-    public String user = null;
+    public String queryId = "";
+    public String connType = "";
+    public String user = "";
     public QueryType queryType = null;
-    public String queryStr = null;
+    public String queryStr = "";
+    public String clientIp = "";
     public State stmtState = State.CLOSE;
     public long rowCnt = -1;
     public long startTime = 0;
     public long endTime = 0;
-    // 0:exec/1:getmeta/2:fetch/3:stmtclose
+    // 0:exec/1:getmeta/2:fetch/3:stmtclose or
+    // 1:getschemas/2:fetch
     public long[] timeHistogram = {0,0,0,0};
     public long[] execProfile   = null;
     public long[] fetchProfile  = {0,0,0,-1,-1,-1,-1,0,0,-1,-1};
@@ -114,7 +116,8 @@ public class RuntimeProfile {
       queryAuditLog.info("{\"queryid\":\"" + entry.queryId + "\"," +
         "\"connect_type\":\"" + entry.connType + "\"," +
         "\"user\":\"" + entry.user + "\"," +
-        "\"query_type\":\"" + ((entry.queryType!=null)?entry.queryType.toString():"") + "\"," +
+        "\"client_host\":\"" + entry.clientIp + "\"," +
+        "\"query_type\":\"" + ((entry.queryType!=null)?entry.queryType.toString():"NOTQUERY") + "\"," +
         "\"query_str\":\"" + entry.queryStr.replace('"', '\'') + "\"," +
         "\"stmt_state\":\"" + entry.stmtState.toString() + "\"," +
         "\"rowcnt\":\"" + entry.rowCnt + "\"," +

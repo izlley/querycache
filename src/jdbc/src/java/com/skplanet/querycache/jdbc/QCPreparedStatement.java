@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.skplanet.querycache.cli.thrift.TCLIService;
+import com.skplanet.querycache.cli.thrift.TCancelOperationReq;
+import com.skplanet.querycache.cli.thrift.TCancelOperationResp;
 import com.skplanet.querycache.cli.thrift.TCloseOperationReq;
 import com.skplanet.querycache.cli.thrift.TExecuteStatementReq;
 import com.skplanet.querycache.cli.thrift.TExecuteStatementResp;
@@ -179,6 +181,9 @@ public class QCPreparedStatement implements PreparedStatement {
       throw es;
     } catch (Exception ex) {
       throw new SQLException(ex.toString(), "08S01", ex);
+    }
+    if (!stmtHandle.isHasResultSet()) {
+      return null;
     }
     resultSet = new QCQueryResultSet.Builder().setClient(client).setSessionHandle(sessHandle)
                       .setStmtHandle(stmtHandle).setMaxRows(maxRows)
@@ -822,8 +827,20 @@ public class QCPreparedStatement implements PreparedStatement {
    */
 
   public void cancel() throws SQLException {
-    // TODO Auto-generated method stub
-    throw new SQLException("Method not supported");
+    if (isClosed) {
+      throw new SQLException("Can't cancel after statement has been closed", "24000");
+    }
+
+    TCancelOperationReq cancelReq = new TCancelOperationReq();
+    cancelReq.setOperationHandle(stmtHandle);
+    try {
+      TCancelOperationResp cancelResp = client.CancelOperation(cancelReq);
+      Utils.verifySuccessWithInfo(cancelResp.getStatus());
+    } catch (SQLException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new SQLException(e.toString(), "08S01", e);
+    }
   }
 
   /*

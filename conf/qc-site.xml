@@ -42,7 +42,7 @@
 
 <property>
   <name>qc.connpool.resizing.cycle.milli</name>
-  <value>30000</value>
+  <value>500000</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
@@ -54,13 +54,13 @@
 
 <property>
   <name>qc.connpool.gc.impala</name>
-  <value>false</value>
+  <value>true</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.cycle.milli</name>
-  <value>20000</value>
+  <value>500000</value>
   <description>Local scratch space for Hive jobs</description>
 </property>
 
@@ -72,7 +72,7 @@
 
 <property>
   <name>qc.query.profiling.level</name>
-  <value>2</value>
+  <value>3</value>
   <description>Command line prompt configuration value. Other hiveconf can be used in
         this configuration value. Variable substitution will only be invoked at the hive
         cli startup.</description>
@@ -112,7 +112,7 @@
 
 <property>
   <name>qc.storage.jdbc.drivers</name>
-  <value>phoenix,impala,hive</value>
+  <value>impala</value>
   <description>if hive is running in test mode, prefixes the output table by this string</description>
 </property>
 
@@ -288,7 +288,7 @@
 
 <property>
   <name>qc.authorization.hive</name>
-  <value>SENTRY</value>
+  <value>NONE</value>
   <description>
     Client authorization types.
        NONE: no authorization check

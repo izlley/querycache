@@ -13,6 +13,8 @@ import com.skplanet.querycache.cli.thrift.TGetCatalogsReq;
 import com.skplanet.querycache.cli.thrift.TGetCatalogsResp;
 import com.skplanet.querycache.cli.thrift.TGetColumnsReq;
 import com.skplanet.querycache.cli.thrift.TGetColumnsResp;
+import com.skplanet.querycache.cli.thrift.TGetFunctionsReq;
+import com.skplanet.querycache.cli.thrift.TGetFunctionsResp;
 import com.skplanet.querycache.cli.thrift.TGetSchemasReq;
 import com.skplanet.querycache.cli.thrift.TGetSchemasResp;
 import com.skplanet.querycache.cli.thrift.TGetTableTypesReq;
@@ -240,7 +242,7 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
 
   public String getDatabaseProductVersion() throws SQLException {
     // TODO: Fetch this from the server side
-    return "0.01.0";
+    return "0.11.0";
   }
 
   public int getDefaultTransactionIsolation() throws SQLException {
@@ -278,12 +280,28 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
     throw new SQLException("Method not supported");
   }
 
-
   public ResultSet getFunctions(String catalogName, String schemaPattern, String functionNamePattern)
       throws SQLException {
-    throw new SQLException("Method not supported");
-  }
+    TGetFunctionsResp funcResp;
+    TGetFunctionsReq getFunctionsReq = new TGetFunctionsReq();
+    getFunctionsReq.setSessionHandle(sessHandle);
+    getFunctionsReq.setCatalogName(catalogName);
+    getFunctionsReq.setSchemaName(schemaPattern);
+    getFunctionsReq.setFunctionName(functionNamePattern);
 
+    try {
+      funcResp = client.GetFunctions(getFunctionsReq);
+    } catch (TException e) { 
+      throw new SQLException(e.getMessage(), "08S01", e);
+    }    
+    Utils.verifySuccess(funcResp.getStatus());
+
+    return new QCQueryResultSet.Builder()
+    .setClient(client)
+    .setSessionHandle(sessHandle)
+    .setStmtHandle(funcResp.getOperationHandle())
+    .build();
+  }
 
   public String getIdentifierQuoteString() throws SQLException {
     throw new SQLException("Method not supported");
@@ -334,11 +352,11 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
   }
 
   public int getJDBCMajorVersion() throws SQLException {
-    return 3;
+    return 0;
   }
 
   public int getJDBCMinorVersion() throws SQLException {
-    return 0;
+    return 11;
   }
 
   public int getMaxBinaryLiteralLength() throws SQLException {
@@ -434,9 +452,9 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
     // no primary keys
     // using local schema with empty resultset
     return new QCQueryResultSet.Builder().setClient(client).setEmptyResultSet(true).
-        setSchema(Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "KEY_SEQ", "PK_NAME" ),
-            Arrays.asList("STRING",    "STRING",      "STRING",     "STRING",       "INT",  "STRING"))
-            .build();
+      setSchema(Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "KEY_SEQ", "PK_NAME" ),
+        Arrays.asList("STRING",    "STRING",      "STRING",     "STRING",       "INT",  "STRING"))
+        .build();
   }
 
   public ResultSet getProcedureColumns(String catalog, String schemaPattern,
@@ -445,16 +463,16 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
     // no primary keys
     // using local schema with empty resultset
     return new QCQueryResultSet.Builder().setClient(client).setEmptyResultSet(true).
-                  setSchema(
-                    Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME", "COLUMN_NAME", "COLUMN_TYPE",
-                              "DATA_TYPE", "TYPE_NAME", "PRECISION", "LENGTH", "SCALE", "RADIX", "NULLABLE", "REMARKS",
-                              "COLUMN_DEF", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
-                              "IS_NULLABLE", "SPECIFIC_NAME"),
-                    Arrays.asList("STRING", "STRING", "STRING", "STRING", "SMALLINT", "INT",
-                              "STRING", "INT", "INT", "SMALLINT", "SMALLINT", "SMALLINT", "STRING", "STRING",
-                              "INT", "INT", "INT", "INT",
-                              "STRING", "STRING"))
-                  .build();
+      setSchema(
+        Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME", "COLUMN_NAME", "COLUMN_TYPE",
+          "DATA_TYPE", "TYPE_NAME", "PRECISION", "LENGTH", "SCALE", "RADIX", "NULLABLE", "REMARKS",
+          "COLUMN_DEF", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
+          "IS_NULLABLE", "SPECIFIC_NAME"),
+        Arrays.asList("STRING", "STRING", "STRING", "STRING", "SMALLINT", "INT",
+          "STRING", "INT", "INT", "SMALLINT", "SMALLINT", "SMALLINT", "STRING", "STRING",
+          "INT", "INT", "INT", "INT",
+          "STRING", "STRING"))
+        .build();
   }
 
   public String getProcedureTerm() throws SQLException {
@@ -466,12 +484,12 @@ public class QCDatabaseMetaData implements DatabaseMetaData {
     // no primary keys
     // using local schema with empty resultset
     return new QCQueryResultSet.Builder().setClient(client).setEmptyResultSet(true).
-                  setSchema(
-                    Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME", "RESERVERD", "RESERVERD",
-                                  "RESERVERD", "REMARKS", "PROCEDURE_TYPE", "SPECIFIC_NAME"),
-                    Arrays.asList("STRING", "STRING", "STRING", "STRING", "STRING",
-                                  "STRING", "STRING", "SMALLINT", "STRING"))
-                  .build();
+      setSchema(
+        Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME", "RESERVERD", "RESERVERD",
+          "RESERVERD", "REMARKS", "PROCEDURE_TYPE", "SPECIFIC_NAME"),
+        Arrays.asList("STRING", "STRING", "STRING", "STRING", "STRING",
+          "STRING", "STRING", "SMALLINT", "STRING"))
+        .build();
   }
 
   public int getResultSetHoldability() throws SQLException {

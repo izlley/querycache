@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.skplanet.querycache.cli.thrift.THostInfo;
+
 public class ConnNode {
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
   
@@ -24,6 +26,7 @@ public class ConnNode {
   // for checking authentication&authorization
   String user = null;
   private String password = null;
+  THostInfo clientInfo = null;
   
   //TODO : use hashcode instead of long
   private final AtomicLong sStmtIdGen = new AtomicLong(0L);
@@ -70,13 +73,13 @@ public class ConnNode {
     return sStmt;
   }
   
-  public StmtNode allocStmt() throws SQLException {
+  public StmtNode allocStmt(boolean getstmt) throws SQLException {
     long sId = sStmtIdGen.addAndGet(1L);
     while (sStmtMap.containsKey(sId) == true) {
       sId = sStmtIdGen.addAndGet(1L);
     }
     StmtNode sStmt = new StmtNode();
-    sStmt.initialize(this, sId, this.sHConn);
+    sStmt.initialize(this, sId, this.sHConn, getstmt);
     // setting query profile
     sStmt.profile.queryId = sConnId + ":" + sId;
     sStmt.profile.user = this.user;
@@ -124,7 +127,9 @@ public class ConnNode {
     // O(n)
     while (iterator.hasNext()) {
       ConcurrentHashMap.Entry<Long, StmtNode> sEntry = iterator.next();
-      sEntry.getValue().sHStmt.close();
+      Statement stmt = sEntry.getValue().sHStmt;
+      if (stmt != null)
+        stmt.close();
       // move QueryProfile to completeQueryProfile Map
       sQueryId = this.sConnId + ":" + sEntry.getValue().sStmtId;
       CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
@@ -133,6 +138,21 @@ public class ConnNode {
     }
     LOG.info("All statements are closed.-Type:" + sConnType + ", -ConnId:"
         + this.sConnId + ",-# of Stmts:" + sStmtMap.size());
+  }
+  
+  public StmtNode cancelStmt(long aStmtId) throws SQLException {
+    StmtNode sStmt = sStmtMap.get(aStmtId);  // O(1)
+    LOG.info("The statement is canceled.-Type:" + sConnType + ", -ConnId:" +
+        this.sConnId + ",StmtId:" + aStmtId);
+    if (sStmt != null) {
+      if (sStmt.rowProducer != null)
+        sStmt.rowProducer.close();
+      sStmt.sHStmt.cancel();
+    } else {
+      LOG.debug("The statement is already closed." + "(" +
+          sConnType + ":" + aStmtId + ")");
+    }
+    return sStmt;
   }
   
   public void setPassword(String aPass) {

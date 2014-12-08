@@ -193,6 +193,9 @@ public class RowFetcher implements Runnable {
       LOG.error("Producer fetchResults error (" + e.getSQLState() + ") :" + e.getMessage(), e);
       _stop.set(true);
       _rowQ.clear();
+      synchronized(_rowQ) {
+        _rowQ.notifyAll();
+      }
       if (e.getSQLState().equals("08S01")) {
         // remove failed ConnNode in the ConnPool
         CLIHandler.gConnMgr.removeConn(_stmt.conn.sConnType, _stmt.conn.sConnId);
