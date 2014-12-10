@@ -8,6 +8,8 @@ import java.util.AbstractMap;
 import java_cup.runtime.Symbol;
 import com.google.common.collect.Lists;
 import com.skplanet.querycache.server.auth.Privilege;
+import com.skplanet.querycache.server.auth.AuthorizeableTable;
+import com.skplanet.querycache.server.auth.AuthorizeableFunction;
 
 parser code {:
   QueryStmt queryStmt = new QueryStmt();
@@ -1289,6 +1291,11 @@ values_operand_list ::=
 
 use_stmt ::=
   KW_USE IDENT:db
+  {:
+    parser.queryStmt.tableRefs.add(
+      new AbstractMap.SimpleEntry<TableName,Privilege>(
+        new TableName(db, AuthorizeableTable.ANY_TABLE_NAME), Privilege.ANY));
+  :}
   ;
 
 show_tables_stmt ::=
@@ -1296,15 +1303,15 @@ show_tables_stmt ::=
   | KW_SHOW KW_TABLES show_pattern
   | KW_SHOW KW_TABLES KW_IN IDENT:db
   {:
-    parser.queryStmt.databaseRefs.add(
-      new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(parser.datastore, db), Privilege.ANY));
+    parser.queryStmt.tableRefs.add(
+      new AbstractMap.SimpleEntry<TableName,Privilege>(
+        new TableName(db, AuthorizeableTable.ANY_TABLE_NAME), Privilege.ANY));
   :}
   | KW_SHOW KW_TABLES KW_IN IDENT:db show_pattern
   {:
-    parser.queryStmt.databaseRefs.add(
-      new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(parser.datastore, db), Privilege.ANY));
+    parser.queryStmt.tableRefs.add(
+      new AbstractMap.SimpleEntry<TableName,Privilege>(
+        new TableName(db, AuthorizeableTable.ANY_TABLE_NAME), Privilege.ANY));
   :}
   ;
 
@@ -1342,16 +1349,16 @@ show_functions_stmt ::=
   | KW_SHOW opt_is_aggregate_fn KW_FUNCTIONS show_pattern
   | KW_SHOW opt_is_aggregate_fn KW_FUNCTIONS KW_IN IDENT:db
   {:
-    parser.queryStmt.databaseRefs.add(
-      new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(parser.datastore, db), Privilege.ANY));
+    parser.queryStmt.functionRefs.add(
+      new AbstractMap.SimpleEntry<FuncName,Privilege>(
+        new FuncName(db, AuthorizeableFunction.ANY_FUNCTION_NAME), Privilege.ANY));
   :}
   | KW_SHOW opt_is_aggregate_fn KW_FUNCTIONS KW_IN IDENT:db
       show_pattern
   {:
-    parser.queryStmt.databaseRefs.add(
-      new AbstractMap.SimpleEntry<DatabaseName,Privilege>(
-        new DatabaseName(parser.datastore, db), Privilege.ANY));
+    parser.queryStmt.functionRefs.add(
+      new AbstractMap.SimpleEntry<FuncName,Privilege>(
+        new FuncName(db, AuthorizeableFunction.ANY_FUNCTION_NAME), Privilege.ANY));
   :}
   ;
 

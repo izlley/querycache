@@ -1316,6 +1316,13 @@ struct TGetResultSetMetadataResp {
         sQueryId, State.ERROR);
       return sResp;
     }
+    if (sStmt.isCanceled) {
+      sResp.status.errorMessage = "Canceled";
+      sResp.status.sqlState = "HY000";
+      sResp.status.statusCode = TStatusCode.ERROR_STATUS;
+      return sResp;
+    }
+    
     // set profiling data
     sStmt.profile.stmtState = StmtNode.State.GETMETA;
     
@@ -1477,6 +1484,12 @@ struct TGetResultSetMetadataResp {
       sResp.status.errorMessage = "FetchResults error : the statement doesn't exist.";
       gConnMgr.queryProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
+      return sResp;
+    }
+    if (sStmt.isCanceled) {
+      sResp.status.errorMessage = "Canceled";
+      sResp.status.sqlState = "HY000";
+      sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       return sResp;
     }
     

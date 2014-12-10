@@ -11,6 +11,8 @@ import com.google.common.collect.Lists;
  * to treat views the same way as tables for the sake of authorization.
  */
 public class AuthorizeableFunction implements Authorizeable {
+  public final static String ANY_FUNCTION_NAME = org.apache.sentry.core.model.db.AccessConstants.ALL;
+  
   private final org.apache.sentry.core.model.db.Function function_;
   private final org.apache.sentry.core.model.db.Database database_;
 

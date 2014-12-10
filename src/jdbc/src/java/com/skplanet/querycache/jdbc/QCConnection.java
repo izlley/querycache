@@ -1,6 +1,5 @@
 package com.skplanet.querycache.jdbc;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Array;
@@ -20,7 +19,6 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +27,6 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslException;
 import org.apache.thrift.transport.TSocket;
 import com.skplanet.querycache.cli.thrift.TCLIService;
 import com.skplanet.querycache.cli.thrift.TCloseSessionReq;
@@ -41,7 +37,6 @@ import com.skplanet.querycache.cli.thrift.TProtocolVersion;
 import com.skplanet.querycache.cli.thrift.TSessionHandle;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;

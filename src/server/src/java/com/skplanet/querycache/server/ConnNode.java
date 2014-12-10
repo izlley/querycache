@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.skplanet.querycache.cli.thrift.THostInfo;
+import com.skplanet.querycache.cli.thrift.TStatusCode;
 
 public class ConnNode {
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
@@ -102,12 +103,15 @@ public class ConnNode {
   
   public StmtNode closeStmt(long aStmtId) throws SQLException {
     StmtNode sStmt = sStmtMap.remove(aStmtId);  // O(1)
-    LOG.info("The statement is closed.-Type:" + sConnType + ", -ConnId:" +
-        this.sConnId + ",StmtId:" + aStmtId + ",-# of Stmts:" + sStmtMap.size());
     if (sStmt != null) {
+      if (sStmt.isCanceled) {
+        throw new SQLException("Canceled", "HY000", TStatusCode.ERROR_STATUS.getValue());
+      }
       if (sStmt.rowProducer != null)
         sStmt.rowProducer.close();
       sStmt.sHStmt.close();
+      LOG.info("The statement is closed.-Type:" + sConnType + ", -ConnId:" +
+        this.sConnId + ",StmtId:" + aStmtId + ",-# of Stmts:" + sStmtMap.size());
     } else {
       LOG.debug("The statement is already closed." + "(" +
           sConnType + ":" + aStmtId + ")");
@@ -127,13 +131,14 @@ public class ConnNode {
     // O(n)
     while (iterator.hasNext()) {
       ConcurrentHashMap.Entry<Long, StmtNode> sEntry = iterator.next();
-      Statement stmt = sEntry.getValue().sHStmt;
-      if (stmt != null)
-        stmt.close();
-      // move QueryProfile to completeQueryProfile Map
-      sQueryId = this.sConnId + ":" + sEntry.getValue().sStmtId;
-      CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
-        sQueryId, StmtNode.State.CLOSE);
+      StmtNode stmtNode = sEntry.getValue();
+      if (stmtNode.sHStmt != null && !stmtNode.isCanceled) {
+        stmtNode.sHStmt.close();
+        // move QueryProfile to completeQueryProfile Map
+        sQueryId = this.sConnId + ":" + sEntry.getValue().sStmtId;
+        CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+          sQueryId, StmtNode.State.CLOSE);
+      }
       iterator.remove();
     }
     LOG.info("All statements are closed.-Type:" + sConnType + ", -ConnId:"
@@ -142,12 +147,16 @@ public class ConnNode {
   
   public StmtNode cancelStmt(long aStmtId) throws SQLException {
     StmtNode sStmt = sStmtMap.get(aStmtId);  // O(1)
-    LOG.info("The statement is canceled.-Type:" + sConnType + ", -ConnId:" +
-        this.sConnId + ",StmtId:" + aStmtId);
     if (sStmt != null) {
+      if (sStmt.isCanceled) {
+        throw new SQLException("Canceled", "HY000", TStatusCode.ERROR_STATUS.getValue());
+      }
       if (sStmt.rowProducer != null)
         sStmt.rowProducer.close();
       sStmt.sHStmt.cancel();
+      sStmt.isCanceled = true;
+      LOG.info("The statement is canceled.-Type:" + sConnType + ", -ConnId:" +
+        this.sConnId + ",StmtId:" + aStmtId);
     } else {
       LOG.debug("The statement is already closed." + "(" +
           sConnType + ":" + aStmtId + ")");

@@ -16,6 +16,7 @@ public class StmtNode {
   ResultSet sRS = null;
   QueryProfile profile = null;
   RowFetcher rowProducer = null;
+  boolean isCanceled = false;
   
   public static enum State {
     INIT,
