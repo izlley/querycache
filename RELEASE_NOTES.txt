@@ -1,0 +1,18 @@
+Release Notes - Querycache - Version 0.11.0
+
+** Bug
+    * Modify setLoginTimeout method to give no effect to query processing
+    * Get database name in a specific datasore
+
+** New Feature
+    * Add getCatalogs method
+    * Add getSchemas method
+    * Add getTables method
+    * Add getColumns method
+    * Add getTableTypes method
+    * Add getTypeInfo method
+    * Add getFunctions method
+    * Add cancel method
+
+** Improvement
+    * 
