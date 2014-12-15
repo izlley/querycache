@@ -5,7 +5,7 @@
     <parent>
         <artifactId>qcserver</artifactId>
         <groupId>com.skplanet.querycache</groupId>
-        <version>0.10.3-SNAPSHOT</version>
+        <version>0.11.0-SNAPSHOT</version>
         <!--<relativePath>${pom.basedir}</relativePath>-->
     </parent>
     <modelVersion>4.0.0</modelVersion>

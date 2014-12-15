@@ -142,6 +142,7 @@ public class CLIHandler implements TCLIService.Iface {
     // TODO: 4. set connection properties by TOpenSessionReq.configuration
     sConn.user = user;
     sConn.setPassword(password);
+    sConn.clientInfo = aReq.getHostInfo();
     
     // 5. build TOpenSessionResp for responding to the client
     //sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
@@ -166,7 +167,7 @@ public class CLIHandler implements TCLIService.Iface {
   private void buildHostInfo(THostInfo aHostInfo) {
     try {
       aHostInfo.hostname = InetAddress.getLocalHost().getHostName();
-      aHostInfo.ipaddr = InetAddress.getLocalHost().toString();
+      aHostInfo.ipaddr = InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException e) {
       LOG.info("HostInfo can't be built properly.");
     }
@@ -285,12 +286,13 @@ public class CLIHandler implements TCLIService.Iface {
     // 2. alloc statement
     //
     try {
-      sStmt = sConn.allocStmt();
+      sStmt = sConn.allocStmt(true);
       // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
       sStmt.profile.stmtState = StmtNode.State.EXEC;
       sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = timeArr;
-      sStmt.profile.queryStr = aReq.statement.replace('\n',' ').replace('\t',' ');
+      sStmt.profile.queryStr = aReq.statement.replace('\n',' ').replace('\r',' ').replace('\t',' ');
       sStmtId = sStmt.sStmtId;
       sQueryId = sConnId + ":" + sStmtId;
       // TODO: 2.5 set statement properties by TExecuteStatementReq.configuration
@@ -391,7 +393,7 @@ public class CLIHandler implements TCLIService.Iface {
       LOG.info("ExecuteStatement PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
         + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", Execute time elapsed="
         + (endTime-startTime) + "ms" + ", Query=" + sStmt.profile.queryStr);
-      sStmt.profile.timeHistogram[0] = endTime-startTime;
+      sStmt.profile.timeHistogram[0] = endTime - startTime;
       if (profileLvl > 1) {
         timeArr[i++] = endTime;
       }
@@ -407,7 +409,96 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetTypeInfoResp GetTypeInfo(TGetTypeInfoReq aReq) {
-    return new TGetTypeInfoResp();
+    LOG.debug("GetTypeInfo is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetTypeInfoResp sResp = new TGetTypeInfoResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetTypeInfo error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetTypeInfo error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETTYPEINFO;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. GetTypeInfo
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getTypeInfo();
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetCatalogsResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_TYPE_INFO);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetTypeInfo error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetTypeInfo: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetTypeInfo PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetTypeInfo time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
   }
 
   /**
@@ -418,7 +509,96 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetCatalogsResp GetCatalogs(TGetCatalogsReq aReq) {
-    return new TGetCatalogsResp();
+    LOG.debug("GetCatalogs is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetCatalogsResp sResp = new TGetCatalogsResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetCatalogs error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetCatalogs error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETCATALOGS;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. getCatalogs
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getCatalogs();
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetCatalogsResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_CATALOGS);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetCatalogs error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetCatalogs: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetCatalogs PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetCatalogs time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
   }
 
   /**
@@ -429,7 +609,98 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetSchemasResp GetSchemas(TGetSchemasReq aReq) {
-    return new TGetSchemasResp();
+    LOG.debug("GetSchemas is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetSchemasResp sResp = new TGetSchemasResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetSchemas error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetSchemas error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETSCHEMAS;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. getSchemas
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getSchemas(
+          (aReq.isSetCatalogName()?aReq.getCatalogName():null),
+          (aReq.isSetSchemaName()?aReq.getSchemaName():null));
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetSchemasResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_SCHEMAS);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetSchemas error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetSchemas: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetSchemas PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetSchemas time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
   }
 
   /**
@@ -440,7 +711,100 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetTablesResp GetTables(TGetTablesReq aReq) {
-    return new TGetTablesResp();
+    LOG.debug("GetTables is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetTablesResp sResp = new TGetTablesResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetTables error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetTables error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETTABLES;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. getTables
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getTables(
+        (aReq.isSetCatalogName()?aReq.getCatalogName():null),
+        (aReq.isSetSchemaName()?aReq.getSchemaName():null),
+        (aReq.isSetTableName()?aReq.getTableName():null),
+        (aReq.isSetTableTypes()?aReq.getTableTypes().toArray(new String[aReq.getTableTypes().size()]):null));
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetSchemasResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_TABLES);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetTables error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetTables: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetTables PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetTables time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
   }
 
   /**
@@ -451,7 +815,96 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TGetTableTypesResp GetTableTypes(TGetTableTypesReq aReq) {
-    return new TGetTableTypesResp();
+    LOG.debug("GetTableTypes is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetTableTypesResp sResp = new TGetTableTypesResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetTableTypes error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetTableTypes error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETTABLETYPES;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. getTableTypes
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getTableTypes();
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetSchemasResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_TABLE_TYPES);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetTableTypes error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetTableTypes: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetTableTypes PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetTableTypes time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
   }
 
   /**
@@ -463,13 +916,107 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TGetColumnsResp GetColumns(TGetColumnsReq aReq) {
-    return new TGetColumnsResp();
+    LOG.debug("GetColumns is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetColumnsResp sResp = new TGetColumnsResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetColumns error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetColumns error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETCOLUMNS;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. GetColumns
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getColumns(
+        (aReq.isSetCatalogName()?aReq.getCatalogName():null),
+        (aReq.isSetSchemaName()?aReq.getSchemaName():null),
+        (aReq.isSetTableName()?aReq.getTableName():null),
+        (aReq.isSetColumnName()?aReq.getColumnName():null));
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetSchemasResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_COLUMNS);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetColumns error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetColumns: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetColumns PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetColumns time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
   }
 
   /**
    * GetOperationStatus()
    *
    * Get the status of an operation running on the server.
+   * We don't need this method yet, because all APIs we supported are working synchronously.
    * 
    */
   public TGetOperationStatusResp GetOperationStatus(TGetOperationStatusReq aReq) {
@@ -484,7 +1031,67 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TCancelOperationResp CancelOperation(TCancelOperationReq aReq) {
-    return new TCancelOperationResp();
+    LOG.debug("CancelOperation is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    TCancelOperationResp sResp = new TCancelOperationResp();
+    sResp.setStatus(new TStatus());
+    
+    // 1. find statement and remove from statement UsingMap
+    long sConnId = aReq.operationHandle.operationId.connid;
+    long sStmtId = aReq.operationHandle.operationId.stmtid;
+    sQueryId = sConnId + ":" + sStmtId;
+    
+    ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("CancelOperation error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("CancelOperation error : the connection doesn't exist.");
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      return sResp;
+    }
+    
+    // 2. Cancel the statement
+    try {
+      sStmt = sConn.cancelStmt(sStmtId);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("CancelOperation error (" + e.getSQLState() + ") :" + e.getMessage(), e);
+      sResp.status.statusCode = TStatusCode.ERROR_STATUS;
+      sResp.status.sqlState = e.getSQLState();
+      sResp.status.errorCode = e.getErrorCode();
+      sResp.status.errorMessage = e.getMessage();
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
+        LOG.warn("CancelOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      return sResp;
+    }
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("CancelOperation PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
+        + aReq.operationHandle.operationId.driverType + ", CancelOp time elapsed="
+        + (endTime-startTime) + "ms");
+      
+      if(sStmt != null) {
+        // move QueryProfile to completeQueryProfile Map
+        CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+          sQueryId, StmtNode.State.CANCEL);
+      }
+    }
+    return sResp;
   }
 
   /**
@@ -709,6 +1316,13 @@ struct TGetResultSetMetadataResp {
         sQueryId, State.ERROR);
       return sResp;
     }
+    if (sStmt.isCanceled) {
+      sResp.status.errorMessage = "Canceled";
+      sResp.status.sqlState = "HY000";
+      sResp.status.statusCode = TStatusCode.ERROR_STATUS;
+      return sResp;
+    }
+    
     // set profiling data
     sStmt.profile.stmtState = StmtNode.State.GETMETA;
     
@@ -776,7 +1390,7 @@ struct TGetResultSetMetadataResp {
       LOG.info("GetResultSetMetadata PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
         + aReq.operationHandle.operationId.driverType
         + ", GetResultSetMetadata time elapsed=" + (endTime-startTime) + "ms");
-      sStmt.profile.timeHistogram[1] = endTime-startTime;
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     return sResp;
   }
@@ -872,6 +1486,12 @@ struct TGetResultSetMetadataResp {
         sQueryId, State.ERROR);
       return sResp;
     }
+    if (sStmt.isCanceled) {
+      sResp.status.errorMessage = "Canceled";
+      sResp.status.sqlState = "HY000";
+      sResp.status.statusCode = TStatusCode.ERROR_STATUS;
+      return sResp;
+    }
     
     //1-0=sumGetConn,2-1=sumGetStmt,3=endGetStmt,4-3=initFetcher,5-4=getMeta,6-5=1stFetch,
     //7=sumNext,8=sumGetCol,9=lastNext,10=EndTS
@@ -937,6 +1557,106 @@ struct TGetResultSetMetadataResp {
     return sResp;
   }
   
+  public TGetFunctionsResp GetFunctions(TGetFunctionsReq aReq) {
+    LOG.debug("GetFunctions is requested.");
+    long startTime = 0;
+    long endTime;
+    StmtNode sStmt = null;
+    String sQueryId = null;
+    
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+    gConnMgr.queryProfile.increaseNumReq();
+    //
+    // 1. get connection from pool
+    //
+    long sConnId = aReq.sessionHandle.sessionId.connid;
+    long sStmtId = 0;
+    
+    TGetFunctionsResp sResp = new TGetFunctionsResp();
+    sResp.setStatus(new TStatus());
+
+    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+    if (sConn == null) {
+      // the connection doesn't even exist, just send a error msg.
+      LOG.error("GetFunctions error : the connection doesn't exist." +
+        " (id:" + sConnId + ")");
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setErrorMessage("GetFunctions error : the connection doesn't exist.");
+      return sResp;
+    }
+
+    //
+    // 2. alloc a fake statement
+    //
+    try {
+      sStmt = sConn.allocStmt(false);
+      // set profiling data
+      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile.stmtState = StmtNode.State.GETFUNCTIONS;
+      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
+      sStmt.profile.execProfile = null;
+      sStmt.profile.queryStr = "";
+      sStmtId = sStmt.sStmtId;
+      sQueryId = sConnId + ":" + sStmtId;
+      
+      // TODO: 3. authorization
+      
+      //
+      // 4. getFunctions
+      //
+      DatabaseMetaData dmd = sConn.sHConn.getMetaData();
+      sStmt.sRS = dmd.getFunctions(
+        (aReq.isSetCatalogName()?aReq.getCatalogName():null),
+        (aReq.isSetSchemaName()?aReq.getSchemaName():null),
+        (aReq.isSetFunctionName()?aReq.getFunctionName():null));
+      sStmt.sHasResultSet = true;
+
+      //
+      // 5. build TGetSchemasResp
+      //
+      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
+        aReq.sessionHandle.sessionId.driverType);
+      TOperationHandle sOH = new TOperationHandle();
+      sOH.setOperationId(sHI);
+      sOH.setHasResultSet(true);
+      sOH.setOperationType(TOperationType.GET_FUNCTIONS);
+      sResp.setOperationHandle(sOH);
+      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+    } catch (SQLException e) {
+      LOG.error("GetFunctions error(" + e.getSQLState() + ") :" + e.getMessage() + "\n", e);
+      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp.status.setSqlState(e.getSQLState());
+      sResp.status.setErrorCode(e.getErrorCode());
+      sResp.status.setErrorMessage(e.getMessage());
+      // remove failed ConnNode in the UsingMap
+      if (e.getSQLState().equals("08S01")) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
+        LOG.warn("GetFunctions: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      }
+      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        sQueryId, State.ERROR);
+      
+      return sResp;
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("GetFunctions PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
+        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetFunctions time elapsed="
+        + (endTime-startTime) + "ms");
+      sStmt.profile.timeHistogram[1] = endTime - startTime;
+    }
+    
+    return sResp;
+  }
+
+  public TGetLogResp GetLog(TGetLogReq req) {
+    return new TGetLogResp();
+  }
+
   public TTypeId mapSQL2QCType(int aJDBCType) {
     TTypeId sInterT;
     switch (aJDBCType) {
