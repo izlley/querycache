@@ -3,10 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>qcserver</artifactId>
+        <artifactId>querycache</artifactId>
         <groupId>com.skplanet.querycache</groupId>
         <version>0.11.0-SNAPSHOT</version>
-        <!--<relativePath>${pom.basedir}</relativePath>-->
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -14,9 +13,9 @@
     </properties>
 
 
-    <artifactId>server</artifactId>
+    <artifactId>querycache-server</artifactId>
     <groupId>com.skplanet.querycache.server</groupId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <build>
         <!--<finalName>${project.artifactId}-${project.version}</finalName>-->
@@ -26,19 +25,13 @@
                 <directory>${pom.basedir}/../conf</directory>
                 <filtering>false</filtering>
                 <!--<includes>-->
-                    <!--<include>qc-site.xml</include>-->
-                    <!--<include>log4j.properties</include>-->
-                    <!--<include>hbase-site.xml</include>-->
+                <!--<include>qc-site.xml</include>-->
+                <!--<include>log4j.properties</include>-->
+                <!--<include>hbase-site.xml</include>-->
                 <!--</includes>-->
             </resource>
         </resources>
-        <!--<extensions>-->
-            <!--<extension>-->
-                <!--<groupId>org.apache.maven.wagon</groupId>-->
-                <!--<artifactId>wagon-ssh</artifactId>-->
-                <!--<version>2.6</version>-->
-            <!--</extension>-->
-        <!--</extensions>-->
+
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -62,51 +55,13 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--<plugin>-->
-                <!--<groupId>org.codehaus.mojo</groupId>-->
-                <!--<artifactId>exec-maven-plugin</artifactId>-->
-                <!--<version>1.2.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<goals>-->
-                            <!--<goal>java</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<mainClass>com.skplanet.querycache.server.main</mainClass>-->
-                    <!--<arguments>-->
-                        <!--<argument>input.test</argument>-->
-                    <!--</arguments>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
-            <!--<plugin>-->
-                <!--<groupId>org.codehaus.mojo</groupId>-->
-                <!--<artifactId>build-helper-maven-plugin</artifactId>-->
-                <!--<version>1.5</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>add-source</id>-->
-                        <!--<phase>generate-sources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>add-source</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<sources>-->
-                                <!--<source>${project.basedir}/generated-sources/parser-sources</source>-->
-                            <!--</sources>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.thrift.tools</groupId>
                 <artifactId>maven-thrift-plugin</artifactId>
                 <version>0.1.11</version>
                 <configuration>
                     <thriftSourceRoot>${project.basedir}/../thrift/src</thriftSourceRoot>
-                    <thriftExecutable>${project.basedir}/../thirdparty/thrift-0.9.1/bin/thrift
-                    </thriftExecutable>
+                    <thriftExecutable>${thrift.binary.path}</thriftExecutable>
                 </configuration>
                 <executions>
                     <execution>

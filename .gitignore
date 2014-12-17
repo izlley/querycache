@@ -2,7 +2,6 @@
 *.swp
 *.iml
 target/*
-**/target/*
-server/target/*	
-jdbc/target/*
+querycache-server/target
+querycache-jdbc/target
 

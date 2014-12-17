@@ -5,14 +5,23 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.skplanet.querycache</groupId>
-    <artifactId>qcserver</artifactId>
+    <artifactId>querycache</artifactId>
     <packaging>pom</packaging>
     <version>0.11.0-SNAPSHOT</version>
     <modules>
-        <module>jdbc</module>
-        <module>server</module>
+        <module>querycache-jdbc</module>
+        <module>querycache-server</module>
     </modules>
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -36,18 +45,114 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+            </plugin>
         </plugins>
     </build>
-<!--<dependencies>-->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>skp-public</id>
+            <name>skp public repository</name>
+            <url>http://mvn.skplanet.com/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+    <repositories>
+        <repository>
+            <id>apache</id>
+            <url>https://repository.apache.org/content/repositories/</url>
+        </repository>
+        <repository>
+            <id>skp-public</id>
+            <name>skplanet public repository</name>
+            <url>http://mvn.skplanet.com/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>maven-repository</id>
+            <name>maven-repository.com</name>
+            <url>http://maven-repository.com</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>skp-releases</id>
+            <name>skp-releases</name>
+            <url>http://mvn.skplanet.com/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>skp-snapshots</id>
+            <name>skp-snapshots</name>
+            <url>http://mvn.skplanet.com/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <!--<dependencies>-->
     <!--<dependency>-->
-        <!--<groupId>com.skplanet.querycache.jdbc</groupId>-->
-        <!--<artifactId>jdbc</artifactId>-->
-        <!--<version>0.1.0-SNAPSHOT</version>-->
+    <!--<groupId>com.skplanet.querycache.jdbc</groupId>-->
+    <!--<artifactId>jdbc</artifactId>-->
+    <!--<version>0.1.0-SNAPSHOT</version>-->
     <!--</dependency>-->
     <!--<dependency>-->
-        <!--<groupId>com.skplanet.querycache.server</groupId>-->
-        <!--<artifactId>server</artifactId>-->
-        <!--<version>0.1.0-SNAPSHOT</version>-->
+    <!--<groupId>com.skplanet.querycache.server</groupId>-->
+    <!--<artifactId>server</artifactId>-->
+    <!--<version>0.1.0-SNAPSHOT</version>-->
     <!--</dependency>-->
-<!--</dependencies>-->
+    <!--</dependencies>-->
+
+    <profiles>
+        <profile>
+            <id>build-os-macos</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <name>mac os x</name>
+                </os>
+            </activation>
+            <properties>
+                <thrift.binary.path>/usr/local/bin/thrift</thrift.binary.path>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>build-os-linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <name>linux</name>
+                </os>
+            </activation>
+            <properties>
+                <thrift.binary.path>${pom.basedir}/../thirdparty/thrift-0.9.1/bin/thrift</thrift.binary.path>
+            </properties>
+        </profile>
+    </profiles>
 </project>
