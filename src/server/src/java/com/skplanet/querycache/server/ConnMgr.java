@@ -208,6 +208,7 @@ public class ConnMgr {
       String url = "";
       LOG.info("Initializing the connection pool of " + aConnType + "...");
       // TODO: How can we handle url kv options? just ignore these?
+      int numofRealConn = 0;
       for (int i = 0; i < initSize; i++) {
         ConnNode sConn = new ConnNode();
         try {
@@ -217,21 +218,20 @@ public class ConnMgr {
           sConn.initialize(connProp,
                            sConnIdGen.addAndGet(1L),
                            url);
-          LOG.info("Add " + (i + 1) + "st ConnNode for ConnPool to " + url);
+          ++numofRealConn;
+          LOG.info("Add " + numofRealConn + "st ConnNode for ConnPool to " + url);
           // append to the FreeList : O(1)
           sFreeList.add(sConn);
         } catch (SQLException e) {
           LOG.error("Connection error to (" + url + ") " + ":" + e.getMessage(), e);
-          LOG.info("Retrying connection");
-          i--;
           continue;
         } catch (LinkageError e) {
           LOG.error(
-            "Connection init error " + aConnType + ":" + e.getMessage(), e);
+            "Connection pool init error " + aConnType + ":" + e.getMessage(), e);
           return CORE_RESULT.CORE_FAILURE;
         } catch (ClassNotFoundException e) {
           LOG.error(
-            "Connection init error " + aConnType + ":" + e.getMessage(), e);
+            "Connection pool init error " + aConnType + ":" + e.getMessage(), e);
           return CORE_RESULT.CORE_FAILURE;
         }
       }
@@ -398,10 +398,8 @@ public class ConnMgr {
     for (String driver: sDrivers) {
       ConnMgrofOne sConn = new ConnMgrofOne();
       if (sConn.initialize(driver, ConnProperty.protocolType.JDBC)
-            == CORE_RESULT.CORE_FAILURE) {
-        LOG.error("Connection error to " + driver);
+            == CORE_RESULT.CORE_FAILURE)
         continue;
-      }
 
       // Load Sentry configuration for authorization control
       if (QueryCacheServer.conf.get(
