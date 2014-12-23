@@ -65,14 +65,15 @@ public class ConnMgr {
           while (true) {
             try {
               Thread.sleep(sResizingCycle);
-              int currSize = sFreeList.size();
+              int currFreeSize = sFreeList.size();
+              int currUsingSize = sUsingMap.size();
               long maxSize = sFreelistMaxSize.get();
               int  addedCnt = 0;
               String url = "";
-              if (currSize < (int)(maxSize * sFreelistThreshold)) {
+              if (currFreeSize <= (int)(maxSize * sFreelistThreshold + 1)) {
                 LOG.info("Resizing worker: Resizing more ConnNode in the ConnPool, Type="
                   + connProp.connTypeName + ", current freesize="
-                  + currSize + ", current usingsize=" + sUsingMap.size()
+                  + currFreeSize + ", current usingsize=" + currUsingSize
                   + ", max size=" + maxSize);
                 // resizing connpool
                 for (int i = (int)maxSize; i < ((maxSize * 3) / 2 + 1); i++) {
@@ -102,8 +103,8 @@ public class ConnMgr {
                       "Resizing worker: Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
                   }
                 }
-                LOG.info("Resizing worker: FreeList resizing from " + currSize + " to "
-                    + (currSize + addedCnt));
+                LOG.info("Resizing worker: FreeList resizing from " + currFreeSize + " to "
+                    + (currFreeSize + addedCnt));
               }
             } catch (InterruptedException e) {
               // Deliberately ignore
@@ -137,7 +138,7 @@ public class ConnMgr {
               Thread.sleep(sGCCycle);
               LOG.info("ConnPool GC: [" + connProp.connTypeName + "] ConnPool GC activated...");
               int currSize = sFreeList.size();
-              for (int i = 0; i < currSize; i++) {
+              for (int i = currSize - 1; i >= 0; --i) {
                 // it's not good for performance, but we can avoid ConcurrentModificationException(CME)
                 ConnNode conn = sFreeList.get(i);
                 Statement stmt = null;
@@ -154,6 +155,7 @@ public class ConnMgr {
                   if (e.getSQLState().equals("08S01")) {
                     // remove failed ConnNode in the ConnPool
                     sFreeList.remove(i);
+                    sFreelistMaxSize.decrementAndGet();
                     LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
                   }
                 } finally {
@@ -262,10 +264,13 @@ public class ConnMgr {
       // return null if this map contains no mapping for the key
       // O(1)
       ConnNode sConn = sUsingMap.remove(aConnId);
+      sFreelistMaxSize.decrementAndGet();
       if (sConn == null) {
         LOG.warn(
           "ConnMgrofOne.removeConn(): There is no connection in ConnPool mapping to the id"
           + "(" + aConnId + ")");
+      } else {
+        LOG.info("Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
     }
     
