@@ -9,6 +9,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.*;
 import java.util.LinkedList;
@@ -39,6 +40,7 @@ public class QCConnection implements java.sql.Connection {
   private static final String QC_SO_TIMEOUT = "socketTimeout";
 
   private TTransport transport;
+  private InetAddress localAddress = null;
   private TCLIService.Iface client;
   private boolean isClosed = true;
   private SQLWarning warningChain = null;
@@ -109,7 +111,8 @@ public class QCConnection implements java.sql.Connection {
     // If the timeout expires, a java.net.SocketTimeoutException is raised,
     // though the Socket is still valid. The timeout must be > 0. 
     // A timeout of zero is interpreted as an infinite timeout.
-    transport = new TSocket(host, port, socketTimeout);
+    TSocket socket = new TSocket(host, port, socketTimeout);
+    transport = socket;
 
     // TProtocol protocol = new TBinaryProtocol(transport);
     TProtocol protocol = new TCompactProtocol(transport);
@@ -117,6 +120,7 @@ public class QCConnection implements java.sql.Connection {
     
     try {
       transport.open();
+      localAddress = socket.getSocket().getLocalAddress();
     } catch (TTransportException e) {
       throw new SQLException("Could not establish connection to " + uri + ": "
           + e.getMessage(), " 08S01", e);
@@ -151,7 +155,7 @@ public class QCConnection implements java.sql.Connection {
   private THostInfo buildHostInfo(THostInfo aHostInfo) {
     try {
       aHostInfo.hostname = InetAddress.getLocalHost().getHostName();
-      aHostInfo.ipaddr = InetAddress.getLocalHost().getHostAddress();
+      aHostInfo.ipaddr = localAddress.getHostAddress();
     } catch (UnknownHostException e) {
       // ignore
     }
