@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.skplanet.querycache.server.QCConfigKeys;
 import com.skplanet.querycache.server.QueryCacheServer;
-import com.skplanet.querycache.server.sqlcompiler.Analyzer;
 import com.skplanet.querycache.server.sqlcompiler.QueryStmt.QueryType;
 import com.skplanet.querycache.server.StmtNode.State;
 

@@ -1,9 +1,6 @@
 package com.skplanet.querycache.conf;
 
-import java.io.BufferedInputStream;
-import java.io.DataInput;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,6 +10,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
@@ -47,7 +44,6 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -58,8 +54,8 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
-import com.skplanet.querycache.server.CLIHandler;
-import com.skplanet.querycache.server.util.*;
+import com.skplanet.querycache.server.util.StringInterner;
+import com.skplanet.querycache.server.util.StringUtils;
 
 public class Configuration implements Iterable <Map.Entry<String, String>> {
   private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);

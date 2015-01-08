@@ -1,24 +1,16 @@
 package com.skplanet.querycache.jdbc;
 
+import com.skplanet.querycache.cli.thrift.*;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.NClob;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Struct;
+import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -26,21 +18,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.thrift.transport.TSocket;
-import com.skplanet.querycache.cli.thrift.TCLIService;
-import com.skplanet.querycache.cli.thrift.TCloseSessionReq;
-import com.skplanet.querycache.cli.thrift.THostInfo;
-import com.skplanet.querycache.cli.thrift.TOpenSessionReq;
-import com.skplanet.querycache.cli.thrift.TOpenSessionResp;
-import com.skplanet.querycache.cli.thrift.TProtocolVersion;
-import com.skplanet.querycache.cli.thrift.TSessionHandle;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TCompactProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 
 /**
  * QCConnection.

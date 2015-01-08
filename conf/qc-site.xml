@@ -6,157 +6,146 @@
 <property>
   <name>qc.server.port</name>
   <value>8655</value>
-  <description>The default number of reduce tasks per job.  Typically set
-  to a prime close to the number of available hosts.  Ignored when
-  mapred.job.tracker is "local". Hadoop set this to 1 by default, whereas hive uses -1 as its default value.
-  By setting this property to -1, Hive will automatically figure out what should be the number of reducers.
-  </description>
+  <description>QueryCache service port number</description>
 </property>
 
 <property>
   <name>qc.workerthread.min</name>
   <value>16</value>
-  <description>size per reducer.The default is 1G, i.e if the input size is 10G, it will use 10 reducers.</description>
+  <description>Minimum number of worker threads</description>
 </property>
 
 <property>
   <name>qc.workerthread.max</name>
   <value>64</value>
-  <description>max number of reducers will be used. If the one
-	specified in the configuration parameter mapred.reduce.tasks is
-	negative, hive will use this one as the max number of reducers when
-	automatically determine number of reducers.</description>
+  <description>Maximum number of worker threads</description>
 </property>
 
 <property>
   <name>qc.connpool.free.init.size</name>
   <value>16</value>
-  <description>Whether to print the names of the columns in query output.</description>
+  <description>Initial number of connection pool</description>
 </property>
 
 <property>
   <name>qc.connpool.free.resizing.factor</name>
   <value>0.2f</value>
-  <description>Whether to include the current database in the hive prompt.</description>
+  <description>Resizing factor for connection pool</description>
 </property>
 
 <property>
   <name>qc.connpool.resizing.cycle.milli</name>
   <value>30000</value>
-  <description>Local scratch space for Hive jobs</description>
+  <description>Interval of connection pool resize</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.hive</name>
   <value>false</value>
-  <description>Local scratch space for Hive jobs</description>
+  <description>Whether to enable connection pool garbage collection or not.</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.impala</name>
   <value>false</value>
-  <description>Local scratch space for Hive jobs</description>
+  <description>Whether to enable connection pool garbage collection or not.</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.cycle.milli</name>
   <value>20000</value>
-  <description>Local scratch space for Hive jobs</description>
+  <description>Interval of connection pool garbage collection</description>
 </property>
 
 <property>
   <name>qc.connpool.gc.verify.query</name>
   <value>Oh God, help me to get out of here!</value>
-  <description>Local scratch space for Hive jobs</description>
+  <description>Query string for connection check</description>
 </property>
 
 <property>
   <name>qc.query.profiling.level</name>
   <value>2</value>
-  <description>Command line prompt configuration value. Other hiveconf can be used in
-        this configuration value. Variable substitution will only be invoked at the hive
-        cli startup.</description>
+  <description>Level of query profiling.</description>
 </property>
 
 <property>
   <name>qc.query.profiling.detail.upper.milli</name>
   <value>1</value>
-  <description>Command line prompt configuration value. Other hiveconf can be used in
-        this configuration value. Variable substitution will only be invoked at the hive
-        cli startup.</description>
+  <description>If a query's runtime exceeds limit, profile will be logged</description>
 </property>
 
 <property>
   <name>qc.objpool.max.size</name>
   <value>1000</value>
-  <description>Scratch space for Hive jobs</description>
+  <description>Maximum size of pre-allocated object pool</description>
 </property>
 
 <property>
   <name>qc.objpool.cell.coeff</name>
   <value>2</value>
-  <description>Scratch space for Hive jobs</description>
+  <description>Coefficient for increasing object pool</description>
 </property>
 
 <property>
   <name>qc.objpool.reload.cycle.milli</name>
   <value>3000000</value>
-  <description>Local scratch space for Hive jobs</description>
+  <description>Interval to reload object pool</description>
 </property>
 
 <property>
   <name>qc.objpool.resizing.factor</name>
   <value>0.2f</value>
-  <description>whether hive is running in test mode. If yes, it turns on sampling and prefixes the output tablename</description>
+  <description>Object pool resizing factor.</description>
 </property>
 
 <property>
   <name>qc.storage.jdbc.drivers</name>
   <value>phoenix,impala,hive</value>
-  <description>if hive is running in test mode, prefixes the output table by this string</description>
+  <description>JDBC drivers to connect to data back-ends</description>
 </property>
 
 <property>
   <name>qc.storage.jdbc.drivers.address.impala</name>
   <value>localhost</value>
-  <description></description>
+  <description>Impala host to connect to</description>
 </property>
     
 <property>
   <name>qc.storage.jdbc.drivers.port.impala</name>
   <value>21050</value>
-  <description></description>
+  <description>Impala service port</description>
 </property>
     
 <property>
   <name>qc.storage.jdbc.drivers.pkgpath.impala</name>
   <value>org.apache.hive.jdbc.HiveDriver</value>
-  <description></description>
+  <description>driver package to connect to impala service</description>
 </property>
     
 <property>
   <name>qc.storage.jdbc.drivers.url.prefix.impala</name>
   <value>jdbc:hive2://</value>
-  <description></description>
+  <description>JDBC url for impala service</description>
 </property>
     
 <property>
   <name>qc.storage.jdbc.drivers.url.suffix.impala</name>
   <value>;auth=noSasl</value>
-  <description></description>
+  <description>JDBC URL suffix for impala back-ends</description>
 </property>
     
 <property>
   <name>qc.storage.auth.policy.file.impala</name>
   <!--value>hdfs://localhost/tmp/server1.ini</value-->
   <value>/home/leejy/work/workspace/querycache/conf/sentry/server1.ini</value>
-  <description></description>
+  <description>Auth policy file path for impala back-ends.</description>
 </property>
 
 <property>
   <name>qc.storage.auth.udf.whitelist.file.impala</name>
   <value>/home/leejy/work/workspace/querycache/conf/sentry/server1_udf</value>
-  <description></description>
+  <description>White-list of UDFs to use with impala back-ends.</description>
 </property>
 
 <property>

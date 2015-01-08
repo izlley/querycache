@@ -1,11 +1,10 @@
 package com.skplanet.querycache.server.sqlcompiler;
 
+import java.io.StringReader;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.StringReader;
-import java.util.AbstractMap;
-import java.util.Map;
 
 import com.google.common.base.Preconditions;
 import com.skplanet.querycache.server.ConnMgr;
@@ -14,7 +13,6 @@ import com.skplanet.querycache.server.auth.Privilege;
 import com.skplanet.querycache.server.auth.PrivilegeRequestBuilder;
 import com.skplanet.querycache.server.common.AnalyzerException;
 import com.skplanet.querycache.server.util.RuntimeProfile.QueryProfile;
-import com.skplanet.querycache.server.auth.Privilege;
 
 /**
  * Wrapper class for parser and analyzer.
