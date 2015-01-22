@@ -18,31 +18,25 @@
  */
 package com.skplanet.querycache.server;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-// Generated code
-import com.skplanet.querycache.thrift.*;
 import com.skplanet.querycache.cli.thrift.*;
-
+import com.skplanet.querycache.server.StmtNode.State;
+import com.skplanet.querycache.server.common.AnalyzerException;
+import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
+import com.skplanet.querycache.server.sqlcompiler.Analyzer;
+import com.skplanet.querycache.server.sqlcompiler.AuthorizationException;
+import com.skplanet.querycache.server.util.ObjectPool;
+import com.skplanet.querycache.thrift.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.skplanet.querycache.server.StmtNode.State;
-import com.skplanet.querycache.server.common.*;
-import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
-import com.skplanet.querycache.server.sqlcompiler.Analyzer;
-import com.skplanet.querycache.server.util.ObjectPool;
-import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
-import com.skplanet.querycache.server.sqlcompiler.AuthorizationException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+
+// Generated code
 
 public class CLIHandler implements TCLIService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
@@ -61,7 +55,7 @@ public class CLIHandler implements TCLIService.Iface {
     60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
   public static ConnMgr gConnMgr = new ConnMgr();
   
-  private ObjectPool gObjPool =
+  private static ObjectPool gObjPool =
     new ObjectPool(
       QueryCacheServer.conf.getInt(QCConfigKeys.QC_OBJECTPOOL_MAX_SIZE,
         QCConfigKeys.QC_OBJECTPOOL_MAX_SIZE_DEFAULT),
@@ -260,7 +254,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       timeArr[i++] = startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -318,7 +312,7 @@ public class CLIHandler implements TCLIService.Iface {
             "\n  -Error Query: " + aReq.statement, e);
           sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
           sResp.status.setErrorMessage(e.getMessage());
-          gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+          gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
             sQueryId, State.ERROR);
           return sResp;
         } catch (AnalyzerException e) {
@@ -326,7 +320,7 @@ public class CLIHandler implements TCLIService.Iface {
             "\n  -Error Query: " + aReq.statement, e);
           sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
           sResp.status.setErrorMessage(e.getMessage());
-          gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+          gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
             sQueryId, State.ERROR);
           return sResp;
         }
@@ -382,7 +376,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("ExecuteStatement: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -418,7 +412,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -484,8 +478,8 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetTypeInfo: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
-        sQueryId, State.ERROR);
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+              sQueryId, State.ERROR);
       
       return sResp;
     }
@@ -518,7 +512,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -584,7 +578,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetCatalogs: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -618,7 +612,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -686,7 +680,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetSchemas: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -720,7 +714,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -790,7 +784,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetTables: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -824,7 +818,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -890,7 +884,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetTableTypes: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -925,7 +919,7 @@ public class CLIHandler implements TCLIService.Iface {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -995,7 +989,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetColumns: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -1055,7 +1049,7 @@ public class CLIHandler implements TCLIService.Iface {
         " (id:" + sConnId + ")");
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("CancelOperation error : the connection doesn't exist.");
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1075,7 +1069,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
         LOG.warn("CancelOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1086,8 +1080,8 @@ public class CLIHandler implements TCLIService.Iface {
         + (endTime-startTime) + "ms");
       
       if(sStmt != null) {
-        // move QueryProfile to completeQueryProfile Map
-        CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        // move runtimeProfile to completeruntimeProfile Map
+        CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
           sQueryId, StmtNode.State.CANCEL);
       }
     }
@@ -1126,7 +1120,7 @@ public class CLIHandler implements TCLIService.Iface {
         " (id:" + sConnId + ")");
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("CloseOperation error : the connection doesn't exist.");
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1146,7 +1140,7 @@ public class CLIHandler implements TCLIService.Iface {
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
         LOG.warn("CloseOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1159,8 +1153,8 @@ public class CLIHandler implements TCLIService.Iface {
       if(sStmt != null) {
         sStmt.profile.endTime = endTime;
         sStmt.profile.timeHistogram[3] = endTime - startTime;
-        // move QueryProfile to completeQueryProfile Map
-        CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        // move runtimeProfile to completeruntimeProfile Map
+        CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
           sQueryId, StmtNode.State.CLOSE);
       
         long totalT = (sStmt.profile.timeHistogram[0]
@@ -1300,7 +1294,7 @@ struct TGetResultSetMetadataResp {
         " (id:" + sConnId + ")");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "GetResultSetMetadata error : The connection doesn't exist.";
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1312,7 +1306,7 @@ struct TGetResultSetMetadataResp {
         " (id:" + sStmtId + ")");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "GetResultSetMetadata error : The statement doesn't exist.";
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1380,7 +1374,7 @@ struct TGetResultSetMetadataResp {
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
         LOG.warn("GetResultSetMetadata: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1465,7 +1459,7 @@ struct TGetResultSetMetadataResp {
         " (id:" + sConnId + ")");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : the connection doesn't exist.";
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1482,7 +1476,7 @@ struct TGetResultSetMetadataResp {
         " (id:" + sStmtId + ")");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : the statement doesn't exist.";
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1503,7 +1497,7 @@ struct TGetResultSetMetadataResp {
         " (id:" + sStmtId + ")");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : The statement has no ResultSet.";
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
@@ -1526,15 +1520,14 @@ struct TGetResultSetMetadataResp {
       LOG.error("FetchResults error : Producer thread unable to be executed.");
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : Producer thread unable to be executed.";
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
     List<TRow> rowsFromProducer = rowFetcher.getRows(fetchSize);
-    TRowSet sRowSet = (TRowSet)gObjPool.getObject(TargetObjs.TROWSET);
-    if (sRowSet == null) {
-      sRowSet = new TRowSet();
-    }
+    TRowSet sRowSet = (TRowSet)gObjPool.getObject(ObjectPool.POOL_TROWSET);
+    rowFetcher.addRowSet(sRowSet); // for object recycling
+
     // 0-based
     sRowSet.clear();
     if (rowsFromProducer == null) {
@@ -1567,7 +1560,7 @@ struct TGetResultSetMetadataResp {
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
-    gConnMgr.queryProfile.increaseNumReq();
+    gConnMgr.runtimeProfile.increaseNumReq();
     //
     // 1. get connection from pool
     //
@@ -1636,7 +1629,7 @@ struct TGetResultSetMetadataResp {
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetFunctions: Removing a failed connection (connId:" + sConn.sConnId + ")");
       }
-      gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       
       return sResp;
@@ -1737,7 +1730,7 @@ struct TGetResultSetMetadataResp {
     return sInterT;
   }
   
-  public ObjectPool getObjPool() {
+  public static ObjectPool getObjPool() {
     return gObjPool;
   }
   /*

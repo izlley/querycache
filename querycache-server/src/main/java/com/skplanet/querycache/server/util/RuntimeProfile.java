@@ -1,11 +1,7 @@
 package com.skplanet.querycache.server.util;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -22,6 +18,7 @@ public class RuntimeProfile {
     .getLogger(RuntimeProfile.class.getName() + ".queryAudit");
   
   private static AtomicInteger numOfRequests = new AtomicInteger(0);
+  private static AtomicInteger numOfRequestsTotal = new AtomicInteger(0);
   private static int requestsPer10Sec = 0;
   
   private static int completeQueryMaxCnt = QueryCacheServer.conf.getInt(
@@ -59,9 +56,8 @@ public class RuntimeProfile {
         while (true) {
           try {
             Thread.sleep(10000);
-            requestsPer10Sec = numOfRequests.get();
+            requestsPer10Sec = numOfRequests.getAndSet(0);
             LOG.debug("Requests per 10sec = " + requestsPer10Sec);
-            numOfRequests.set(0);
           } catch (InterruptedException e) {
             // Deliberately ignore
             interrupted = true;
@@ -80,33 +76,44 @@ public class RuntimeProfile {
   }
   
   public QueryProfile addRunningQuery(String key, QueryProfile profile) {
-    QueryProfile entry = runningQueryProfile.put(key, profile);
-    LOG.debug("Add a profile obj in the runningQueryProfileMap: size="
-      + runningQueryProfile.size());
+    QueryProfile entry = null;
+    synchronized (runningQueryProfile) {
+      entry = runningQueryProfile.put(key, profile);
+      LOG.debug("Add a profile obj in the runningQueryProfileMap: size="
+              + runningQueryProfile.size());
+    }
     return entry;
   }
   
-  public synchronized QueryProfile addCompletedQuery(String key, QueryProfile profile) {
-    if (completeQueryProfile.size() - completeQueryMaxCnt >= 0) {
-      // remove the oldest entry
-      Iterator<Map.Entry<String, QueryProfile>> iter =
-        completeQueryProfile.entrySet().iterator();
-      if (iter.hasNext()) {
-        iter.next();
-        iter.remove();
-        LOG.debug("Remove a profile obj in the completeQueryProfileMap: size="
-          + completeQueryProfile.size());
+  public QueryProfile addCompletedQuery(String key, QueryProfile profile) {
+    QueryProfile entry = null;
+    synchronized (completeQueryProfile) {
+      if (completeQueryProfile.size() - completeQueryMaxCnt >= 0) {
+        // remove the oldest entry
+        Iterator<Map.Entry<String, QueryProfile>> iter =
+                completeQueryProfile.entrySet().iterator();
+        if (iter.hasNext()) {
+          iter.next();
+          iter.remove();
+          LOG.debug("Remove a profile obj in the completeQueryProfileMap: size="
+                  + completeQueryProfile.size());
+        }
       }
+      entry = completeQueryProfile.put(key, profile);
+      LOG.debug("Add a profile obj in the completeQueryProfileMap: size="
+              + completeQueryProfile.size());
     }
-    QueryProfile entry = completeQueryProfile.put(key, profile);
-    LOG.debug("Add a profile obj in the completeQueryProfileMap: size="
-      + completeQueryProfile.size());
     return entry;
   }
   
   public void moveRunToCompleteProfileMap(String qid, State state) {
     if (qid == null) return;
-    QueryProfile entry = runningQueryProfile.remove(qid);
+
+    QueryProfile entry = null;
+    synchronized (runningQueryProfile) {
+      entry = runningQueryProfile.remove(qid);
+    }
+
     if (entry != null) {
       entry.stmtState = state;
       if (state == State.ERROR)
@@ -134,9 +141,30 @@ public class RuntimeProfile {
   
   public void increaseNumReq() {
     numOfRequests.incrementAndGet();
+    numOfRequestsTotal.incrementAndGet();
   }
-  
+
+  public int getNumReq() {
+    return numOfRequestsTotal.get();
+  }
+
   public int getNumReqPer10s() {
     return requestsPer10Sec;
+  }
+
+  public List<QueryProfile> getRunningQueries() {
+    ArrayList<QueryProfile> list = null;
+    synchronized (runningQueryProfile) {
+      list = new ArrayList<QueryProfile>(runningQueryProfile.values());
+    }
+    return list;
+  }
+
+  public List<QueryProfile> getCompleteQueries() {
+    ArrayList<QueryProfile> list = null;
+    synchronized (completeQueryProfile) {
+      list = new ArrayList<QueryProfile>(completeQueryProfile.values());
+    }
+    return list;
   }
 }

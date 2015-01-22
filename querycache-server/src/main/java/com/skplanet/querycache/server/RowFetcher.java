@@ -1,5 +1,11 @@
 package com.skplanet.querycache.server;
 
+import com.skplanet.querycache.server.StmtNode.State;
+import com.skplanet.querycache.server.util.ObjectPool;
+import com.skplanet.querycache.thrift.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -8,17 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.skplanet.querycache.server.StmtNode.State;
-import com.skplanet.querycache.server.util.ObjectPool;
-import com.skplanet.querycache.server.util.ObjectPool.TargetObjs;
-import com.skplanet.querycache.thrift.TColumnValue;
-import com.skplanet.querycache.thrift.TRow;
-import com.skplanet.querycache.thrift.TStringValue;
-import com.skplanet.querycache.thrift.TTypeId;
 
 public class RowFetcher implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RowFetcher.class);
@@ -38,7 +33,8 @@ public class RowFetcher implements Runnable {
   public AtomicBoolean _isFetching = new AtomicBoolean(false);
   public AtomicBoolean _isDone = new AtomicBoolean(false);
   //
-  private long _fetchSize = Long.MAX_VALUE; 
+  private long _fetchSize = Long.MAX_VALUE;
+  private List<Object> _rowsetUsed = new ArrayList<Object>();
   
   RowFetcher(String queryId, StmtNode stmt, CLIHandler cliHandler) {
     this._queryId = queryId;
@@ -60,7 +56,7 @@ public class RowFetcher implements Runnable {
     if (_stmt.sHasResultSet != true) {
       LOG.error("Producer fetchResults error : The statement has no ResultSet." +
         " (id:" + _queryId + ")");
-      CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         _queryId, State.ERROR);
       return;
     }
@@ -84,10 +80,7 @@ public class RowFetcher implements Runnable {
       k = j;
       while (sRS.next()) {
         _fetchedoffset.incrementAndGet();
-        TRow sRow = (TRow)_objPool.getObject(TargetObjs.TROW);
-        if (sRow == null) {
-          sRow = new TRow();
-        }
+        TRow sRow = (TRow)_objPool.getObject(ObjectPool.POOL_TROW);
         if (_logLvl > 2) {
           midTime = System.currentTimeMillis(); // T1
           if (_fetchedoffset.get() == 1) {
@@ -100,10 +93,7 @@ public class RowFetcher implements Runnable {
           timeArr[j++] += midTime; // index-6
         }
         for (int i = 1; i <= sColCnt; i++) {
-          TColumnValue sCell = (TColumnValue)_objPool.getObject(TargetObjs.TCOLUMNVALUE);
-          if (sCell == null) {
-            sCell = new TColumnValue();
-          }
+          TColumnValue sCell = (TColumnValue)_objPool.getObject(ObjectPool.POOL_TCOLUMNVALUE);
           TTypeId sQCType = _cliHandler.mapSQL2QCType(sMeta.getColumnType(i));
           switch (sQCType) {
             case CHAR:
@@ -111,12 +101,8 @@ public class RowFetcher implements Runnable {
             case BINARY:
             case DECIMAL:
               String value = sRS.getString(i);
-              TStringValue sStrV = (TStringValue)_objPool.getObject(TargetObjs.TSTRINGVALUE);
-              if (sStrV != null) {
-                sCell.setStringVal(sStrV.setValue(value));
-              } else {
-                sCell.setStringVal(new TStringValue().setValue(value));
-              }
+              TStringValue sStrV = (TStringValue)_objPool.getObject(ObjectPool.POOL_TSTRINGVALUE);
+              sCell.setStringVal(sStrV.setValue(value));
               break;
             case BIGINT:
               sCell.setI64Val(sRS.getLong(i));
@@ -165,7 +151,7 @@ public class RowFetcher implements Runnable {
           }
         }
         if (_stop.get()) {
-          _rowQ.clear();
+          _objPool.recycleRows(_rowQ);
           sRS.close();
           break;
         }
@@ -192,7 +178,7 @@ public class RowFetcher implements Runnable {
     } catch (SQLException e) {
       LOG.error("Producer fetchResults error (" + e.getSQLState() + ") :" + e.getMessage(), e);
       _stop.set(true);
-      _rowQ.clear();
+      _objPool.recycleRows(_rowQ);
       synchronized(_rowQ) {
         _rowQ.notifyAll();
       }
@@ -201,7 +187,7 @@ public class RowFetcher implements Runnable {
         CLIHandler.gConnMgr.removeConn(_stmt.conn.sConnType, _stmt.conn.sConnId);
         LOG.warn("FetchResults: Removing a failed connection (connId:" + _stmt.conn.sConnId + ")");
       }
-      CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+      CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         _queryId, State.ERROR);
     }
     if (_logLvl > 0) {
@@ -223,7 +209,8 @@ public class RowFetcher implements Runnable {
   
   public void close() {
     _stop.set(true);
-    _rowQ.clear();
+    _objPool.recycleRows(_rowQ);
+    _objPool.recycleObjects(_rowsetUsed, ObjectPool.POOL_TROWSET);
   }
   
   public List<TRow> getRows(long fetchSize) {
@@ -235,7 +222,7 @@ public class RowFetcher implements Runnable {
     synchronized (_rowQ) {
       if (_fetchSize == Long.MAX_VALUE)
         _fetchSize = fetchSize;
-      while (true) {
+      while (escape == false) {
         fetching = _isFetching.get();
         done = _isDone.get();
         if (_stop.get()) {
@@ -275,8 +262,6 @@ public class RowFetcher implements Runnable {
           result = null;
           escape = true;
         }
-        if (escape == true)
-          break;
       }
     }
     return result;
@@ -289,5 +274,11 @@ public class RowFetcher implements Runnable {
       dest.add(_rowQ.get(i));
     }
     return dest;
+  }
+
+  // for object recycling.
+  // in close(), TRowSet instances will be recycled by ObjectPool
+  public void addRowSet(TRowSet rowset) {
+    _rowsetUsed.add(rowset);
   }
 }

@@ -54,6 +54,9 @@ if [ -z $QC_HOME ]; then
     fi
 fi
 
+# explicitly change working directory to $QC_HOME
+cd $QC_HOME
+
 if [ -z $DRIVER_DIR ]; then
     DRIVER_DIR=$QC_HOME/lib/driver
 fi

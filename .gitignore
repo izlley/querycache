@@ -4,4 +4,6 @@
 target/*
 querycache-server/target
 querycache-jdbc/target
-
+logs/*
+lib/*
+src/test/java/*.class

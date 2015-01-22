@@ -93,7 +93,7 @@ public class ConnNode {
     LOG.info("The statement is added.-Type:" + sConnType + ", -ConnId:" + 
       this.sConnId + ", StmtId:" + sId + ", -# of Stmts:" + sStmtMap.size());
     
-    if (CLIHandler.gConnMgr.queryProfile.addRunningQuery(sStmt.profile.queryId, sStmt.profile)
+    if (CLIHandler.gConnMgr.runtimeProfile.addRunningQuery(sStmt.profile.queryId, sStmt.profile)
         != null) {
       LOG.warn("There is same query-id in RunningProfileMap " + "(queryId:" + 
         sStmt.profile.queryId + ")");
@@ -136,7 +136,7 @@ public class ConnNode {
         stmtNode.sHStmt.close();
         // move QueryProfile to completeQueryProfile Map
         sQueryId = this.sConnId + ":" + sEntry.getValue().sStmtId;
-        CLIHandler.gConnMgr.queryProfile.moveRunToCompleteProfileMap(
+        CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
           sQueryId, StmtNode.State.CLOSE);
       }
       iterator.remove();

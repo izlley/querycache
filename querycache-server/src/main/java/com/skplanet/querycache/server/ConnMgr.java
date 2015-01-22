@@ -21,7 +21,12 @@ import com.skplanet.querycache.server.util.RuntimeProfile;
 public class ConnMgr {
   private static final Logger LOG = LoggerFactory.getLogger(ConnMgr.class);
 
-  private class ConnMgrofOne {
+  public class ConnMgrofOne {
+    public final String connType;
+    public ConnMgrofOne(String _connType) {
+      connType = new String(_connType);
+    }
+
     // N.B.: if the list is structurally modified at any time after the iterator
     // is
     // created, in any way except through the Iterator's own remove or add
@@ -385,18 +390,25 @@ public class ConnMgr {
         sUrl += "/" + connProp.connUrlSuffix;
       return sUrl;
     }
+
+    public int getFreeConnCount() {
+      return sFreeList.size();
+    }
+    public int getUsingConnCount() {
+      return sUsingMap.size();
+    }
   }
 
   // This Array contains ConnMgrofOnes of all of connection types.
   private Map<String, ConnMgrofOne> connMgrofAll = new HashMap<String, ConnMgrofOne>();
   // This contains running and completed query's profiling data
-  public RuntimeProfile queryProfile = new RuntimeProfile();
+  public RuntimeProfile runtimeProfile = new RuntimeProfile();
 
   CORE_RESULT initialize() {
     String[] sDrivers = QueryCacheServer.conf.getStrings(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS);
     // initialize jdbc connpools
     for (String driver: sDrivers) {
-      ConnMgrofOne sConn = new ConnMgrofOne();
+      ConnMgrofOne sConn = new ConnMgrofOne(driver);
       if (sConn.initialize(driver, ConnProperty.protocolType.JDBC)
             == CORE_RESULT.CORE_FAILURE) {
         LOG.error("Connection error to " + driver);
@@ -428,7 +440,7 @@ public class ConnMgr {
     String sHBaseDriver = QueryCacheServer.conf.get(QCConfigKeys.QC_STORAGE_HBASE_DRIVER);
     
     if (sHBaseDriver != null) {
-      ConnMgrofOne sConn = new ConnMgrofOne();
+      ConnMgrofOne sConn = new ConnMgrofOne(sHBaseDriver);
       if (sConn.initialize(sHBaseDriver, ConnProperty.protocolType.HBASE)
             == CORE_RESULT.CORE_FAILURE) {
         LOG.error("Connection error to " + sHBaseDriver);

@@ -19,6 +19,7 @@
 package com.skplanet.querycache.server;
 
 import com.skplanet.querycache.cli.thrift.TCLIService;
+import com.skplanet.querycache.servlet.QCWebApiServlet;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
@@ -26,8 +27,16 @@ import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.skplanet.querycache.servlet.QCStatusServlet;
 
 // Generated code
 
@@ -65,10 +74,42 @@ public class QueryCacheServer {
 
       new Thread(sThriftServer).start();
       //new Thread(secure).start();
+
+      Server server = runWebInterface();
+      server.join();
     } catch (Exception e) {
       LOG.error("FATAL error : ", e);
       System.exit(1);
     }
+  }
+
+  public static Server runWebInterface() throws Exception {
+    // create web service
+    LOG.info("Starting web interface...");
+    Server server = new Server(8080);
+
+    ServletContextHandler context_api = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    context_api.setContextPath("/api");
+    context_api.addServlet(new ServletHolder(new QCWebApiServlet()), "/*");
+
+    ServletContextHandler context_devel = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    context_devel.setContextPath("/devel");
+    context_devel.addServlet(new ServletHolder(new QCStatusServlet()), "/*");
+
+    ResourceHandler resource_handler = new ResourceHandler();
+    resource_handler.setDirectoriesListed(true);
+    resource_handler.setWelcomeFiles(new String[]{ "index.html" });
+    resource_handler.setResourceBase("./www/");
+
+    ContextHandlerCollection contextCollection = new ContextHandlerCollection();
+    contextCollection.setHandlers( new Handler[] { context_api, context_devel } );
+
+    HandlerList handlers = new HandlerList();
+    handlers.setHandlers(new Handler[] {contextCollection, resource_handler});
+    server.setHandler(handlers);
+    server.start();
+    LOG.info("Started web interface...");
+    return server;
   }
 
   public static void createServer(TCLIService.Processor processor) {
