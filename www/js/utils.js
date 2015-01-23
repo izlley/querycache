@@ -843,3 +843,12 @@ function formatDate(d) {
         d.getSeconds()
     );
 }
+
+function humanReadable(bytes, si) {
+    var unit = (si==true)? 1000:1024;
+    if (bytes<unit) return bytes + "B";
+    var exp = parseInt(Math.log(bytes)/Math.log(unit));
+    var pre = ((si==true)? "kMGTPE":"KMGTPE").charAt(exp-1) + ((si==true)? "":"i");
+    return '%.1f %sB'.sprintf(bytes/Math.pow(unit, exp), pre);
+}
+

@@ -1,0 +1,81 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>QueryCache</title>
+    <style type="text/css">
+    @import '/bootstrap/css/bootstrap.min.css';
+    @import '/css/querycache.css';
+    </style>
+    <script src="/js/jquery-1.11.1.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/js/utils.js"></script>
+</head>
+<script type="text/javascript">
+var g_running_queries = [];
+var g_complete_queries = [];
+var g_connection_pool = [];
+var g_object_pool = null;
+
+function getAll() {
+    $.ajax({
+        url: '/header.html',
+        cache:false
+    }).done(function(html) {
+        $('#header').html(html);
+    });
+    $.getJSON('/api/connections', function(result) {
+        var contents = '';
+        g_connection_pool = result;
+        for (var i=0; i<g_connection_pool.length; i++) {
+            var p = g_connection_pool[i];
+            contents += '<tr><td>'+p.driver+'</td><td>'+p.free+'</td><td>'+p.using+'</td></tr>';
+        }
+        $('#connpool tbody').html(contents);
+    });
+    $.getJSON('/api/objectpool', function(result) {
+        var contents = '';
+        g_object_pool = result;
+        var p = g_object_pool;
+        contents += '<tr><td>TROWSET</td><td>'+p.poolSize[0]+'</td></tr>';
+        contents += '<tr><td>TROW</td><td>'+p.poolSize[1]+'</td></tr>';
+        contents += '<tr><td>TCOLUMNVALUE</td><td>'+p.poolSize[2]+'</td></tr>';
+        contents += '<tr><td>TSTRINGVALUE</td><td>'+p.poolSize[3]+'</td></tr>';
+        $('#objpool tbody').html(contents);
+    });
+}
+
+$(function() {
+    getAll();
+});
+
+</script>
+<body>
+
+<H1>QueryCache : Pools</H1>
+<table class="table table-nonfluid" id="header"></table>
+
+<H2>Connection Pool Stats</H2>
+<div class="container">
+    <table class="table table-bordered table-nonfluid" id="connpool">
+    <thead><tr>
+        <th>backend</th><th>free</th><th>in use</th>
+    </tr></thead>
+    <tbody>
+    </tbody>
+    </table>
+</div>
+
+<H2>Object Pool Stats</H2>
+<div class="container">
+    <table class="table table-bordered table-nonfluid" id="objpool">
+    <thead><tr>
+        <th>obj type</th><th>free</th>
+    </tr></thead>
+    <tbody>
+    </tbody>
+    </table>
+</div>
+
+</body>
+</html>
+

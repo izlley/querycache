@@ -42,8 +42,8 @@ import com.skplanet.querycache.servlet.QCStatusServlet;
 
 public class QueryCacheServer {
   private static final Logger LOG = LoggerFactory.getLogger(QueryCacheServer.class);
-
   public static final QCConfiguration conf = new QCConfiguration();
+  public static Server webServer = null;
   
   public static void main(String [] args) {
     try {
@@ -75,8 +75,8 @@ public class QueryCacheServer {
       new Thread(sThriftServer).start();
       //new Thread(secure).start();
 
-      Server server = runWebInterface();
-      server.join();
+      webServer = runWebInterface();
+      webServer.join();
     } catch (Exception e) {
       LOG.error("FATAL error : ", e);
       System.exit(1);
@@ -109,6 +109,7 @@ public class QueryCacheServer {
     server.setHandler(handlers);
     server.start();
     LOG.info("Started web interface...");
+
     return server;
   }
 

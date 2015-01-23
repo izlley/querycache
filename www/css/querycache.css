@@ -11,6 +11,10 @@
     background-color: #DD8888;
 }
 
+.table-nonfluid {
+    width: auto;
+}
+
 .left {
 	position: absolute;
 	left: 0;

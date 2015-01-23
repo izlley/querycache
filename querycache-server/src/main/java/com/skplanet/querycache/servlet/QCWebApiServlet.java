@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.skplanet.querycache.server.CLIHandler;
 import com.skplanet.querycache.server.ConnMgr;
+import com.skplanet.querycache.server.QueryCacheServer;
 import com.skplanet.querycache.server.util.ObjectPool;
 import com.skplanet.querycache.server.util.ObjectPool.Profile;
 import com.skplanet.querycache.server.util.RuntimeProfile;
@@ -14,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -29,6 +32,68 @@ public class QCWebApiServlet extends HttpServlet {
             this.driver = driver;
             this.free = free;
             this.using = using;
+        }
+    }
+
+    // the info from java.lang.Runtime is specific to current JVM
+    // system info should be obtained seperately
+    public class RuntimeInfo {
+        int nProcessors;
+        long memFree;
+        long memTotal;
+        long memMax;
+
+        public RuntimeInfo(Runtime runtime) {
+            this.nProcessors = runtime.availableProcessors();
+            this.memFree = runtime.freeMemory();
+            this.memTotal = runtime.totalMemory();
+            this.memMax = runtime.maxMemory();
+            if (this.memMax == Long.MAX_VALUE) {
+                this.memMax = -1;
+            }
+        }
+    }
+
+    public class ThreadInfo {
+        int webServerThreads;
+        int webServerThreadsIdle;
+        int handlerThreads;
+        int handlerThreadsIdle;
+        int totalThreads;
+
+        public ThreadInfo() {
+            if (QueryCacheServer.webServer != null) {
+                webServerThreads = QueryCacheServer.webServer.getThreadPool().getThreads();
+                webServerThreadsIdle = QueryCacheServer.webServer.getThreadPool().getIdleThreads();
+            }
+
+            ThreadGroup rootGroup = Thread.currentThread( ).getThreadGroup( );
+            ThreadGroup parentGroup;
+            while ( ( parentGroup = rootGroup.getParent() ) != null ) {
+                rootGroup = parentGroup;
+            }
+            totalThreads = rootGroup.activeCount();
+
+            handlerThreads = CLIHandler.getThreadPoolSize();
+            handlerThreadsIdle = CLIHandler.getThreadPoolSize() - CLIHandler.getThreadPoolActiveCount();
+        }
+    }
+
+    public class SystemInfo {
+        double loadSystem;
+        double loadProcess;
+        long memPhysFree;
+        long memPhysTotal;
+        long swapFree;
+        long swapTotal;
+
+        public SystemInfo(OperatingSystemMXBean bean) {
+            loadSystem = bean.getSystemCpuLoad();
+            loadProcess = bean.getProcessCpuLoad();
+            memPhysFree = bean.getFreePhysicalMemorySize();
+            memPhysTotal = bean.getTotalPhysicalMemorySize();
+            swapFree = bean.getFreeSwapSpaceSize();
+            swapTotal = bean.getTotalSwapSpaceSize();
         }
     }
 
@@ -74,6 +139,14 @@ public class QCWebApiServlet extends HttpServlet {
                 ObjectPool pool = CLIHandler.getObjPool();
                 Profile profile = pool.new Profile();
                 writer.print(gson.toJson(profile));
+                break;
+            }
+
+            case "/system": {
+                RuntimeInfo runtime = new RuntimeInfo(Runtime.getRuntime());
+                SystemInfo system = new SystemInfo((OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean());
+                ThreadInfo threads = new ThreadInfo();
+                writer.printf("{\"jvm\":%s,\"system\":%s,\"threads\":%s}", gson.toJson(runtime), gson.toJson(system), gson.toJson(threads));
                 break;
             }
         }

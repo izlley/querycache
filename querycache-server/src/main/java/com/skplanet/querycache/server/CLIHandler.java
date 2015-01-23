@@ -1733,6 +1733,16 @@ struct TGetResultSetMetadataResp {
   public static ObjectPool getObjPool() {
     return gObjPool;
   }
+
+  public static int getThreadPoolSize()
+  {
+    return ((ThreadPoolExecutor)_threadPool).getPoolSize();
+  }
+  public static int getThreadPoolActiveCount()
+  {
+    return ((ThreadPoolExecutor)_threadPool).getActiveCount();
+  }
+
   /*
   private ConnType convertSesstypeToConntype (TSessionType aSessType) {
     switch (aSessType) {

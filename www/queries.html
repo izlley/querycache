@@ -1,0 +1,76 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>QueryCache</title>
+    <style type="text/css">
+    @import '/bootstrap/css/bootstrap.min.css';
+    @import '/css/querycache.css';
+    </style>
+    <script src="/js/jquery-1.11.1.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/js/utils.js"></script>
+</head>
+<script type="text/javascript">
+var g_running_queries = [];
+var g_complete_queries = [];
+
+function getAll() {
+    $.ajax({
+        url: '/header.html',
+        cache:false
+    }).done(function(html) {
+        $('#header').html(html);
+    });
+    $.getJSON('/api/queries', function(result) {
+        var contents = '';
+        g_running_queries = result.runningQueries;
+        for (var i=0; i<g_running_queries.length; i++) {
+            var q = g_running_queries[i];
+            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td></tr>';
+        }
+        $('#queriesinflight tbody').html(contents);
+
+        contents = '';
+        g_complete_queries = result.completeQueries;
+        for (var i=0; i<g_complete_queries.length; i++) {
+            var q = g_complete_queries[i];
+            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td></tr>';
+        }
+        $('#queriescomplete tbody').html(contents);
+    });
+}
+
+$(function() {
+    getAll();
+});
+
+</script>
+<body>
+
+<H1>QueryCache : Queries</H1>
+<table class="table table-nonfluid" id="header"></table>
+
+<H2>In-Flight Queries</H2>
+<div class="container">
+    <table class="table table-bordered" id="queriesinflight">
+    <thead><tr>
+        <th>id</th><th>type</th><th>user</th><th>statement</th><th>client ip</th><th>rows</th><th>startTime</th><th>endTime</th>
+    </tr></thead>
+    <tbody>
+    </tbody>
+    </table>
+</div>
+
+<H2>Complete Queries</H2>
+<div class="container">
+    <table class="table table-bordered" id="queriescomplete">
+    <thead><tr>
+        <th>id</th><th>type</th><th>user</th><th>statement</th><th>client ip</th><th>rows</th><th>startTime</th><th>elapsedTime</th>
+    </tr></thead>
+    <tbody>
+    </tbody>
+    </table>
+</div>
+</body>
+</html>
+
