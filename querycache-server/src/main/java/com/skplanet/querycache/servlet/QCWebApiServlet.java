@@ -9,7 +9,9 @@ import com.skplanet.querycache.server.util.ObjectPool;
 import com.skplanet.querycache.server.util.ObjectPool.Profile;
 import com.skplanet.querycache.server.util.RuntimeProfile;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,7 +25,9 @@ import java.util.*;
 /**
  * Created by nazgul33 on 15. 1. 16.
  */
+@WebServlet(asyncSupported = true)
 public class QCWebApiServlet extends HttpServlet {
+    private static final String ASYNC_REQ_ATTR = QCWebApiServlet.class.getName() + ".async";
     public class ConDesc {
         public String driver;
         public int free;
@@ -101,9 +105,6 @@ public class QCWebApiServlet extends HttpServlet {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("application/json; charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-
         PrintWriter writer = response.getWriter();
         RuntimeProfile rt = CLIHandler.gConnMgr.runtimeProfile;
 
@@ -120,6 +121,8 @@ public class QCWebApiServlet extends HttpServlet {
                 String rq = gson.toJson(listRQ, qpListType);
                 String cq = gson.toJson(listCQ, qpListType);
 
+                response.setContentType("application/json; charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
                 writer.printf("{\"runningQueries\":%s, \"completeQueries\":%s}", rq, cq);
                 break;
             }
@@ -131,6 +134,8 @@ public class QCWebApiServlet extends HttpServlet {
                     ConDesc cd = new ConDesc(mgr.connType, mgr.getFreeConnCount(), mgr.getUsingConnCount());
                     lCD.add(cd);
                 }
+                response.setContentType("application/json; charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
                 writer.print(gson.toJson(lCD));
                 break;
             }
@@ -138,6 +143,8 @@ public class QCWebApiServlet extends HttpServlet {
             case "/objectpool": {
                 ObjectPool pool = CLIHandler.getObjPool();
                 Profile profile = pool.new Profile();
+                response.setContentType("application/json; charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
                 writer.print(gson.toJson(profile));
                 break;
             }
@@ -146,7 +153,44 @@ public class QCWebApiServlet extends HttpServlet {
                 RuntimeInfo runtime = new RuntimeInfo(Runtime.getRuntime());
                 SystemInfo system = new SystemInfo((OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean());
                 ThreadInfo threads = new ThreadInfo();
+                response.setContentType("application/json; charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
                 writer.printf("{\"jvm\":%s,\"system\":%s,\"threads\":%s}", gson.toJson(runtime), gson.toJson(system), gson.toJson(threads));
+                break;
+            }
+
+            case "/cancelQuery": {
+                // if async marker is not set, check update time and initiate async
+                if ( request.getAttribute(ASYNC_REQ_ATTR) == null ) {
+                    final String qId = request.getParameter("id");
+                    final String driver = request.getParameter("driver");
+
+                    if (qId != null && qId.length() > 0 && driver != null && driver.length() > 0) {
+                        final AsyncContext async = request.startAsync();
+                        final Boolean asyncYes = new Boolean(true);
+                        request.setAttribute(ASYNC_REQ_ATTR, asyncYes);
+                        async.setTimeout(30000);
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                CLIHandler ch = CLIHandler.getInstance();
+                                ch.internalCancelStatement(qId, driver);
+                                async.dispatch();
+
+                            }
+                        }).start();
+                    }
+                    else {
+                        response.setContentType("application/json; charset=utf-8");
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        writer.printf("{\"result\":\"%s\", \"msg\":\"%s\"}", "error", "invalid query specifier");
+                    }
+                }
+                else {
+                    response.setContentType("application/json; charset=utf-8");
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    writer.printf("{\"result\":\"%s\", \"msg\":\"%s\"}", "ok", "successful");
+                }
                 break;
             }
         }

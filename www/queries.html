@@ -26,7 +26,7 @@ function getAll() {
         g_running_queries = result.runningQueries;
         for (var i=0; i<g_running_queries.length; i++) {
             var q = g_running_queries[i];
-            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td></tr>';
+            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.stmtState+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td><td><a href="/api/cancelQuery?id='+q.queryId+'&driver='+q.connType+'">'+"Cancel"+'</a></td></tr>';
         }
         $('#queriesinflight tbody').html(contents);
 
@@ -34,7 +34,7 @@ function getAll() {
         g_complete_queries = result.completeQueries;
         for (var i=0; i<g_complete_queries.length; i++) {
             var q = g_complete_queries[i];
-            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td></tr>';
+            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.stmtState+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td></tr>';
         }
         $('#queriescomplete tbody').html(contents);
     });
@@ -54,7 +54,7 @@ $(function() {
 <div class="container">
     <table class="table table-bordered" id="queriesinflight">
     <thead><tr>
-        <th>id</th><th>type</th><th>user</th><th>statement</th><th>client ip</th><th>rows</th><th>startTime</th><th>endTime</th>
+        <th>id</th><th>type</th><th>user</th><th>statement</th><th>state</th><th>client ip</th><th>rows</th><th>startTime</th><th>endTime</th><th>Cancel</th>
     </tr></thead>
     <tbody>
     </tbody>
@@ -65,7 +65,7 @@ $(function() {
 <div class="container">
     <table class="table table-bordered" id="queriescomplete">
     <thead><tr>
-        <th>id</th><th>type</th><th>user</th><th>statement</th><th>client ip</th><th>rows</th><th>startTime</th><th>elapsedTime</th>
+        <th>id</th><th>type</th><th>user</th><th>statement</th><th>state</th><th>client ip</th><th>rows</th><th>startTime</th><th>elapsedTime</th>
     </tr></thead>
     <tbody>
     </tbody>

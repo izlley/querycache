@@ -116,26 +116,25 @@ public class RuntimeProfile {
 
     if (entry != null) {
       entry.stmtState = state;
-      if (state == State.ERROR)
+      if (entry.endTime <= 0)
         entry.endTime = System.currentTimeMillis();
+
       addCompletedQuery(qid, entry);
       queryAuditLog.info("{\"queryid\":\"" + entry.queryId + "\"," +
-        "\"connect_type\":\"" + entry.connType + "\"," +
-        "\"user\":\"" + entry.user + "\"," +
-        "\"client_host\":\"" + entry.clientIp + "\"," +
-        "\"query_type\":\"" + ((entry.queryType!=null)?entry.queryType.toString():"NOTQUERY") + "\"," +
-        "\"query_str\":\"" + entry.queryStr.replace('"', '\'') + "\"," +
-        "\"stmt_state\":\"" + entry.stmtState.toString() + "\"," +
-        "\"rowcnt\":\"" + entry.rowCnt + "\"," +
-        "\"start_time\":\"" + dateformat.format(new Date(entry.startTime)) + "\"," +
-        "\"end_time\":\"" + dateformat.format(new Date(entry.endTime)) + "\"," +
-        "\"time_histogram\":[\"" + entry.timeHistogram[0] + "\",\"" + entry.timeHistogram[1] +
-          "\",\"" + entry.timeHistogram[2] + "\",\"" + entry.timeHistogram[3] + "\"]," +
-        "\"total_elapsedtime\":\"" + (entry.timeHistogram[0] + entry.timeHistogram[1] +
-          entry.timeHistogram[2] + entry.timeHistogram[3]) + "\"}"
+                      "\"connect_type\":\"" + entry.connType + "\"," +
+                      "\"user\":\"" + entry.user + "\"," +
+                      "\"client_host\":\"" + entry.clientIp + "\"," +
+                      "\"query_type\":\"" + ((entry.queryType != null) ? entry.queryType.toString() : "NOTQUERY") + "\"," +
+                      "\"query_str\":\"" + entry.queryStr.replace('"', '\'') + "\"," +
+                      "\"stmt_state\":\"" + entry.stmtState.toString() + "\"," +
+                      "\"rowcnt\":\"" + entry.rowCnt + "\"," +
+                      "\"start_time\":\"" + dateformat.format(new Date(entry.startTime)) + "\"," +
+                      "\"end_time\":\"" + dateformat.format(new Date(entry.endTime)) + "\"," +
+                      "\"time_histogram\":[\"" + entry.timeHistogram[0] + "\",\"" + entry.timeHistogram[1] +
+                      "\",\"" + entry.timeHistogram[2] + "\",\"" + entry.timeHistogram[3] + "\"]," +
+                      "\"total_elapsedtime\":\"" + (entry.timeHistogram[0] + entry.timeHistogram[1] +
+                      entry.timeHistogram[2] + entry.timeHistogram[3]) + "\"}"
       );
-    } else {
-      LOG.warn("The query-id(" + qid + ") is not exist in the runningQueryProfile map.");
     }
   }
   

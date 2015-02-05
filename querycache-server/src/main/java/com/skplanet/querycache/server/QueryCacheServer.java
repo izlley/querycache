@@ -47,7 +47,7 @@ public class QueryCacheServer {
   
   public static void main(String [] args) {
     try {
-      CLIHandler handler = new CLIHandler();
+      CLIHandler handler = CLIHandler.getInstance();
       final TCLIService.Processor processor = new TCLIService.Processor(handler);
       
       Runnable sThriftServer = new Runnable() {
@@ -92,17 +92,13 @@ public class QueryCacheServer {
     context_api.setContextPath("/api");
     context_api.addServlet(new ServletHolder(new QCWebApiServlet()), "/*");
 
-    ServletContextHandler context_devel = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    context_devel.setContextPath("/devel");
-    context_devel.addServlet(new ServletHolder(new QCStatusServlet()), "/*");
-
     ResourceHandler resource_handler = new ResourceHandler();
     resource_handler.setDirectoriesListed(true);
     resource_handler.setWelcomeFiles(new String[]{ "index.html" });
     resource_handler.setResourceBase("./www/");
 
     ContextHandlerCollection contextCollection = new ContextHandlerCollection();
-    contextCollection.setHandlers( new Handler[] { context_api, context_devel } );
+    contextCollection.setHandlers( new Handler[] { context_api } );
 
     HandlerList handlers = new HandlerList();
     handlers.setHandlers(new Handler[] {contextCollection, resource_handler});

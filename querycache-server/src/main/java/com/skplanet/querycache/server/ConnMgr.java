@@ -252,26 +252,11 @@ public class ConnMgr {
     }
 
     private ConnNode getConn(long aConnId) {
-      // return null if this map contains no mapping for the key
-      // O(1)
-      ConnNode sConn = sUsingMap.get(aConnId);
-      if (sConn == null) {
-        LOG.warn(
-          "ConnMgrofOne.getConn(): There is no connection in ConnPool mapping to the id"
-          + "(" + aConnId + ")");
-      }
-      return sConn;
+      return sUsingMap.get(aConnId);
     }
 
     private void removeConn(long aConnId) {
-      // return null if this map contains no mapping for the key
-      // O(1)
-      ConnNode sConn = sUsingMap.remove(aConnId);
-      if (sConn == null) {
-        LOG.warn(
-          "ConnMgrofOne.removeConn(): There is no connection in ConnPool mapping to the id"
-          + "(" + aConnId + ")");
-      }
+      sUsingMap.remove(aConnId);
     }
     
     private ConnNode allocConn() {
@@ -337,9 +322,7 @@ public class ConnMgr {
     private CORE_RESULT closeConn(long aConnId) {
       ConnNode sConn = sUsingMap.remove(aConnId);
       if (sConn == null) {
-        LOG.warn(
-          "ConnMgrofOne.removeConn(): There is no connection in ConnPool mapping to the id"
-          + "(" + aConnId + ")");
+        LOG.debug("ConnMgrofOne.removeConn(): already closed. (" + aConnId + ")");
         return CORE_RESULT.CORE_SUCCESS;
       }
       // close all statements in the ConnNode

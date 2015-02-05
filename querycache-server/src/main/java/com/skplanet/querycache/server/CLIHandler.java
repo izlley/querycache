@@ -67,7 +67,15 @@ public class CLIHandler implements TCLIService.Iface {
         QCConfigKeys.QC_CONNECTIONPOOL_FREE_RESIZING_F_DEFAULT)
     );
 
-  public CLIHandler() {
+  private static CLIHandler handlerInstance = null;
+  public static CLIHandler getInstance() {
+    if (handlerInstance == null) {
+      handlerInstance = new CLIHandler();
+    }
+    return handlerInstance;
+  }
+
+  protected CLIHandler() {
     if (gConnMgr.initialize() == CORE_RESULT.CORE_FAILURE) {
       LOG.error("Server start failed.");
       System.exit(1);
@@ -183,28 +191,31 @@ public class CLIHandler implements TCLIService.Iface {
     
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
-      sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType,
-          aReq.sessionHandle.sessionId.connid);
     }
-    
-    // 1. find the specific ConnNode by ConnId
-    if (gConnMgr.closeConn(aReq.sessionHandle.sessionId.driverType,
-          aReq.sessionHandle.sessionId.connid) == CORE_RESULT.CORE_FAILURE) {
-      // just ignoring the failure, client don't need to handle this failure.
-      LOG.error("CloseSession failed.");
-    }
-    
+
     TCloseSessionResp sResp = new TCloseSessionResp();
     sResp.setStatus(new TStatus().setStatusCode(TStatusCode.SUCCESS_STATUS));
-    
-    if (profileLvl > 0) {
-      endTime = System.currentTimeMillis();
-      sConn.latency[1] = endTime-startTime;
-      LOG.info("CloseSession PROFILE: ConnID=" + sConn.sConnId + ", Type=" + 
-          aReq.sessionHandle.sessionId.driverType + 
-          ", Close time elapsed=" + (endTime-startTime) + "ms" +
-          ", OpenClose_latency={" + sConn.latency[0] + "," + sConn.latency[1] + "}");
-      sConn.latency[0] = sConn.latency[1] = -1;
+
+    sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType,
+            aReq.sessionHandle.sessionId.connid);
+    if (sConn != null) {
+      // 1. find the specific ConnNode by ConnId
+      if (gConnMgr.closeConn(aReq.sessionHandle.sessionId.driverType,
+              aReq.sessionHandle.sessionId.connid) == CORE_RESULT.CORE_FAILURE) {
+        // just ignoring the failure, client don't need to handle this failure.
+        LOG.error("CloseSession failed.");
+      }
+
+
+      if (profileLvl > 0) {
+        endTime = System.currentTimeMillis();
+        sConn.latency[1] = endTime - startTime;
+        LOG.info("CloseSession PROFILE: ConnID=" + sConn.sConnId + ", Type=" +
+                aReq.sessionHandle.sessionId.driverType +
+                ", Close time elapsed=" + (endTime - startTime) + "ms" +
+                ", OpenClose_latency={" + sConn.latency[0] + "," + sConn.latency[1] + "}");
+        sConn.latency[0] = sConn.latency[1] = -1;
+      }
     }
     
     return sResp;
@@ -1017,6 +1028,60 @@ public class CLIHandler implements TCLIService.Iface {
     return new TGetOperationStatusResp();
   }
 
+  public void internalCancelStatement(String sQueryId, String driverType) {
+    LOG.info("InternalCancelOperation is requested.");
+    long sConnId;
+    long sStmtId;
+    long startTime = 0;
+    long endTime;
+
+    if (profileLvl > 0) {
+      startTime = System.currentTimeMillis();
+    }
+
+    try {
+      String[] token = sQueryId.split(":");
+      sConnId = Long.valueOf(token[0]);
+      sStmtId = Long.valueOf(token[1]);
+    }
+    catch (Exception e) {
+      LOG.error("mal-formatted query ID (" + sQueryId + ", " + driverType + ")");
+      return;
+    }
+
+    ConnNode sConn = gConnMgr.getConn(driverType, sConnId);
+    if (sConn == null) {
+      LOG.error("invalid query ID (" + sQueryId + ", " + driverType + ")");
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+              sQueryId, State.ERROR);
+      return;
+    }
+
+    // 2. Cancel the statement
+    StmtNode sStmt = null;
+    try {
+      sStmt = sConn.cancelStmt(sStmtId);
+    } catch (SQLException e) {
+      LOG.error("Error cancelling query (" + e.getSQLState() + ") :" + e.getMessage(), e);
+    } finally {
+      gConnMgr.removeConn(driverType, sConnId);
+      LOG.info("Removing a cancelled connection (connId:" + sConn.sConnId + ")");
+    }
+
+    if (profileLvl > 0) {
+      endTime = System.currentTimeMillis();
+      LOG.info("InternalCancelOperation PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
+              + driverType + ", CancelOp time elapsed="
+              + (endTime-startTime) + "ms");
+
+      if(sStmt != null) {
+        // move runtimeProfile to completeProfile Map
+        CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+                sQueryId, StmtNode.State.CANCEL);
+      }
+    }
+  }
+
   /**
    * CancelOperation()
    *
@@ -1130,16 +1195,18 @@ public class CLIHandler implements TCLIService.Iface {
       sStmt = sConn.closeStmt(sStmtId);
       sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
     } catch (SQLException e) {
-      LOG.error("CloseOperation error (" + e.getSQLState() + ") :" + e.getMessage(), e);
+      if ("HY000".equals(e.getSQLState())) {
+        LOG.info("CloseOperation: closing a canceled statement");
+      } else {
+        LOG.error("CloseOperation error (" + e.getSQLState() + ") :" + e.getMessage(), e);
+      }
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
-      if (e.getSQLState().equals("08S01")) {
-        // remove failed ConnNode in the ConnPool
-        gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
-        LOG.warn("CloseOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
-      }
+      // remove failed ConnNode in the ConnPool
+      gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
+      LOG.info("CloseOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;

@@ -137,7 +137,9 @@ public class RowFetcher implements Runnable {
           }
           sRow.addToColVals(sCell);
         }
-        _rowQ.add(sRow);
+        synchronized(_rowQ) {
+          _rowQ.add(sRow);
+        }
         if (_logLvl > 2) {
           midTime = System.currentTimeMillis(); // T2
           // put the sum of T2 to calculate sum time of get cols
@@ -145,13 +147,15 @@ public class RowFetcher implements Runnable {
           // we also need TS of the last T2
           timeArr[j++] = midTime; // lastNext; index-8
         }
-        if ((_rowQ.size() - _cursoroffset.get()) >= _fetchSize) {
-          synchronized(_rowQ) {
-            _rowQ.notifyAll();
+        synchronized(_rowQ) {
+          if ((_rowQ.size() - _cursoroffset.get()) >= _fetchSize) {
+              _rowQ.notifyAll();
           }
         }
         if (_stop.get()) {
-          _objPool.recycleRows(_rowQ);
+          synchronized(_rowQ) {
+            _objPool.recycleRows(_rowQ);
+          }
           sRS.close();
           break;
         }
@@ -178,8 +182,8 @@ public class RowFetcher implements Runnable {
     } catch (SQLException e) {
       LOG.error("Producer fetchResults error (" + e.getSQLState() + ") :" + e.getMessage(), e);
       _stop.set(true);
-      _objPool.recycleRows(_rowQ);
       synchronized(_rowQ) {
+        _objPool.recycleRows(_rowQ);
         _rowQ.notifyAll();
       }
       if (e.getSQLState().equals("08S01")) {
@@ -208,9 +212,15 @@ public class RowFetcher implements Runnable {
   }
   
   public void close() {
-    _stop.set(true);
-    _objPool.recycleRows(_rowQ);
-    _objPool.recycleObjects(_rowsetUsed, ObjectPool.POOL_TROWSET);
+    if (_stop.compareAndSet(false, true)) {
+      synchronized (_rowQ) {
+        _objPool.recycleRows(_rowQ);
+        _rowQ.notifyAll();
+      }
+      synchronized (_rowsetUsed) {
+        _objPool.recycleObjects(_rowsetUsed, ObjectPool.POOL_TROWSET);
+      }
+    }
   }
   
   public List<TRow> getRows(long fetchSize) {
@@ -270,8 +280,10 @@ public class RowFetcher implements Runnable {
   private List<TRow> subRowQ(int from, int to) {
     ArrayList<TRow> dest = new ArrayList<TRow>(to - from);
     // shallow copy
-    for (int i = from; i < to; i++) {
-      dest.add(_rowQ.get(i));
+    synchronized (_rowQ) {
+      for (int i = from; i < to; i++) {
+        dest.add(_rowQ.get(i));
+      }
     }
     return dest;
   }
@@ -279,6 +291,8 @@ public class RowFetcher implements Runnable {
   // for object recycling.
   // in close(), TRowSet instances will be recycled by ObjectPool
   public void addRowSet(TRowSet rowset) {
-    _rowsetUsed.add(rowset);
+    synchronized (_rowsetUsed) {
+      _rowsetUsed.add(rowset);
+    }
   }
 }

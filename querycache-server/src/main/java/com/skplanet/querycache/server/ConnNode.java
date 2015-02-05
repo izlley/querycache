@@ -151,10 +151,16 @@ public class ConnNode {
       if (sStmt.isCanceled) {
         throw new SQLException("Canceled", "HY000", TStatusCode.ERROR_STATUS.getValue());
       }
+
       if (sStmt.rowProducer != null)
         sStmt.rowProducer.close();
-      sStmt.sHStmt.cancel();
       sStmt.isCanceled = true;
+      try {
+        sStmt.sHStmt.cancel();
+      } catch (SQLException e) {
+        LOG.error("exception while cancelling a query", e);
+      }
+
       LOG.info("The statement is canceled.-Type:" + sConnType + ", -ConnId:" +
         this.sConnId + ",StmtId:" + aStmtId);
     } else {
