@@ -62,14 +62,9 @@
             <version>0.9.1</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.thrift.tools</groupId>
-            <artifactId>maven-thrift-plugin</artifactId>
-            <version>0.1.11</version>
-        </dependency>
-        <dependency>
-            <groupId>com.skplanet.querycache.server</groupId>
-            <artifactId>querycache-server</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.10</version>
         </dependency>
     </dependencies>
 </project>
