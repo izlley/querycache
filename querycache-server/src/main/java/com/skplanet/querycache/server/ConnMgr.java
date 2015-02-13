@@ -156,7 +156,7 @@ public class ConnMgr {
                   LOG.debug("ConnPool GC: execut query, url=" + conn.getUrl() + ",query=" + query);
                 } catch (SQLException e) {
                   // only handling the connection error
-                  if (e.getSQLState().equals("08S01")) {
+                  if ("08S01".equals(e.getSQLState())) {
                     // remove failed ConnNode in the ConnPool
                     sFreeList.remove(i);
                     LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");

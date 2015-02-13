@@ -186,7 +186,7 @@ public class RowFetcher implements Runnable {
         _objPool.recycleRows(_rowQ);
         _rowQ.notifyAll();
       }
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         CLIHandler.gConnMgr.removeConn(_stmt.conn.sConnType, _stmt.conn.sConnId);
         LOG.warn("FetchResults: Removing a failed connection (connId:" + _stmt.conn.sConnId + ")");

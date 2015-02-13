@@ -382,7 +382,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("ExecuteStatement: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -484,7 +484,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetTypeInfo: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -584,7 +584,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetCatalogs: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -686,7 +686,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetSchemas: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -790,7 +790,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetTables: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -890,7 +890,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetTableTypes: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -995,7 +995,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetColumns: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -1129,7 +1129,7 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
         LOG.warn("CancelOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -1436,7 +1436,7 @@ struct TGetResultSetMetadataResp {
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
         LOG.warn("GetResultSetMetadata: Removing a failed connection (connId:" + sConn.sConnId + ")");
@@ -1691,7 +1691,7 @@ struct TGetResultSetMetadataResp {
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
       // remove failed ConnNode in the UsingMap
-      if (e.getSQLState().equals("08S01")) {
+      if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
         LOG.warn("GetFunctions: Removing a failed connection (connId:" + sConn.sConnId + ")");

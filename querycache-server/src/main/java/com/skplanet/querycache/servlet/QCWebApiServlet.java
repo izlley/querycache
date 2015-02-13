@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import com.sun.management.OperatingSystemMXBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -27,6 +30,7 @@ import java.util.*;
  */
 @WebServlet(asyncSupported = true)
 public class QCWebApiServlet extends HttpServlet {
+    private static final Logger LOG = LoggerFactory.getLogger(QCWebApiServlet.class);
     private static final String ASYNC_REQ_ATTR = QCWebApiServlet.class.getName() + ".async";
     public class ConDesc {
         public String driver;
@@ -166,6 +170,7 @@ public class QCWebApiServlet extends HttpServlet {
                     final String driver = request.getParameter("driver");
 
                     if (qId != null && qId.length() > 0 && driver != null && driver.length() > 0) {
+                        LOG.info("Starting cancel async job. " + qId);
                         final AsyncContext async = request.startAsync();
                         final Boolean asyncYes = new Boolean(true);
                         request.setAttribute(ASYNC_REQ_ATTR, asyncYes);
@@ -174,6 +179,7 @@ public class QCWebApiServlet extends HttpServlet {
                             @Override
                             public void run() {
                                 CLIHandler ch = CLIHandler.getInstance();
+                                LOG.info("calling cancel " + qId);
                                 ch.internalCancelStatement(qId, driver);
                                 async.dispatch();
 
@@ -181,6 +187,7 @@ public class QCWebApiServlet extends HttpServlet {
                         }).start();
                     }
                     else {
+                        LOG.info("cancel finished." + qId);
                         response.setContentType("application/json; charset=utf-8");
                         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                         writer.printf("{\"result\":\"%s\", \"msg\":\"%s\"}", "error", "invalid query specifier");
