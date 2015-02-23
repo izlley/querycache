@@ -1,25 +1,10 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.io.*;
+import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
-import java.io.FileReader;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class QueryRunner {
@@ -50,13 +35,12 @@ public class QueryRunner {
   private static long totMaxTime = 0;
   private static long totMinTime = Long.MAX_VALUE;
   private static long[] totHistogram = new long[HIST_SIZE];
-  private static long WAIT_TERM_TIME = 1800;
 
   private static enum ExecType {
     SINGLE_QUERY, GEN_QUERY_BY_PK_FILE, GEN_QUERY_BY_PK_QUERY,
   }
 
-  private static class PerfTestWorker implements Runnable {
+  private static class PerfTestWorker implements Callable<Boolean> {
     private int threadId;
     
     PerfTestWorker(int threadId) {
@@ -64,7 +48,7 @@ public class QueryRunner {
     }
     
     @Override
-    public void run() {
+    public Boolean call() {
       Random randomGenerator = new Random();
       int  upperCnt = 0;
       long startTime = 0;
@@ -89,7 +73,7 @@ public class QueryRunner {
         bwriter = new BufferedWriter(fw);
       } catch (IOException e) {
         System.err.println("ERROR : Can't crete a file :" + e);
-        System.exit(1);
+        return false;
       }
       
       for (int idx = 1; idx <= loopCnt; idx++) {
@@ -303,7 +287,7 @@ public class QueryRunner {
           failedCnt++;
         } catch (IOException e) {
           System.err.println("ERROR : Can't write data to the file :" + e);
-          System.exit(1);
+          return false;
         }
         finally {
           try {
@@ -317,7 +301,7 @@ public class QueryRunner {
             System.err.println("ERROR : SQL exception occured" + e);
           } catch (IOException e) {
             System.err.println("ERROR : Can't write data to the file :" + e);
-            System.exit(1);
+            return false;
           }
         }
       }
@@ -365,8 +349,9 @@ public class QueryRunner {
         bwriter.close();
       } catch (IOException e) {
         System.err.println("ERROR : Can't crete a file :" + e);
-        System.exit(1);
+        return false;
       }
+      return true;
     }
     
     private static synchronized void setTotMinTime(long val) {
@@ -501,20 +486,29 @@ public class QueryRunner {
     }
 
     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    List<PerfTestWorker> jobs = new ArrayList<PerfTestWorker>(numThreads);
     for (int i = 0; i < numThreads; i++) {
-      Runnable worker = new PerfTestWorker(i+1);
-      executor.execute(worker);
+      jobs.add(new PerfTestWorker(i + 1));
     }
+    List<Future<Boolean>> results = executor.invokeAll(jobs);
+
     // This will make the executor accept no new threads
     // and finish all existing threads in the queue
     executor.shutdown();
+    if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+      System.err.println("ERROR : Executor termination timed out");
+    }
+
+    // debug: make sure all jobs terminated;
+    int not_done_count=0;
+    for (Future<Boolean> job: results) {
+      if (!job.isDone()) not_done_count++;
+    }
+    if (not_done_count>0) {
+      System.err.printf("ERROR : %d/%d jobs not finished\n", not_done_count, results.size());
+    }
     
-    if (!executor.awaitTermination(WAIT_TERM_TIME, TimeUnit.SECONDS))
-      System.err.println("ERROR : ThreadPool did not terminate");
-    
-    //
-    // Summary test results
-    //
+    // Summarize test results
     try {
       File file = new File(summaryFileName);
       if (!file.exists()) {

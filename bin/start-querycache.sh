@@ -54,11 +54,14 @@ if [ -z $QC_HOME ]; then
     fi
 fi
 
+# explicitly change working directory to $QC_HOME
+cd $QC_HOME
+
 if [ -z $DRIVER_DIR ]; then
     DRIVER_DIR=$QC_HOME/lib/driver
 fi
 
-JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms5g -Xmx5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/logs/querycache-gc-$(date +%Y%m%d-%H%M%S).log"}
+JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms5g -Xmx5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/logs/querycache-gc-$(date +%Y%m%d-%H%M%S).log -DQC_HOME=${QC_HOME}"}
 export QC_CONF_DIR=$QC_HOME/conf
 export QC_LIB_DIR=$QC_HOME/lib
 export PATH=$QC_HOME/bin:$PATH

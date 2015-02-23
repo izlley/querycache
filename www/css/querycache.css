@@ -1,0 +1,45 @@
+.table > tbody > tr.stall > td,
+.table > tbody > tr > td.stall {
+    background-color: #DD3344;
+}
+
+.table .online {
+    background-color: #88DD88;
+}
+
+.table .offline {
+    background-color: #DD8888;
+}
+
+.table-nonfluid {
+    width: auto;
+}
+
+.left {
+	position: absolute;
+	left: 0;
+	/*right: 120px;*/
+    overflow: auto;
+    /*overflow: hidden;*/
+    width: 110px;
+    min-height: 400px;
+    /*border: 2px dashed #ddd*/
+}
+
+.right {
+	position: absolute;
+	right: 0;
+	left: 112px;
+    overflow: auto;
+    /*width: 250px;*/
+    min-height: 500px;
+    margin-left: 5px;
+    /*border: 2px dashed #ddd*/
+}
+
+.boxtop {
+	position: absolute;
+	visibility: hidden;
+	/*display: none;*/
+	z-index: 100;
+}

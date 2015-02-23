@@ -1,0 +1,81 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>QueryCache</title>
+    <style type="text/css">
+    @import '/bootstrap/css/bootstrap.min.css';
+    @import '/css/querycache.css';
+    </style>
+    <script src="/js/jquery-1.11.1.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/js/utils.js"></script>
+</head>
+<script type="text/javascript">
+var g_running_queries = [];
+var g_complete_queries = [];
+var g_connection_pool = [];
+var g_object_pool = null;
+
+function getAll() {
+    $.ajax({
+        url: '/header.html',
+        cache:false
+    }).done(function(html) {
+        $('#header').html(html);
+    });
+    $.getJSON('/api/system', function(r) {
+        var contents = '';
+        contents += '<tr><td>Processors Available</td><td>'+r.jvm.nProcessors+'</td></tr>';
+        contents += '<tr><td>Memory available</td><td>'+humanReadable(r.jvm.memFree)+'</td></tr>';
+        contents += '<tr><td>Memory in use</td><td>'+humanReadable(r.jvm.memTotal-r.jvm.memFree)+'</td></tr>';
+        contents += '<tr><td>Max Memory</td><td>'+((r.jvm.memMax==-1)? 'Unlimited':humanReadable(r.jvm.memMax))+'</td></tr>';
+        $('#JVMInfo').html(contents);
+
+        contents = '';
+        contents += '<tr><td>System Load</td><td>'+parseInt(r.system.loadSystem*100)+'%</td></tr>';
+        contents += '<tr><td>QueryCache Load</td><td>'+parseInt(r.system.loadProcess*100)+'%</td></tr>';
+        contents += '<tr><td>Total Physical Memory</td><td>'+humanReadable(r.system.memPhysTotal)+'</td></tr>';
+        contents += '<tr><td>Free Physical Memory</td><td>'+humanReadable(r.system.memPhysFree)+'</td></tr>';
+        contents += '<tr><td>Total Swap</td><td>'+humanReadable(r.system.swapTotal)+'</td></tr>';
+        contents += '<tr><td>Free Swap</td><td>'+humanReadable(r.system.swapFree)+'</td></tr>';
+        $('#SystemInfo').html(contents);
+
+        contents = '';
+        contents += '<tr><td>Total Threads</td><td>'+r.threads.totalThreads+'</td></tr>';
+        contents += '<tr><td>Query Handler Threads</td><td>'+r.threads.handlerThreads+'</td></tr>';
+        contents += '<tr><td>&nbsp - Active</td><td>'+(r.threads.handlerThreads - r.threads.handlerThreadsIdle)+'</td></tr>';
+        contents += '<tr><td>Web Server Threads</td><td>'+r.threads.webServerThreads+'</td></tr>';
+        contents += '<tr><td>&nbsp - Active</td><td>'+(r.threads.webServerThreads - r.threads.webServerThreadsIdle)+'</td></tr>';
+        $('#ThreadInfo').html(contents);
+     });
+}
+
+$(function() {
+    getAll();
+});
+
+</script>
+<body>
+
+<H1>QueryCache System/Process Information</H1>
+<table class="table table-nonfluid" id="header"><tr><td>HEADER</td></tr></table>
+
+<H2>Jvm Process Info</H2>
+<div class="container">
+    <table class="table table-bordered table-nonfluid" id="JVMInfo">
+    </table>
+</div>
+
+<H2>System Info</H2>
+<div class="container">
+    <table class="table table-bordered table-nonfluid" id="SystemInfo">
+    </table>
+</div>
+
+<H2>Thread Info</H2>
+<div class="container">
+    <table class="table table-bordered table-nonfluid" id="ThreadInfo">
+    </table>
+</div>
+</body>
+</html>

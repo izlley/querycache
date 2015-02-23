@@ -2,7 +2,8 @@
 *.swp
 *.iml
 target/*
-**/target/*
-server/target/*	
-jdbc/target/*
-
+querycache-server/target
+querycache-jdbc/target
+logs/*
+lib/*
+src/test/java/*.class
