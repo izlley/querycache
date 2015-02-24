@@ -66,7 +66,9 @@ public class Analyzer {
              ", Function=[" + analResult.queryStmt_.toStringfunctionRefs() +
              "], Uris=" + analResult.queryStmt_.uriPathRefs.toString());
       // set profiling data
-      profile.queryType = analResult.queryStmt_.type;
+      if (profile!=null) {
+        profile.queryType = analResult.queryStmt_.type;
+      }
       if (isAuthCheck) {
         checkAuthorization(analResult);
       }

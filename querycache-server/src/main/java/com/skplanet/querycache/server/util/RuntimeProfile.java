@@ -1,16 +1,21 @@
 package com.skplanet.querycache.server.util;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.gson.Gson;
+import com.skplanet.querycache.cli.thrift.THandleIdentifier;
+import com.skplanet.querycache.cli.thrift.THostInfo;
+import com.skplanet.querycache.server.ConnNode;
+import com.skplanet.querycache.server.QCConfigKeys;
+import com.skplanet.querycache.server.QueryCacheServer;
+import com.skplanet.querycache.server.StmtNode;
+import com.skplanet.querycache.server.StmtNode.State;
+import com.skplanet.querycache.server.sqlcompiler.QueryStmt.QueryType;
+import com.skplanet.querycache.servlet.QCWebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.skplanet.querycache.server.QCConfigKeys;
-import com.skplanet.querycache.server.QueryCacheServer;
-import com.skplanet.querycache.server.sqlcompiler.QueryStmt.QueryType;
-import com.skplanet.querycache.server.StmtNode.State;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RuntimeProfile {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProfile.class);
@@ -32,21 +37,31 @@ public class RuntimeProfile {
   private static SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   
   public static class QueryProfile {
-    public String queryId = "";
-    public String connType = "";
-    public String user = "";
+    public final String queryId;
+    public final String connType;
+    public final String user;
     public QueryType queryType = null;
-    public String queryStr = "";
-    public String clientIp = "";
+    public final String queryStr;
+    public final String clientIp;
     public State stmtState = State.CLOSE;
     public long rowCnt = -1;
-    public long startTime = 0;
+    public final long startTime;
     public long endTime = 0;
     // 0:exec/1:getmeta/2:fetch/3:stmtclose or
     // 1:getschemas/2:fetch
     public long[] timeHistogram = {0,0,0,0};
     public long[] execProfile   = null;
     public long[] fetchProfile  = {0,0,0,-1,-1,-1,-1,0,0,-1,-1};
+
+    public QueryProfile(StmtNode sStmt, ConnNode sConn, THandleIdentifier sessionId, String queryStr) {
+      this.queryId = sConn.sConnId + ":" + sStmt.sStmtId;
+      this.connType = sessionId.driverType;
+      this.user = sConn.getUser();
+      this.queryStr = queryStr;
+      THostInfo clientInfo = sConn.getClientInfo();
+      this.clientIp = clientInfo.getHostname() + "/" + clientInfo.getIpaddr();
+      this.startTime = System.currentTimeMillis();
+    }
   }
   
   private Runnable resetNumRequestsThread = new Runnable() {
@@ -70,9 +85,18 @@ public class RuntimeProfile {
       }
     }
   };
-  
-  public RuntimeProfile() {
+
+  private static RuntimeProfile rpInstance = null;
+  public static RuntimeProfile getInstance() {
+    if (rpInstance == null) {
+      rpInstance = new RuntimeProfile();
+    }
+    return rpInstance;
+  }
+
+  protected RuntimeProfile() {
     new Thread(resetNumRequestsThread).start();
+    initEventNotifier();
   }
   
   public QueryProfile addRunningQuery(String key, QueryProfile profile) {
@@ -82,6 +106,10 @@ public class RuntimeProfile {
       LOG.debug("Add a profile obj in the runningQueryProfileMap: size="
               + runningQueryProfile.size());
     }
+    if (entry != null) {
+      LOG.warn("There is same query-id in RunningProfileMap " + "(queryId:" + key + ")");
+    }
+    addQueryEvent(EVENT_ADD_QUERY, profile);
     return entry;
   }
   
@@ -116,6 +144,9 @@ public class RuntimeProfile {
 
     if (entry != null) {
       entry.stmtState = state;
+
+      addQueryEvent(EVENT_REMOVE_QUERY, entry);
+
       if (entry.endTime <= 0)
         entry.endTime = System.currentTimeMillis();
 
@@ -165,5 +196,102 @@ public class RuntimeProfile {
       list = new ArrayList<QueryProfile>(completeQueryProfile.values());
     }
     return list;
+  }
+
+  private Map<Integer, QCWebSocket> eventSubscribers = new HashMap<>();
+  private List<String> eventQueue = new ArrayList<>();
+  private Thread eventNotifier = null;
+  private AtomicInteger eventSubscriberId = new AtomicInteger(0);
+  public int addSubscriber(QCWebSocket ws) {
+    int id = eventSubscriberId.getAndIncrement();
+    synchronized (eventSubscribers) {
+      eventSubscribers.put(id, ws);
+    }
+    return id;
+  }
+
+  public void removeSubscriber(int id) {
+    synchronized (eventSubscribers) {
+      eventSubscribers.remove(id);
+    }
+  }
+
+  private void initEventNotifier() {
+    eventNotifier = new Thread( new Runnable() {
+      @Override
+      public void run() {
+        while (!Thread.interrupted()) {
+          // wait for event notification
+          synchronized (eventQueue) {
+            while (eventQueue.size() == 0) {
+              try {
+                eventQueue.wait();
+              } catch (InterruptedException e) {
+                break;
+              }
+            }
+          }
+
+          List<String> events = new ArrayList<>();
+          synchronized (eventQueue) {
+            events.addAll(eventQueue);
+            eventQueue.clear();
+          }
+
+          List<QCWebSocket> subscribers = new ArrayList<>();
+          synchronized (eventSubscribers) {
+            subscribers.addAll(eventSubscribers.values());
+          }
+
+          // send events to all subscribers.
+          for (String event: events) {
+            for (QCWebSocket ws: subscribers) {
+              try {
+                ws.sendMessage(event);
+              } catch (Exception e) {
+                LOG.error("error sending event", e);
+              }
+            }
+          }
+        }
+        LOG.info("event notifier thread terminating.");
+      }
+    });
+    eventNotifier.start();
+  }
+
+  public static final int EVENT_ADD_QUERY = 0;
+  public static final int EVENT_UPDATE_QUERY = 1;
+  public static final int EVENT_REMOVE_QUERY = 2;
+  private static class RunningQueryEvent {
+    public String msgType = null;
+    public QueryProfile query = null;
+  }
+
+  public void addQueryEvent(int type, QueryProfile query) {
+    Gson gson = new Gson();
+    RunningQueryEvent e = new RunningQueryEvent();
+    switch (type) {
+      case EVENT_ADD_QUERY:
+        e.msgType = "runningQueryAdded";
+        e.query = query;
+        break;
+      case EVENT_UPDATE_QUERY:
+        e.msgType = "runningQueryUpdated";
+        e.query = query;
+        break;
+      case EVENT_REMOVE_QUERY:
+        e.msgType = "runningQueryRemoved";
+        e.query = query;
+        break;
+      default:
+        LOG.error("BUG: unsupported event type = " + type);
+        return;
+    }
+    String msg = gson.toJson(e);
+    synchronized (eventQueue) {
+      eventQueue.add(msg);
+      eventQueue.notifyAll();
+    }
   }
 }

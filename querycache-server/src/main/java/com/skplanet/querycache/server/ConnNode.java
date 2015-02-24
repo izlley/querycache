@@ -18,7 +18,7 @@ public class ConnNode {
   // 0:open/1:connclose
   long[] latency = {-1,-1};
   
-  long sConnId = 0;
+  public final long sConnId;
   Connection sHConn = null;
   String sConnType;
   private State  sState;
@@ -39,10 +39,8 @@ public class ConnNode {
     CLOSED,
     ERROR
   }
-  
-  public void initialize(ConnProperty aConnType,
-                         long aId,
-                         String aUrl) 
+
+  public ConnNode(ConnProperty aConnType, long aId, String aUrl)
       throws SQLException, LinkageError, ClassNotFoundException {
     Class.forName(aConnType.connPkgPath);
     this.sConnId = aId;
@@ -57,8 +55,13 @@ public class ConnNode {
     this.url = aUrl;
   }
   
-  public void finalize() {
-    this.sConnId = 0;
+  public void close() {
+    try {
+      this.sHConn.close();
+    } catch (SQLException e) {
+      LOG.error("Connection close error :" + e.getMessage(), e);
+    }
+
     this.sHConn = null;
     this.sState = State.CLOSED;
     this.sStmtMap.clear();
@@ -75,29 +78,24 @@ public class ConnNode {
   }
   
   public StmtNode allocStmt(boolean getstmt) throws SQLException {
-    long sId = sStmtIdGen.addAndGet(1L);
-    while (sStmtMap.containsKey(sId) == true) {
+    long sId;
+    // only use positive number as stmt id
+    do {
       sId = sStmtIdGen.addAndGet(1L);
-    }
-    StmtNode sStmt = new StmtNode();
-    sStmt.initialize(this, sId, this.sHConn, getstmt);
-    // setting query profile
-    sStmt.profile.queryId = sConnId + ":" + sId;
-    sStmt.profile.user = this.user;
-    sStmt.profile.startTime = System.currentTimeMillis();
-    
+      if (sId <= 0) {
+        sStmtIdGen.set(1L);
+        sId = 1L;
+      }
+    } while (sStmtMap.containsKey(sId) == true);
+    StmtNode sStmt = new StmtNode(this, sId, this.sHConn, getstmt);
+
     if (sStmtMap.put(sId, sStmt) != null) {
       LOG.warn("There is same statement id in StmtPool" + "(" + sConnType + 
         ":" + sId + ")");
     }
     LOG.info("The statement is added.-Type:" + sConnType + ", -ConnId:" + 
       this.sConnId + ", StmtId:" + sId + ", -# of Stmts:" + sStmtMap.size());
-    
-    if (CLIHandler.gConnMgr.runtimeProfile.addRunningQuery(sStmt.profile.queryId, sStmt.profile)
-        != null) {
-      LOG.warn("There is same query-id in RunningProfileMap " + "(queryId:" + 
-        sStmt.profile.queryId + ")");
-    }
+
     return sStmt;
   }
   
@@ -180,5 +178,13 @@ public class ConnNode {
   
   public String getUrl() {
     return url;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public THostInfo getClientInfo() {
+    return clientInfo;
   }
 }

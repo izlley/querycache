@@ -20,13 +20,18 @@ package com.skplanet.querycache.server;
 
 import com.skplanet.querycache.cli.thrift.TCLIService;
 import com.skplanet.querycache.servlet.QCWebApiServlet;
+import com.skplanet.querycache.servlet.QCWebSocketServlet;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
+import org.apache.thrift.transport.TTransport;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -37,13 +42,108 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 // Generated code
 
 public class QueryCacheServer {
   private static final Logger LOG = LoggerFactory.getLogger(QueryCacheServer.class);
   public static final QCConfiguration conf = new QCConfiguration();
   public static Server webServer = null;
-  
+
+  public static class QCServerContext implements ServerContext {
+    private static AtomicLong nextConnection = new AtomicLong(1);
+    private static ConcurrentHashMap<Long, QCServerContext> svrCtxMap = new ConcurrentHashMap<>();
+
+    private long connectionId;
+    private long threadId;
+    private QCServerContext(long threadId) {
+      this.connectionId = nextConnection.getAndIncrement();
+      this.threadId = threadId;
+      svrCtxMap.put(threadId, this);
+    }
+
+    public long getConnectionId() {
+      return connectionId;
+    }
+
+    public long getThreadId() {
+      return threadId;
+    }
+
+    private String queryId = null;
+    private String driverType = null;
+    public void setCurrentQuery(String driverType, String queryId) {
+      this.driverType = driverType;
+      this.queryId = queryId;
+    }
+    public void clearCurrentQuery() {
+      this.driverType = null;
+      this.queryId = null;
+    }
+    private void cancelCurrentQuery() {
+      if (driverType != null && queryId != null) {
+        CLIHandler.getInstance().internalCancelStatement(queryId, driverType);
+      }
+      clearCurrentQuery();
+    }
+
+    public static QCServerContext newSvrContext() {
+      long threadId = Thread.currentThread().getId();
+      QCServerContext svrCtx = svrCtxMap.get(threadId);
+      if (svrCtx == null) {
+        svrCtx = new QCServerContext(threadId);
+        svrCtxMap.put(threadId, svrCtx);
+        LOG.info("added thrift svrCtx. remaining : " + svrCtxMap.size());
+      }
+      return svrCtx;
+    }
+
+    public static QCServerContext getSvrContext() {
+      long threadId = Thread.currentThread().getId();
+      QCServerContext svrCtx = svrCtxMap.get(threadId);
+      if (svrCtx == null) {
+        LOG.info("thrift svrCtx not found for tid " + threadId);
+      }
+      return svrCtx;
+    }
+
+    public static void removeSvrContext() {
+      long threadId = Thread.currentThread().getId();
+      QCServerContext ctx = svrCtxMap.remove(threadId);
+      if (ctx != null) {
+        ctx.cancelCurrentQuery();
+      }
+
+      LOG.info("removed thrift svrCtx. remaining : " + svrCtxMap.size());
+    }
+  }
+
+  private static class QueryCacheServerEventHandler implements TServerEventHandler {
+    public void preServe() {
+      // do nothing
+    }
+
+    // methods below are called in the same thread context.
+    // (thread which work for specific client connection) : see TThreadPoolServer.java
+    public ServerContext createContext(TProtocol input, TProtocol output) {
+      QCServerContext ctx = QCServerContext.newSvrContext();
+      LOG.info("new thrift connection #" + ctx.getConnectionId() + " tid " + ctx.getThreadId());
+      return ctx;
+    }
+
+    public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
+      QCServerContext ctx = (QCServerContext)serverContext;
+      QCServerContext.removeSvrContext();
+      LOG.info("thrift connection closed #" + ctx.getConnectionId() + " tid " + ctx.getThreadId());
+    }
+
+    public void processContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
+      // do nothing
+    }
+  }
+
   public static void main(String [] args) {
     try {
       CLIHandler handler = CLIHandler.getInstance();
@@ -89,6 +189,7 @@ public class QueryCacheServer {
 
     ServletContextHandler context_api = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context_api.setContextPath("/api");
+    context_api.addServlet(new ServletHolder(new QCWebSocketServlet()), "/websocket/*");
     context_api.addServlet(new ServletHolder(new QCWebApiServlet()), "/*");
 
     ResourceHandler resource_handler = new ResourceHandler();
@@ -129,7 +230,8 @@ public class QueryCacheServer {
         QCConfigKeys.QC_WORKERTHREAD_MAX_DEFAULT));
       
       TServer server = new TThreadPoolServer(sArgs);
-      
+      server.setServerEventHandler(new QueryCacheServerEventHandler());
+
       System.out.println("Starting the QueryCache server...");
       LOG.info("Starting the QueryCache server...");
       server.serve();

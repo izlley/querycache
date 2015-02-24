@@ -25,6 +25,7 @@ import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
 import com.skplanet.querycache.server.sqlcompiler.Analyzer;
 import com.skplanet.querycache.server.sqlcompiler.AuthorizationException;
 import com.skplanet.querycache.server.util.ObjectPool;
+import com.skplanet.querycache.server.util.RuntimeProfile;
 import com.skplanet.querycache.thrift.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -292,14 +293,19 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(true);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId,
+              aReq.statement.replace('\n',' ').replace('\r',' ').replace('\t',' '));
       sStmt.profile.stmtState = StmtNode.State.EXEC;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = timeArr;
-      sStmt.profile.queryStr = aReq.statement.replace('\n',' ').replace('\r',' ').replace('\t',' ');
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 2.5 set statement properties by TExecuteStatementReq.configuration
       //    (e.g. setMaxRows())
 
@@ -343,7 +349,7 @@ public class CLIHandler implements TCLIService.Iface {
       // 4. execute query
       //
       try {
-      sStmt.sHStmt.setFetchSize(_defFetchSize);
+        sStmt.sHStmt.setFetchSize(_defFetchSize);
       } catch (SQLFeatureNotSupportedException e) {
         //ignore
       }
@@ -448,15 +454,18 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETTYPEINFO;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //
@@ -548,15 +557,18 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETCATALOGS;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //
@@ -648,15 +660,18 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETSCHEMAS;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //
@@ -750,15 +765,18 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETTABLES;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //
@@ -854,15 +872,18 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETTABLETYPES;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //
@@ -955,15 +976,18 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETCOLUMNS;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //
@@ -1057,6 +1081,10 @@ public class CLIHandler implements TCLIService.Iface {
       return;
     }
 
+    // whatever the case is, outstanding query will be closed
+    QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+    if (svrCtx != null) svrCtx.clearCurrentQuery();
+
     // 2. Cancel the statement
     StmtNode sStmt = null;
     try {
@@ -1106,7 +1134,11 @@ public class CLIHandler implements TCLIService.Iface {
     long sConnId = aReq.operationHandle.operationId.connid;
     long sStmtId = aReq.operationHandle.operationId.stmtid;
     sQueryId = sConnId + ":" + sStmtId;
-    
+
+    // whatever the case is, outstanding query will be closed
+    QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+    if (svrCtx != null) svrCtx.clearCurrentQuery();
+
     ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
@@ -1177,7 +1209,11 @@ public class CLIHandler implements TCLIService.Iface {
     long sConnId = aReq.operationHandle.operationId.connid;
     long sStmtId = aReq.operationHandle.operationId.stmtid;
     sQueryId = sConnId + ":" + sStmtId;
-    
+
+    // whatever the case is, outstanding query will be closed
+    QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+    if (svrCtx != null) svrCtx.clearCurrentQuery();
+
     ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
@@ -1580,7 +1616,7 @@ struct TGetResultSetMetadataResp {
     RowFetcher rowFetcher = sStmt.allocRowProducer(sQueryId, this);
     try {
       //if (rowFetcher.getAndSetIfInit(FetchState.FETCHING) == FetchState.INIT) {
-    if (rowFetcher._isFetching.compareAndSet(false, true)) {
+      if (rowFetcher._isFetching.compareAndSet(false, true)) {
         _threadPool.execute(rowFetcher);
       }
     } catch (RejectedExecutionException e) {
@@ -1652,15 +1688,18 @@ struct TGetResultSetMetadataResp {
     //
     try {
       sStmt = sConn.allocStmt(false);
+
       // set profiling data
-      sStmt.profile.clientIp = sConn.clientInfo.getHostname() + "/" + sConn.clientInfo.getIpaddr();
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
       sStmt.profile.stmtState = StmtNode.State.GETFUNCTIONS;
-      sStmt.profile.connType = aReq.sessionHandle.sessionId.driverType;
       sStmt.profile.execProfile = null;
-      sStmt.profile.queryStr = "";
       sStmtId = sStmt.sStmtId;
-      sQueryId = sConnId + ":" + sStmtId;
-      
+      sQueryId = sStmt.profile.queryId;
+      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
+
       // TODO: 3. authorization
       
       //

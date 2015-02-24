@@ -49,7 +49,7 @@ public class ConnMgr {
     // Long.MAX_VALUE = 9223372036854775807
     private final AtomicLong sConnIdGen = new AtomicLong(0L);
     private float sFreelistThreshold; // def:0.2f
-    private AtomicLong sFreelistMaxSize; // def:16
+    private AtomicLong sFreelistMaxSize = new AtomicLong(0L); // def:16
     private long sResizingCycle; // def:15*1000
     private long sGCCycle; // def:5*60*1000;
 
@@ -62,6 +62,25 @@ public class ConnMgr {
     private AuthorizationLoader authLoader = null;
     
     // It's a checker thread running in the background to extend the size of the ConnPool.
+    private ConnNode newConnNode() throws LinkageError, ClassNotFoundException {
+      ConnNode sConn = null;
+      boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
+      // Every time builUrl is called, returns different address for distributing connections
+      String url = buildUrl(isPhoenix);
+      try {
+        sConn = new ConnNode(connProp,
+                sConnIdGen.addAndGet(1L),
+                url);
+      } catch (SQLException e) {
+        LOG.error( "newConnNode() : Connection error to (" + url + ") " + ":" + e.getMessage(), e);
+        return null;
+      }
+      LOG.info("newConnNode() : " + url);
+      sFreeList.add(sConn);
+      sFreelistMaxSize.addAndGet(1);
+      return sConn;
+    }
+
     private Runnable sReloadThread = new Runnable() {
       public void run() {
         LOG.info("ConnPool resizing thread init.");
@@ -82,30 +101,11 @@ public class ConnMgr {
                   + ", max size=" + maxSize);
                 // resizing connpool
                 for (int i = (int)maxSize; i < ((maxSize * 3) / 2 + 1); i++) {
-                  ConnNode sConn = new ConnNode();
-                  try {
-                    boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
-                    // Every time builUrl is called, returns different address for distributing connections
-                    url = buildUrl(isPhoenix);
-                    sConn.initialize(connProp,
-                                     sConnIdGen.addAndGet(1L),
-                                     url);
-                    LOG.info("Resizing worker: Add " + (addedCnt + 1) + "th ConnNode for ConnPool to " + url);
-                    // append to the FreeList : O(1)
-                    sFreeList.add(sConn);
-                    sFreelistMaxSize.addAndGet(1);
+                  ConnNode sConn = newConnNode();
+                  if (sConn == null) {
+                    LOG.error("Error resizing connection pool for " + connProp.connTypeName);
+                  } else {
                     addedCnt++;
-                  } catch (SQLException e) {
-                    LOG.error(
-                      "Resizing worker: Connection error to (" + url + ") " + ":" + e.getMessage(), e);
-                    // I don't wanna infinite loop here.
-                    //i--;
-                  } catch (LinkageError e) {
-                    LOG.error(
-                      "Resizing worker: Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
-                  } catch (ClassNotFoundException e) {
-                    LOG.error(
-                      "Resizing worker: Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
                   }
                 }
                 LOG.info("Resizing worker: FreeList resizing from " + currFreeSize + " to "
@@ -217,32 +217,21 @@ public class ConnMgr {
       // TODO: How can we handle url kv options? just ignore these?
       int numofRealConn = 0;
       for (int i = 0; i < initSize; i++) {
-        ConnNode sConn = new ConnNode();
         try {
-          boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
-          // Every time builUrl is called, returns different address for distributing connections
-          url = buildUrl(isPhoenix);
-          sConn.initialize(connProp,
-                           sConnIdGen.addAndGet(1L),
-                           url);
-          ++numofRealConn;
-          LOG.info("Add " + numofRealConn + "st ConnNode for ConnPool to " + url);
-          // append to the FreeList : O(1)
-          sFreeList.add(sConn);
-        } catch (SQLException e) {
-          LOG.error("Connection error to (" + url + ") " + ":" + e.getMessage(), e);
-          continue;
+          ConnNode sConn = newConnNode();
+          if (sConn == null) {
+            continue;
+          } else {
+            ++numofRealConn;
+          }
         } catch (LinkageError e) {
-          LOG.error(
-            "Connection pool init error " + aConnType + ":" + e.getMessage(), e);
+          LOG.error( "connection init error : " + connProp.connTypeName + " : " + e.getMessage(), e);
           return CORE_RESULT.CORE_FAILURE;
         } catch (ClassNotFoundException e) {
-          LOG.error(
-            "Connection pool init error " + aConnType + ":" + e.getMessage(), e);
+          LOG.error( "connection init error : " + connProp.connTypeName + " : " + e.getMessage(), e);
           return CORE_RESULT.CORE_FAILURE;
         }
       }
-      sFreelistMaxSize = new AtomicLong(initSize);
 
       // start background thread for checking connpool size and resizing if necessary
       new Thread(sReloadThread).start();
@@ -285,33 +274,15 @@ public class ConnMgr {
         short retryCnt = 3;
         String url = "";
         for (int i = 0; i < retryCnt; i++) {
-          ConnNode sConn2 = new ConnNode();
           try {
-            boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
-            // Every time builUrl is called, it returns different address for distributing connections
-            url = buildUrl(isPhoenix);
-            sConn2.initialize(connProp,
-                             sConnIdGen.addAndGet(1L),
-                             url);
-            LOG.info("Add " + (i + 1) + "st ConnNode for ConnPool to " + url);
-            // append to the FreeList : O(1)
-            sFreelistMaxSize.addAndGet(1);
+            ConnNode sConn2 = newConnNode();
+            if (sConn == null) {
+              LOG.info("Retrying connection");
+              continue;
+            }
             sConn = sConn2;
-            break;
-          } catch (SQLException e) {
-            LOG.error("Connection error to (" + url + ") " + ":" + e.getMessage(), e);
-            LOG.info("Retrying connection");
-            continue;
-          } catch (LinkageError e) {
-            LOG.error(
-              "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
-            LOG.info("Retrying connection");
-            continue;
-          } catch (ClassNotFoundException e) {
-            LOG.error(
-              "Connection init error " + connProp.connTypeName + ":" + e.getMessage(), e);
-            LOG.info("Retrying connection");
-            continue;
+          } catch (Exception e) {
+            LOG.error("allocConn() error : " + e.getMessage(), e);
           }
         }
       }
@@ -341,13 +312,8 @@ public class ConnMgr {
         sConn.setPassword(null);
       } catch (SQLException e1) {
         LOG.error("Statement close error :" + e1.getMessage(), e1);
-        // close this connection forcely
-        try {
-          sConn.sHConn.close();
-        } catch (SQLException e2) {
-          LOG.error("Connection close error :" + e2.getMessage(), e2);
-        }
-        sConn.finalize();
+        // force close connection
+        sConn.close();
         return CORE_RESULT.CORE_FAILURE;
       }
 
@@ -394,7 +360,7 @@ public class ConnMgr {
   // This Array contains ConnMgrofOnes of all of connection types.
   private Map<String, ConnMgrofOne> connMgrofAll = new HashMap<String, ConnMgrofOne>();
   // This contains running and completed query's profiling data
-  public RuntimeProfile runtimeProfile = new RuntimeProfile();
+  public RuntimeProfile runtimeProfile = RuntimeProfile.getInstance();
 
   CORE_RESULT initialize() {
     String[] sDrivers = QueryCacheServer.conf.getStrings(QCConfigKeys.QC_STORAGE_JDBC_DRIVERS);
