@@ -51,12 +51,14 @@ export QC_CONF_DIR=$QC_HOME/conf
 export QC_LIB_DIR=$QC_HOME/lib
 export PATH=$QC_HOME/bin:$PATH
 
-for jar in `ls ${DRIVER_DIR}/*.jar`; do
+CLASSPATH=$QC_HOME/src/test/java:$CLASSPATH
+CLASSPATH=${QC_LIB_DIR}/slf4j-api-1.7.10.jar:${QC_LIB_DIR}/commons-logging-1.0.4.jar:${QC_LIB_DIR}/slf4j-simple-1.7.10.jar:${CLASSPATH}
+CLASSPATH=${QC_LIB_DIR}/commons-lang3-3.1.jar:${QC_LIB_DIR}/libthrift-0.9.1.jar:${CLASSPATH}
+
+for jar in `ls ${DRIVER_DIR}/querycache-jdbc*.jar`; do
       CLASSPATH=${CLASSPATH}:$jar
 done
 
-CLASSPATH=$QC_HOME/src/test/java:$QC_HOME/lib:$CLASSPATH
-CLASSPATH=${QC_LIB_DIR}/slf4j-api-1.6.4.jar:${QC_LIB_DIR}/commons-logging-1.0.4.jar:${QC_LIB_DIR}/slf4j-simple-1.6.4.jar:${CLASSPATH}
 export CLASSPATH
 
 echo "----------------ENV----------------" 

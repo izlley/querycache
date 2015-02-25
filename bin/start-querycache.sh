@@ -74,7 +74,7 @@ CLASSPATH=$QC_HOME/conf:$CLASSPATH
 for jar in `ls ${QC_LIB_DIR}/*.jar`; do
   CLASSPATH=${CLASSPATH}:$jar
 done
-for jar in `ls ${DRIVER_DIR}/*.jar`; do
+for jar in `find ${DRIVER_DIR} -name "*.jar" -a ! -name "querycache-jdbc*.jar"`; do
   CLASSPATH=${CLASSPATH}:$jar
 done
 export CLASSPATH
@@ -87,8 +87,12 @@ echo "CLASSPATH              = $CLASSPATH"
 echo "JVMARGS                = $JVMARGS"
 echo "HOSTNAME               = $HOSTNAME"
 
-rm $QC_HOME/logs/querycache-gc.log
+rm -f $QC_HOME/logs/querycache-gc.log
 ln -s ${GCLOGFILE} $QC_HOME/logs/querycache-gc.log
 
 echo "start Querycache..."
+if [ x${QC_FOREGROUND} = x ]; then
 exec nohup $JAVA $JVMARGS -DHOSTNAME="${HOSTNAME}" -classpath "$CLASSPATH" com.skplanet.querycache.server.QueryCacheServer -DHOSTNAME="${HOSTNAME}" "$@" > /dev/null 2>&1 &
+else
+$JAVA $JVMARGS -DHOSTNAME="${HOSTNAME}" -classpath "$CLASSPATH" com.skplanet.querycache.server.QueryCacheServer -DHOSTNAME="${HOSTNAME}" "$@"
+fi
