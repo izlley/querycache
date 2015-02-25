@@ -67,6 +67,8 @@ public class QCWebApiServlet extends HttpServlet {
         int webServerThreadsIdle;
         int handlerThreads;
         int handlerThreadsIdle;
+        int thriftServerThreads;
+        int thriftServerThreadsIdle;
         int totalThreads;
 
         public ThreadInfo() {
@@ -84,6 +86,13 @@ public class QCWebApiServlet extends HttpServlet {
 
             handlerThreads = CLIHandler.getThreadPoolSize();
             handlerThreadsIdle = CLIHandler.getThreadPoolSize() - CLIHandler.getThreadPoolActiveCount();
+            if (QueryCacheServer.qcServerExecutorService == null) {
+                thriftServerThreads = 0;
+                thriftServerThreadsIdle = 0;
+            } else {
+                thriftServerThreads = QueryCacheServer.qcServerExecutorService.getPoolSize();
+                thriftServerThreadsIdle = thriftServerThreads - QueryCacheServer.qcServerExecutorService.getActiveCount();
+            }
         }
     }
 

@@ -43,6 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 // Generated code
@@ -144,6 +147,16 @@ public class QueryCacheServer {
     }
   }
 
+  public static ThreadPoolExecutor qcServerExecutorService = null;
+  private static class QCServerExecutorService extends ThreadPoolExecutor {
+    public QCServerExecutorService(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit) {
+      super(corePoolSize, maximumPoolSize, keepAliveTime, unit, new SynchronousQueue());
+    }
+  }
+
   public static void main(String [] args) {
     try {
       CLIHandler handler = CLIHandler.getInstance();
@@ -212,7 +225,13 @@ public class QueryCacheServer {
   public static void createServer(TCLIService.Processor processor) {
     try {
       boolean tcpKeepAlive = true;
-      
+
+      qcServerExecutorService = new QCServerExecutorService(
+              conf.getInt(QCConfigKeys.QC_WORKERTHREAD_MIN, QCConfigKeys.QC_WORKERTHREAD_MIN_DEFAULT),
+              conf.getInt(QCConfigKeys.QC_WORKERTHREAD_MAX, QCConfigKeys.QC_WORKERTHREAD_MAX_DEFAULT),
+              60L,
+              TimeUnit.SECONDS);
+
       //TServerTransport serverTransport = tcpKeepAlive ?
       //  new TServerSocketKeepAlive(Configure.gServerPort) : new TServerSocket(Configure.gServerPort);
       TServerTransport serverTransport = tcpKeepAlive ?
@@ -224,11 +243,8 @@ public class QueryCacheServer {
           processor(processor);
       sArgs.inputProtocolFactory(new TCompactProtocol.Factory());
       sArgs.outputProtocolFactory(new TCompactProtocol.Factory());
-      sArgs.minWorkerThreads(conf.getInt(QCConfigKeys.QC_WORKERTHREAD_MIN,
-        QCConfigKeys.QC_WORKERTHREAD_MIN_DEFAULT));
-      sArgs.maxWorkerThreads(conf.getInt(QCConfigKeys.QC_WORKERTHREAD_MAX,
-        QCConfigKeys.QC_WORKERTHREAD_MAX_DEFAULT));
-      
+      sArgs.executorService(qcServerExecutorService);
+
       TServer server = new TThreadPoolServer(sArgs);
       server.setServerEventHandler(new QueryCacheServerEventHandler());
 
