@@ -1,32 +1,30 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>QueryCache</title>
-    <style type="text/css">
-    @import '/bootstrap/css/bootstrap.min.css';
-    @import '/css/querycache.css';
-    </style>
-    <script src="/js/jquery-1.11.1.min.js"></script>
-    <script src="/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/js/utils.js"></script>
+    <title>QueryCache :: Queries</title>
 </head>
+<link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="/css/querycache.css">
+<script src="/js/jquery-1.11.1.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/js/utils.js"></script>
+
 <script type="text/javascript">
 var g_running_queries = [];
 var g_complete_queries = [];
 
 function getAll() {
-    $.ajax({
-        url: '/header.html',
-        cache:false
-    }).done(function(html) {
-        $('#header').html(html);
+    $.getJSON('/api/hostname', function(r) {
+        $('#header-hostname').html(r);
     });
+
     $.getJSON('/api/queries', function(result) {
         var contents = '';
+        var now = new Date();
         g_running_queries = result.runningQueries;
         for (var i=0; i<g_running_queries.length; i++) {
             var q = g_running_queries[i];
-            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.stmtState+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(q.endTime - q.startTime)+'</td><td><a href="/api/cancelQuery?id='+q.queryId+'&driver='+q.connType+'">'+"Cancel"+'</a></td></tr>';
+            contents += '<tr><td>'+q.queryId+'</td><td>'+q.connType+'</td><td>'+q.user+'</td><td>'+q.queryStr+'</td><td>'+q.stmtState+'</td><td>'+q.clientIp+'</td><td>'+q.rowCnt+'</td><td>'+formatDate(new Date(q.startTime))+'</td><td>'+(now - q.startTime)+'</td><td><a href="/api/cancelQuery?id='+q.queryId+'&driver='+q.connType+'">'+"Cancel"+'</a></td></tr>';
         }
         $('#queriesinflight tbody').html(contents);
 
@@ -41,35 +39,53 @@ function getAll() {
 }
 
 $(function() {
+    $('#headerMenuQueries').removeClass('btn-primary').addClass('btn-warning').attr('disabled', 'disabled');
     getAll();
 });
 
 </script>
 <body>
 
-<H1>QueryCache : Queries</H1>
-<table class="table table-nonfluid" id="header"></table>
-
-<H2>In-Flight Queries</H2>
-<div class="container">
-    <table class="table table-bordered" id="queriesinflight">
-    <thead><tr>
-        <th>id</th><th>type</th><th>user</th><th>statement</th><th>state</th><th>client ip</th><th>rows</th><th>startTime</th><th>endTime</th><th>Cancel</th>
-    </tr></thead>
-    <tbody>
-    </tbody>
-    </table>
+<div class="container-fluid" align="center" style="padding: 10px; background-color: #285e8e;">
+    <div id="header" style="width: 90%;">
+        <div id="header-pages" class="header-left" align="left">
+            <a id="headerMenuSystem" class="btn btn-primary btn-xs" href="/index.html">system</a>&nbsp;&nbsp;&nbsp;&nbsp;
+            <a id="headerMenuQueries" class="btn btn-primary btn-xs" href="/queries.html">queries</a>&nbsp;&nbsp;&nbsp;&nbsp;
+            <a id="headerMenuPools" class="btn btn-primary btn-xs" href="/pools.html">pools</a>
+        </div>
+        <div id="header-right" class="header-right" align="right">
+            <span id="header-hostname" style="color:white; font-weight: bold;">unknown</span>
+        </div>
+        <div class="header-middle" align="center">
+            <span style="color:white; font-weight: bold;">QueryCache : </span>
+            <span id="header-title" style="color:white; font-weight: bold;">Queries</span>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
 </div>
 
-<H2>Complete Queries</H2>
-<div class="container">
-    <table class="table table-bordered" id="queriescomplete">
-    <thead><tr>
-        <th>id</th><th>type</th><th>user</th><th>statement</th><th>state</th><th>client ip</th><th>rows</th><th>startTime</th><th>elapsedTime</th>
-    </tr></thead>
-    <tbody>
-    </tbody>
-    </table>
+<div class="container-fluid" align="center">
+    <div class="cmscrollbar" style="width: 90%; height: 30%; text-align:left; position: relative;">
+        <H2>In-Flight Queries</H2>
+        <table class="table table-striped small" id="queriesinflight">
+        <thead><tr>
+            <th>id</th><th>type</th><th>user</th><th>statement</th><th>state</th><th>client ip</th><th>rows</th><th>startTime</th><th>elapsed</th><th>Cancel</th>
+        </tr></thead>
+        <tbody>
+        </tbody>
+        </table>
+    </div>
+
+    <div style="width: 90%; text-align:left; position: relative;">
+        <H2>Complete Queries</H2>
+        <table class="table table-striped small" id="queriescomplete">
+        <thead><tr>
+            <th>id</th><th>type</th><th>user</th><th>statement</th><th>state</th><th>client ip</th><th>rows</th><th>startTime</th><th>elapsed</th>
+        </tr></thead>
+        <tbody>
+        </tbody>
+        </table>
+    </div>
 </div>
 </body>
 </html>

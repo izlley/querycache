@@ -157,7 +157,10 @@ public class QueryCacheServer {
     }
   }
 
+  public static String hostname = "";
+
   public static void main(String [] args) {
+    hostname = System.getProperty("HOSTNAME", "noname");
     try {
       CLIHandler handler = CLIHandler.getInstance();
       final TCLIService.Processor processor = new TCLIService.Processor(handler);

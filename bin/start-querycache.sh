@@ -61,7 +61,8 @@ if [ -z $DRIVER_DIR ]; then
     DRIVER_DIR=$QC_HOME/lib/driver
 fi
 
-JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms5g -Xmx5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/logs/querycache-gc-$(date +%Y%m%d-%H%M%S).log -DQC_HOME=${QC_HOME}"}
+GCLOGFILE=querycache-gc-$(date +%Y%m%d-%H%M%S).log
+JVMARGS=${JVMARGS-"-enableassertions -enablesystemassertions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms5g -Xmx5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -verbose:gc -Xloggc:$QC_HOME/logs/${GCLOGFILE} -DQC_HOME=${QC_HOME}"}
 export QC_CONF_DIR=$QC_HOME/conf
 export QC_LIB_DIR=$QC_HOME/lib
 export PATH=$QC_HOME/bin:$PATH
@@ -77,12 +78,17 @@ for jar in `ls ${DRIVER_DIR}/*.jar`; do
   CLASSPATH=${CLASSPATH}:$jar
 done
 export CLASSPATH
+export HOSTNAME=`hostname`
 
 echo "QC_HOME                = $QC_HOME"
 echo "JAVA_HOME              = $JAVA_HOME"
 echo "DRIVER_DIR             = $DRIVER_DIR"
 echo "CLASSPATH              = $CLASSPATH"
 echo "JVMARGS                = $JVMARGS"
+echo "HOSTNAME               = $HOSTNAME"
+
+rm $QC_HOME/logs/querycache-gc.log
+ln -s ${GCLOGFILE} $QC_HOME/logs/querycache-gc.log
 
 echo "start Querycache..."
-exec nohup $JAVA $JVMARGS -classpath "$CLASSPATH" com.skplanet.querycache.server.QueryCacheServer "$@" > /dev/null 2>&1 &
+exec nohup $JAVA $JVMARGS -DHOSTNAME="${HOSTNAME}" -classpath "$CLASSPATH" com.skplanet.querycache.server.QueryCacheServer -DHOSTNAME="${HOSTNAME}" "$@" > /dev/null 2>&1 &

@@ -1,15 +1,14 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>QueryCache</title>
-    <style type="text/css">
-    @import '/bootstrap/css/bootstrap.min.css';
-    @import '/css/querycache.css';
-    </style>
-    <script src="/js/jquery-1.11.1.min.js"></script>
-    <script src="/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/js/utils.js"></script>
+    <title>QueryCache :: System</title>
 </head>
+<link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="/css/querycache.css">
+<script src="/js/jquery-1.11.1.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/js/utils.js"></script>
+
 <script type="text/javascript">
 var g_running_queries = [];
 var g_complete_queries = [];
@@ -17,12 +16,10 @@ var g_connection_pool = [];
 var g_object_pool = null;
 
 function getAll() {
-    $.ajax({
-        url: '/header.html',
-        cache:false
-    }).done(function(html) {
-        $('#header').html(html);
+    $.getJSON('/api/hostname', function(r) {
+        $('#header-hostname').html(r);
     });
+
     $.getJSON('/api/system', function(r) {
         var contents = '';
         contents += '<tr><td>Processors Available</td><td>'+r.jvm.nProcessors+'</td></tr>';
@@ -46,36 +43,52 @@ function getAll() {
         contents += '<tr><td>&nbsp - Active</td><td>'+(r.threads.handlerThreads - r.threads.handlerThreadsIdle)+'</td></tr>';
         contents += '<tr><td>Web Server Threads</td><td>'+r.threads.webServerThreads+'</td></tr>';
         contents += '<tr><td>&nbsp - Active</td><td>'+(r.threads.webServerThreads - r.threads.webServerThreadsIdle)+'</td></tr>';
+        contents += '<tr><td>Thrift Server Threads</td><td>'+r.threads.thriftServerThreads+'</td></tr>';
+        contents += '<tr><td>&nbsp - Active</td><td>'+(r.threads.thriftServerThreads - r.threads.thriftServerThreadsIdle)+'</td></tr>';
         $('#ThreadInfo').html(contents);
      });
 }
 
 $(function() {
+    $('#headerMenuSystem').removeClass('btn-primary').addClass('btn-warning').attr('disabled', 'disabled');
     getAll();
 });
 
 </script>
 <body>
 
-<H1>QueryCache System/Process Information</H1>
-<table class="table table-nonfluid" id="header"><tr><td>HEADER</td></tr></table>
-
-<H2>Jvm Process Info</H2>
-<div class="container">
-    <table class="table table-bordered table-nonfluid" id="JVMInfo">
-    </table>
+<div class="container-fluid" align="center" style="padding: 10px; background-color: #285e8e;">
+    <div id="header" style="width: 90%;">
+        <div id="header-pages" class="header-left" align="left">
+            <a id="headerMenuSystem" class="btn btn-primary btn-xs" href="/index.html">system</a>&nbsp;&nbsp;&nbsp;&nbsp;
+            <a id="headerMenuQueries" class="btn btn-primary btn-xs" href="/queries.html">queries</a>&nbsp;&nbsp;&nbsp;&nbsp;
+            <a id="headerMenuPools" class="btn btn-primary btn-xs" href="/pools.html">pools</a>
+        </div>
+        <div id="header-right" class="header-right" align="right">
+            <span id="header-hostname" style="color:white; font-weight: bold;">unknown</span>
+        </div>
+        <div class="header-middle" align="center">
+            <span style="color:white; font-weight: bold;">QueryCache : </span>
+            <span id="header-title" style="color:white; font-weight: bold;">System</span>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
 </div>
 
-<H2>System Info</H2>
-<div class="container">
-    <table class="table table-bordered table-nonfluid" id="SystemInfo">
-    </table>
-</div>
+<div class="container-fluid" align="center">
+    <div style="width: 90%; text-align:left; position: relative;">
+        <H2>Jvm Process Info</H2>
+        <table class="table table-hover small table-nonfluid" id="JVMInfo">
+        </table>
 
-<H2>Thread Info</H2>
-<div class="container">
-    <table class="table table-bordered table-nonfluid" id="ThreadInfo">
-    </table>
+        <H2>System Info</H2>
+        <table class="table table-hover small table-nonfluid" id="SystemInfo">
+        </table>
+
+        <H2>Thread Info</H2>
+        <table class="table table-hover small table-nonfluid" id="ThreadInfo">
+        </table>
+    </div>
 </div>
 </body>
 </html>

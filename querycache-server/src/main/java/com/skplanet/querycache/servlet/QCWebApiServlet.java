@@ -172,6 +172,13 @@ public class QCWebApiServlet extends HttpServlet {
                 break;
             }
 
+            case "/hostname": {
+                response.setContentType("application/json; charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
+                writer.print(gson.toJson(QueryCacheServer.hostname));
+                break;
+            }
+
             case "/cancelQuery": {
                 // if async marker is not set, check update time and initiate async
                 if ( request.getAttribute(ASYNC_REQ_ATTR) == null ) {
