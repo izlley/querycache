@@ -39,7 +39,7 @@ enum TOperationState {
   // The operation has completed. the result set may be fetched.
   FINISHED_STATE,
 
-  //CANCELED_STATE,
+  CANCELED_STATE,
 
   // The operation was closed by a client
   CLOSED_STATE,
@@ -207,6 +207,8 @@ struct TExecuteStatementReq {
   2: required string statement
 
   3: optional map<string, string> configuration
+
+  4: optional bool asyncMode
 }
 
 struct TExecuteStatementResp {
@@ -331,7 +333,8 @@ struct TGetOperationStatusReq {
 
 struct TGetOperationStatusResp {
   1: required TStatus status
-  2: optional TOperationState operationState
+  2: required TOperationState operationState
+  3: optional TOperationHandle operationHandle
 }
 
 /*

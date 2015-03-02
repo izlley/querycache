@@ -254,162 +254,39 @@ public class CLIHandler implements TCLIService.Iface {
   }
   */
 
+
   public TExecuteStatementResp ExecuteStatement(TExecuteStatementReq aReq) {
-    LOG.debug("ExecuteStatement is requested.");
-    long startTime = 0;
-    long endTime;
-    long timeArr[] = {-1,-1,-1,-1,-1,-1};
-    int i = 0;
-    StmtNode sStmt = null;
-    String sQueryId = null;
-    
-    if (profileLvl > 0) {
-      timeArr[i++] = startTime = System.currentTimeMillis();
-    }
-    gConnMgr.runtimeProfile.increaseNumReq();
-    //
-    // 1. get connection from pool
-    //
-    long sConnId = aReq.sessionHandle.sessionId.connid;
-    long sStmtId = 0;
-    
-    TExecuteStatementResp sResp = new TExecuteStatementResp();
-    sResp.setStatus(new TStatus());
-
-    ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-    if (sConn == null) {
-      // the connection doesn't even exist, just send a error msg.
-      LOG.error("ExecuteStatement error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
-      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
-      sResp.status.setErrorMessage("ExecuteStatement error : the connection doesn't exist.");
-      return sResp;
-    }
-    if (profileLvl > 1)
-      timeArr[i++] = System.currentTimeMillis();
-
-    //
-    // 2. alloc statement
-    //
+    StatementExecutor exec;
+    TExecuteStatementResp sResp;
     try {
-      sStmt = sConn.allocStmt(true);
-
-      // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId,
-              aReq.statement.replace('\n',' ').replace('\r',' ').replace('\t',' '));
-      sStmt.profile.stmtState = StmtNode.State.EXEC;
-      sStmt.profile.execProfile = timeArr;
-      sStmtId = sStmt.sStmtId;
-      sQueryId = sStmt.profile.queryId;
-      gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
-
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
-      svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
-
-      // TODO: 2.5 set statement properties by TExecuteStatementReq.configuration
-      //    (e.g. setMaxRows())
-
-      if (profileLvl > 1)
-        timeArr[i++] = System.currentTimeMillis();
-      
-      //
-      // 3. Analyze SQL stmt
-      //
-      boolean isAuthCheck = 
-        !QueryCacheServer.conf.get(QCConfigKeys.QC_AUTHORIZATION_PREFIX + "." +
-          aReq.sessionHandle.sessionId.driverType.split(":")[1], QCConfigKeys.QC_AUTHORIZATION_DEFAULT).
-            equalsIgnoreCase("NONE");
-      if (isSyntaxCheck || isAuthCheck) {
-        try {
-          Analyzer compiler = new Analyzer(sConn.user,
-            aReq.sessionHandle.sessionId.driverType, gConnMgr);
-          compiler.analyzer(aReq.statement, sStmt.profile, isAuthCheck);
-        } catch (AuthorizationException e) {
-          LOG.error("Authorization error:" + e.getMessage() +
-            "\n  -Error Query: " + aReq.statement, e);
-          sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
-          sResp.status.setErrorMessage(e.getMessage());
-          gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
-            sQueryId, State.ERROR);
-          return sResp;
-        } catch (AnalyzerException e) {
-          LOG.error("Query analyzer error:" + e.getMessage() +
-            "\n  -Error Query: " + aReq.statement, e);
-          sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
-          sResp.status.setErrorMessage(e.getMessage());
-          gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
-            sQueryId, State.ERROR);
-          return sResp;
-        }
-      }
-      if (profileLvl > 1)
-        timeArr[i++] = System.currentTimeMillis();
-      
-      //
-      // 4. execute query
-      //
-      try {
-        sStmt.sHStmt.setFetchSize(_defFetchSize);
-      } catch (SQLFeatureNotSupportedException e) {
-        //ignore
-      }
-      boolean sIsRS = sStmt.sHStmt.execute(aReq.statement);
-      if (profileLvl > 1)
-        timeArr[i++] = System.currentTimeMillis();
-      
-      //
-      // 5. build TExecuteStatementResp
-      //
-      THandleIdentifier sHI = new THandleIdentifier(sConnId, sStmtId,
-        aReq.sessionHandle.sessionId.driverType);
-      TOperationHandle sOH = new TOperationHandle();
-      sOH.setOperationId(sHI);
-      sOH.setOperationType(TOperationType.EXECUTE_STATEMENT);
-      sResp.setOperationHandle(sOH);
-      
-      if (sIsRS) {
-        sResp.operationHandle.hasResultSet = true;
-        // 6. Save a ResultSet in the StmtNode
-        sStmt.sHasResultSet = true;
-        sStmt.sRS = sStmt.sHStmt.getResultSet();
-      } else {
-        sResp.operationHandle.hasResultSet = false;
-        sResp.operationHandle.updateRowCount = sStmt.sHStmt.getUpdateCount();
-        // set profiling data
-        sStmt.profile.rowCnt = (long)sResp.operationHandle.updateRowCount;
-      }
-      
-      sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
+      exec = new StatementExecutor(aReq);
+      sResp = exec.sResp;
     } catch (SQLException e) {
-      LOG.error("ExecuteStatement error(" + e.getSQLState() + ") :" + e.getMessage() +
-        "\n  -Error Query: " + aReq.statement, e);
-      sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      sResp = new TExecuteStatementResp();
+      sResp.setStatus(new TStatus().setStatusCode(TStatusCode.ERROR_STATUS));
       sResp.status.setSqlState(e.getSQLState());
       sResp.status.setErrorCode(e.getErrorCode());
       sResp.status.setErrorMessage(e.getMessage());
-      // remove failed ConnNode in the UsingMap
-      if ("08S01".equals(e.getSQLState())) {
-        // remove failed ConnNode in the ConnPool
-        gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("ExecuteStatement: Removing a failed connection (connId:" + sConn.sConnId + ")");
-      }
-      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
-        sQueryId, State.ERROR);
-      
+      return sResp;
+    } catch (Exception e) {
+      sResp = new TExecuteStatementResp();
+      sResp.setStatus(new TStatus().setStatusCode(TStatusCode.ERROR_STATUS));
+      sResp.status.setSqlState("HY000"); // general error
+      sResp.status.setErrorMessage(e.getMessage());
       return sResp;
     }
 
-    if (profileLvl > 0) {
-      endTime = System.currentTimeMillis();
-      LOG.info("ExecuteStatement PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", Execute time elapsed="
-        + (endTime-startTime) + "ms" + ", Query=" + sStmt.profile.queryStr);
-      sStmt.profile.timeHistogram[0] = endTime - startTime;
-      if (profileLvl > 1) {
-        timeArr[i++] = endTime;
-      }
+    if (exec.asyncMode) {
+      LOG.debug("starting async executor");
+      exec.job = _threadPool.submit(exec);
+
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+      svrCtx.setAsyncExecutor(exec);
     }
-    
+    else {
+      exec.run();
+    }
+
     return sResp;
   }
 
@@ -1049,7 +926,47 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TGetOperationStatusResp GetOperationStatus(TGetOperationStatusReq aReq) {
-    return new TGetOperationStatusResp();
+    QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+    TGetOperationStatusResp sResp;
+    StatementExecutor asyncExecutor = null;
+    if (svrCtx != null) {
+      asyncExecutor = svrCtx.getAsyncExecutor();
+    }
+    if (asyncExecutor == null) {
+      sResp = new TGetOperationStatusResp(new TStatus(TStatusCode.INVALID_HANDLE_STATUS), TOperationState.UNKNOWN_STATE);
+      sResp.status.setErrorMessage("No operation in progress");
+      return sResp;
+    }
+
+    try {
+      // TODO: make this configurable
+      asyncExecutor.job.get(2000, TimeUnit.MILLISECONDS);
+    } catch (ExecutionException e) {
+      LOG.error("exception waiting for a executor job.", e);
+      asyncExecutor.sOpStatusResp.operationState = TOperationState.ERROR_STATE;
+      asyncExecutor.sOpStatusResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
+      asyncExecutor.sOpStatusResp.status.setErrorMessage(e.getMessage());
+    } catch (TimeoutException e) {
+      // ignore
+    } catch (InterruptedException e) {
+      // TODO: what to do here?
+    }
+
+    switch (asyncExecutor.sOpStatusResp.operationState) {
+      case INITIALIZED_STATE:
+      case RUNNING_STATE:
+        // still running
+        break;
+      case FINISHED_STATE:
+      case CANCELED_STATE:
+      case CLOSED_STATE:
+      case ERROR_STATE:
+      case UNKNOWN_STATE:
+        // finished somehow
+        svrCtx.setAsyncExecutor(null);
+        break;
+    }
+    return asyncExecutor.sOpStatusResp;
   }
 
   public void internalCancelStatement(String sQueryId, String driverType) {
@@ -1083,12 +1000,25 @@ public class CLIHandler implements TCLIService.Iface {
 
     // whatever the case is, outstanding query will be closed
     QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
-    if (svrCtx != null) svrCtx.clearCurrentQuery();
+    if (svrCtx != null) {
+      // cancelling within same thread ( thrift server )
+      // highly unlikely the statement state is EXEC
+      svrCtx.clearCurrentQuery();
+    }
+    else {
+      // in this case, other thread ( webServer for example ) called cancel()
+      // maybe in EXEC
+    }
 
     // 2. Cancel the statement
-    StmtNode sStmt = null;
+    StmtNode sStmt = sConn.getStmt(sStmtId);
     try {
-      sStmt = sConn.cancelStmt(sStmtId);
+      if (sStmt.profile.stmtState == StmtNode.State.EXEC) {
+        sConn.cancelStmt(sStmtId);
+      }
+      else {
+        sConn.closeStmt(sStmtId);
+      }
     } catch (SQLException e) {
       LOG.error("Error cancelling query (" + e.getSQLState() + ") :" + e.getMessage(), e);
     } finally {

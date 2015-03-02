@@ -6,17 +6,9 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
-import com.skplanet.querycache.cli.thrift.TCLIService;
-import com.skplanet.querycache.cli.thrift.TCancelOperationReq;
-import com.skplanet.querycache.cli.thrift.TCancelOperationResp;
-import com.skplanet.querycache.cli.thrift.TCloseOperationReq;
-import com.skplanet.querycache.cli.thrift.TCloseOperationResp;
-import com.skplanet.querycache.cli.thrift.TExecuteStatementReq;
-import com.skplanet.querycache.cli.thrift.TExecuteStatementResp;
-import com.skplanet.querycache.cli.thrift.TOperationHandle;
-import com.skplanet.querycache.cli.thrift.TSessionHandle;
-import com.skplanet.querycache.cli.thrift.TStatusCode;
+import com.skplanet.querycache.cli.thrift.*;
 
 /**
  * QCStatement.
@@ -29,6 +21,7 @@ public class QCStatement implements java.sql.Statement {
   private final Map<String,String> sessConf = new HashMap<String,String>();
   private int fetchSize = 1024;
   private boolean isScrollableResultset = false;
+  private ReentrantLock transportLock = new ReentrantLock(true);
   /**
    * We need to keep a reference to the result set to support the following:
    * <code>
@@ -86,19 +79,20 @@ public class QCStatement implements java.sql.Statement {
    */
 
   public void cancel() throws SQLException {
-    if (isClosed) {
+    if (isClosed || stmtHandle == null) {
       throw new SQLException("Can't cancel after statement has been closed", "24000");
     }
 
     TCancelOperationReq cancelReq = new TCancelOperationReq();
     cancelReq.setOperationHandle(stmtHandle);
     try {
+      transportLock.lock();
       TCancelOperationResp cancelResp = client.CancelOperation(cancelReq);
       Utils.verifySuccessWithInfo(cancelResp.getStatus());
-    } catch (SQLException e) {
-      throw e;
     } catch (Exception e) {
       throw new SQLException(e.toString(), "08S01", e);
+    } finally {
+      transportLock.unlock();
     }
   }
 
@@ -128,14 +122,17 @@ public class QCStatement implements java.sql.Statement {
       if (stmtHandle != null) {
         TCloseOperationReq closeReq = new TCloseOperationReq();
         closeReq.setOperationHandle(stmtHandle);
+        transportLock.lock();
         TCloseOperationResp closeResp = client.CloseOperation(closeReq);
       }
     } catch (SQLException e) {
       throw e;
     } catch (Exception e) {
       throw new SQLException(e.getMessage(), "08S01", e);
+    } finally {
+      stmtHandle = null;
+      transportLock.unlock();
     }
-    stmtHandle = null;
   }
 
   /*
@@ -170,21 +167,66 @@ public class QCStatement implements java.sql.Statement {
       throw new SQLException("Can't execute after statement has been closed");
     }
 
-    try {
       //closeClientOperation();
-      TExecuteStatementReq execReq = new TExecuteStatementReq(sessHandle, sql);
-      execReq.setConfiguration(sessConf);
-      TExecuteStatementResp execResp = client.ExecuteStatement(execReq);
-      if (execResp.getStatus().getStatusCode().equals(TStatusCode.STILL_EXECUTING_STATUS)) {
-        warningChain = Utils.addWarning(warningChain, new SQLWarning("Query execuing asynchronously"));
-      } else {
-        Utils.verifySuccessWithInfo(execResp.getStatus());
-      }
-      stmtHandle = execResp.getOperationHandle();
-    } catch (SQLException eS) {
-      throw eS;
+    TExecuteStatementReq execReq = new TExecuteStatementReq(sessHandle, sql);
+    TExecuteStatementResp execResp;
+    execReq.setConfiguration(sessConf);
+    execReq.setAsyncMode(true);
+    transportLock.lock();
+    try {
+      execResp = client.ExecuteStatement(execReq);
     } catch (Exception ex) {
       throw new SQLException(ex.toString(), "08S01", ex);
+    } finally {
+      transportLock.unlock();
+    }
+
+    if (execResp.status.getStatusCode() != TStatusCode.SUCCESS_STATUS) {
+      throw new SQLException(execResp.status.getErrorMessage(), execResp.status.getSqlState(), execResp.status.getErrorCode());
+    }
+
+    /* Hmm..
+    if (execResp.getStatus().getStatusCode().equals(TStatusCode.STILL_EXECUTING_STATUS)) {
+      warningChain = Utils.addWarning(warningChain, new SQLWarning("Query execuing asynchronously"));
+    } else {
+      Utils.verifySuccessWithInfo(execResp.getStatus());
+    }
+    */
+
+    // polling getOperationStatus()
+    stmtHandle = execResp.getOperationHandle();
+    boolean keepPolling = true;
+    TGetOperationStatusReq osReq = new TGetOperationStatusReq(stmtHandle);
+    while (keepPolling) {
+      TGetOperationStatusResp osResp;
+      transportLock.lock();
+      try {
+        osResp = client.GetOperationStatus(osReq);
+      } catch (Exception ex) {
+        throw new SQLException(ex.toString(), "08S01", ex);
+      } finally {
+        transportLock.unlock();
+      }
+
+      if (osResp.status.statusCode != TStatusCode.SUCCESS_STATUS) {
+        throw new SQLException(osResp.status.getErrorMessage(), osResp.status.getSqlState(), osResp.status.getErrorCode());
+
+      }
+      switch (osResp.operationState) {
+        case INITIALIZED_STATE:
+        case RUNNING_STATE:
+          // still running
+          break;
+        case FINISHED_STATE:
+          keepPolling = false;
+          stmtHandle = osResp.getOperationHandle();
+          break;
+        case CANCELED_STATE:
+        case ERROR_STATE:
+        case CLOSED_STATE: /* never returns this state from serve-side yet */
+        case UNKNOWN_STATE: /* never returns this state from serve-side yet */
+          throw new SQLException(osResp.status.getErrorMessage(), osResp.status.getSqlState(), osResp.status.getErrorCode());
+      }
     }
 
     if (!stmtHandle.isHasResultSet()) {

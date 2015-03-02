@@ -21,6 +21,7 @@ public class StmtNode {
   public static enum State {
     INIT,
     EXEC,
+    EXEC_COMPLETE,
     GETMETA,
     GETSCHEMAS,
     GETCATALOGS,
