@@ -16,6 +16,7 @@ import java.util.concurrent.Future;
  * Created by nazgul33 on 15. 2. 27.
  */
 public class StatementExecutor implements Runnable {
+    private static final boolean DEBUG = false;
     private static final Logger LOG = LoggerFactory.getLogger(StatementExecutor.class);
     private static final int _defFetchSize = 1024;
 
@@ -54,17 +55,17 @@ public class StatementExecutor implements Runnable {
         timeArr[1] = System.currentTimeMillis();
 
         // 2. alloc statement
+        svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
         sStmt = sConn.allocStmt(true);
 
         sStmt.profile = new RuntimeProfile.QueryProfile(sStmt, sConn, aReq.sessionHandle.sessionId,
-                aReq.statement.replace('\n', ' ').replace('\r', ' ').replace('\t', ' '));
+                aReq.statement, svrCtx.clientVersion);
         sStmt.profile.stmtState = StmtNode.State.EXEC;
         sStmt.profile.execProfile = timeArr;
         sStmtId = sStmt.sStmtId;
         sQueryId = sStmt.profile.queryId;
         CLIHandler.gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-        svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
         svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
         timeArr[2] = System.currentTimeMillis();
@@ -144,9 +145,8 @@ public class StatementExecutor implements Runnable {
             sOpStatusResp.setOperationHandle(sResp.operationHandle);
 
             endTime = System.currentTimeMillis();
-            LOG.info("ExecuteStatement PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-                    + ", Type=" + driverType + ", Execute time elapsed="
-                    + (endTime-startTime) + "ms" + ", Query=" + sStmt.profile.queryStr);
+            LOG.debug("ExecuteStatement PROFILE: QueryID={}, Type={}, Execute time elapsed={}ms, Query={}",
+                    sQueryId, driverType, endTime - startTime, sStmt.profile.queryStr);
             sStmt.profile.timeHistogram[0] = endTime - startTime;
 
         } catch (SQLException e) {

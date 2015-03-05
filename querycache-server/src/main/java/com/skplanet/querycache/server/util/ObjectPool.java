@@ -14,6 +14,7 @@ import com.skplanet.querycache.thrift.*;
 //       This looks very promising: http://concurrencykit.org/, except that the kit is written in C
 
 public class ObjectPool {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(ObjectPool.class);
 
   public static final int POOL_TROWSET = 0;
@@ -43,18 +44,18 @@ public class ObjectPool {
             Thread.sleep(sReloadCycle);
             LOG.debug("ObjectPool: checking each object count.");
             for (int i = 0; i < POOLS_COUNT; i++) {
-              LOG.debug("  ObjList[" + i + "].size()=" + sObjPools.get(i).size());
+              LOG.debug("  ObjList[{}].size()={}", i, sObjPools.get(i).size());
               if (i == POOL_TCOLUMNVALUE || i == POOL_TSTRINGVALUE) {
                 if (sObjPools.get(i).size() < (int)((sMaxPoolSize*sCellCoeff) *
                     sReloadingThreshold)) {
-                  LOG.info("Reloading more objects in the ObjectPool[" + i + "]"
-                      + ".size()=" + sObjPools.get(i).size());
+                  LOG.info("Reloading more objects in the ObjectPool[{}].size()={}",
+                          i, sObjPools.get(i).size());
                   initObjPool(i);
                 }
               } else {
                 if (sObjPools.get(i).size() < (int)(sMaxPoolSize * sReloadingThreshold)) {
-                  LOG.info("Reloading more objects in the ObjectPool[" + i + "]"
-                      + ".size()=" + sObjPools.get(i).size());
+                  LOG.info("Reloading more objects in the ObjectPool[{}].size()={}",
+                          i, sObjPools.get(i).size());
                   initObjPool(i);
                 }
               }
@@ -234,7 +235,9 @@ public class ObjectPool {
     }
     rows.clear();
 
-    LOG.info("recycling " + lRows.size() + " rows, " + lCols.size() + " cols, " + lStrs.size() + " strs.");
+    LOG.debug("recycling {} rows, {} cols, {} strs.",
+            lRows.size(), lCols.size(), lStrs.size());
+
     recycleObjects(lRows, POOL_TROW);
     recycleObjects(lCols, POOL_TCOLUMNVALUE);
     recycleObjects(lStrs, POOL_TSTRINGVALUE);

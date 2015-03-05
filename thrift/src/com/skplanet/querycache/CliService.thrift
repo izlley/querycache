@@ -138,6 +138,7 @@ struct TOpenSessionReq {
 
   5: optional map<string, string> configuration
   6: optional THostInfo hostInfo
+  7: optional string clientVersion
 }
 
 struct TOpenSessionResp {

@@ -1,0 +1,441 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+<!-- Querycache Execution Parameters -->
+<property>
+  <name>qc.server.port</name>
+  <value>8655</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.workerthread.min</name>
+  <value>20</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.workerthread.max</name>
+  <value>2147483647</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.free.init.size</name>
+  <value>16</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.free.resizing.factor</name>
+  <value>0.5f</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.resizing.cycle.milli</name>
+  <value>10000</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.query.profiling.level</name>
+  <value>1</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.query.profiling.detail.upper.milli</name>
+  <value>500</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.objpool.max.size</name>
+  <value>10000000</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.objpool.cell.coeff</name>
+  <value>1</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.objpool.reload.cycle.milli</name>
+  <value>10000</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.objpool.resizing.factor</name>
+  <value>0.5f</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers</name>
+  <value>eda-impala,daas-impala,eda-hive,daas-phoenix</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.daas-impala</name>
+  <value>dicc-r3n001,dicc-r3n002,dicc-r3n003,dicc-r3n004,dicc-r3n005,dicc-r3n006,dicc-r3n007,dicc-r3n008,dicc-r3n009,dicc-r3n010,dicc-r3n011,dicc-r3n012,dicc-r3n013,dicc-r3n014,dicc-r3n015,dicc-r3n016,dicc-r3n017,dicc-r3n018,dicc-r3n019,dicc-r3n020,dicc-r3n021,dicc-r3n022,dicc-r3n023,dicc-r3n024,dicc-r3n025,dicc-r3n026,dicc-r3n027,dicc-r3n028,dicc-r3n029,dicc-r3n030,dicc-r3n031,dicc-r3n032,dicc-r3n033,dicc-r3n034,dicc-r3n035,dicc-r3n036,dicc-r3n037,dicc-r3n038,dicc-r3n039,dicc-r3n040,dicc-r3n041,dicc-r3n042,dicc-r3n043,dicc-r3n044,dicc-r3n045,dicc-r3n046,dicc-r3n047,dicc-r3n048,dicc-r3n049,dicc-r3n050,dicc-r3n051,dicc-r3n052,dicc-r3n053,dicc-r3n054,dicc-r3n055,dicc-r3n056,dicc-r3n057,dicc-r3n058,dicc-r3n059,dicc-r3n060,dicc-r3n061,dicc-r3n062,dicc-r3n063,dicc-r3n064,dicc-r3n065,dicc-r3n066,dicc-r3n067,dicc-r3n068,dicc-r3n069,dicc-r3n070,dicc-r3n071,dicc-r3n072,dicc-r3n073,dicc-r3n074,dicc-r3n075,dicc-r3n076,dicc-r3n077,dicc-r3n078,dicc-r3n079,dicc-r3n080,dicc-r3n081,dicc-r3n082,dicc-r3n083,dicc-r3n084</value>
+  <!--
+  <value>dicc-r2n001,dicc-r2n002,dicc-r2n003,dicc-r2n004,dicc-r2n005,dicc-r2n006,dicc-r2n007,dicc-r2n008,dicc-r2n009,dicc-r2n010,dicc-r2n011,dicc-r2n012,dicc-r2n013,dicc-r2n014,dicc-r2n015,dicc-r2n016,dicc-r2n017,dicc-r2n018,dicc-r2n019,dicc-r2n020,dicc-r2n021,dicc-r2n022,dicc-r2n023,dicc-r2n024,dicc-r2n025,dicc-r2n026,dicc-r2n027,dicc-r2n028,dicc-r2n029,dicc-r2n030,dicc-r2n031,dicc-r2n032,dicc-r2n033,dicc-r2n034,dicc-r2n035,dicc-r2n036,dicc-r2n037,dicc-r2n038,dicc-r2n039,dicc-r2n040,dicc-r2n041,dicc-r2n042,dicc-r2n043,dicc-r2n044,dicc-r2n045,dicc-r2n046,dicc-r2n047,dicc-r2n048,dicc-r2n049,dicc-r2n050</value>
+  -->
+  <description>
+  </description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.port.daas-impala</name>
+  <value>21050</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.user.daas-impala</name>
+  <value>querycache</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.pkgpath.daas-impala</name>
+  <value>org.apache.hive.jdbc.HiveDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.daas-impala</name>
+  <value>jdbc:hive2://</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.suffix.daas-impala</name>
+  <value>;auth=noSasl</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.auth.policy.file.daas-impala</name>
+  <value>/app/sentry/conf/policy/daas-impala/daas-impala.ini</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.auth.udf.whitelist.file.daas-impala</name>
+  <value>/app/bdb/querycache/conf/sentry/daas-impala-udflist</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.eda-impala</name>
+  <value>dicc-r1n031,dicc-r1n032,dicc-r1n033,dicc-r1n034,dicc-r1n035,dicc-r1n036,dicc-r1n037,dicc-r1n038,dicc-r1n039,dicc-r1n040,dicc-r1n041,dicc-r1n042,dicc-r1n043,dicc-r1n044,dicc-r1n045,dicc-r1n046,dicc-r1n047,dicc-r1n048,dicc-r1n049,dicc-r1n050,dicc-r1n051,dicc-r1n052,dicc-r1n053,dicc-r1n054,dicc-r1n055,dicc-r1n056,dicc-r1n057,dicc-r1n058,dicc-r1n059,dicc-r1n060,dicc-r1n061,dicc-r1n062,dicc-r1n063,dicc-r1n064,dicc-r1n065,dicc-r1n066,dicc-r1n067,dicc-r1n068,dicc-r1n069,dicc-r1n070,dicc-r1n071,dicc-r1n072,dicc-r1n073,dicc-r1n074,dicc-r1n075,dicc-r1n076,dicc-r1n077,dicc-r1n078,dicc-r1n079,dicc-r1n080,dicc-r1n081,dicc-r1n082,dicc-r1n083,dicc-r1n084</value>
+  <description>
+  </description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.port.eda-impala</name>
+  <value>21050</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.user.eda-impala</name>
+  <value>querycache</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.pkgpath.eda-impala</name>
+  <value>org.apache.hive.jdbc.HiveDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.eda-impala</name>
+  <value>jdbc:hive2://</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.suffix.eda-impala</name>
+  <value>;auth=noSasl</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.auth.policy.file.eda-impala</name>
+  <value>/app/sentry/conf/policy/eda-impala/eda-impala.ini</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.auth.udf.whitelist.file.eda-impala</name>
+  <value>/app/bdb/querycache/conf/sentry/eda-impala-udflist</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.daas-phoenix</name>
+  <value>bdbc-m001,bdbc-m002,bdbc-m003</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.port.daas-phoenix</name>
+  <value>2181</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.pkgpath.daas-phoenix</name>
+  <value>org.apache.phoenix.jdbc.PhoenixDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.daas-phoenix</name>
+  <value>jdbc:phoenix:</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.auth.policy.file.daas-phoenix</name>
+  <value>/app/sentry/conf/policy/daas-phoenix/daas-phoenix.ini</value>
+  <description></description>
+</property>
+
+<!--property>
+  <name>qc.storage.auth.udf.whitelist.file.daas-phoenix</name>
+  <value>/app/bdb/querycache/conf/sentry/daas-phoenix-udflist</value>
+  <description></description>
+</property-->
+
+<property>
+  <name>qc.storage.jdbc.drivers.address.eda-hive</name>
+  <value>dicc-t4if009,dicc-t4if010</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.port.eda-hive</name>
+  <value>10100</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.user.eda-hive</name>
+  <value>querycache</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.jdbc.drivers.pkgpath.eda-hive</name>
+  <value>org.apache.hive.jdbc.HiveDriver</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.jdbc.drivers.url.prefix.eda-hive</name>
+  <value>jdbc:hive2://</value>
+  <description></description>
+</property>
+    
+<property>
+  <name>qc.storage.auth.policy.file.eda-hive</name>
+  <value>/app/sentry/conf/policy/eda-hive/eda-hive.ini</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.storage.auth.udf.whitelist.file.eda-hive</name>
+  <value>/app/bdb/querycache/conf/sentry/eda-hive-udflist</value>
+  <description></description>
+</property>
+
+<property>
+  <name>qc.query.syntax.check</name>
+  <value>true</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.daas-impala</name>
+  <value>SENTRY</value>
+  <description>
+    Client authorization types.
+       NONE: no authorization check
+       SENTRY: Apache Sentry authorization
+       CUSTOM: Custom authorization provider
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.eda-impala</name>
+  <value>SENTRY</value>
+  <description>
+    Client authorization types.
+       NONE: no authorization check
+       SENTRY: Apache Sentry authorization
+       CUSTOM: Custom authorization provider
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.eda-hive</name>
+  <value>SENTRY</value>
+  <description>
+    Client authorization types.
+       NONE: no authorization check
+       SENTRY: Apache Sentry authorization
+       CUSTOM: Custom authorization provider
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.daas-phoenix</name>
+  <value>NONE</value>
+  <description>
+    Client authorization types.
+       NONE: no authorization check
+       SENTRY: Apache Sentry authorization
+       CUSTOM: Custom authorization provider
+  </description>
+</property>
+
+<property>
+  <name>qc.authorization.policy.reload.cycle.milli</name>
+  <value>300000</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.eda-impala</name>
+  <value>true</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.daas-impala</name>
+  <value>true</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.daas-phoenix</name>
+  <value>false</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.eda-hive</name>
+  <value>true</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.cycle.milli</name>
+  <value>180000</value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>qc.connpool.gc.verify.query</name>
+  <value>hellojaeha</value>
+  <description>
+  </description>
+</property>
+
+<!--property>
+  <name>qc.server.authentication</name>
+  <value>NONE</value>
+  <description>
+    Client authentication types.
+       NONE: no authentication check
+       LDAP: LDAP/AD based authentication
+       KERBEROS: Kerberos/GSSAPI authentication
+       CUSTOM: Custom authentication provider
+               (Use with property hive.server2.custom.authentication.class)
+  </description>
+</property>
+
+<property>
+  <name>qc.server.custom.authentication.class</name>
+  <value></value>
+  <description>
+    Custom authentication class. Used when property
+    'hive.server2.authentication' is set to 'CUSTOM'. Provided class
+    must be a proper implementation of the interface
+    org.apache.hive.service.auth.PasswdAuthenticationProvider. HiveServer2
+    will call its Authenticate(user, passed) method to authenticate requests.
+    The implementation may optionally extend the Hadoop's
+    org.apache.hadoop.conf.Configured class to grab Hive's Configuration object.
+  </description>
+</property>
+
+<property>
+  <name>qc.server.authentication.kerberos.principal</name>
+  <value></value>
+  <description>
+    Kerberos server principal
+  </description>
+</property>
+
+<property>
+  <name>qc.server.authentication.kerberos.keytab</name>
+  <value></value>
+  <description>
+    Kerberos keytab file for server principal
+  </description>
+</property>
+
+<property>
+  <name>qc.server.authentication.ldap.url</name>
+  <value></value>
+  <description>
+    LDAP connection URL
+  </description>
+</property>
+
+<property>
+  <name>qc.server.thrift.sasl.qop</name>
+  <value>auth</value>
+  <description>Sasl QOP value; one of 'auth', 'auth-int' and 'auth-conf'</description>
+</property>
+
+<property>
+  <name>qc.server.authentication.ldap.baseDN</name>
+  <value></value>
+  <description>
+    LDAP base DN
+  </description>
+</property-->
+</configuration>
+

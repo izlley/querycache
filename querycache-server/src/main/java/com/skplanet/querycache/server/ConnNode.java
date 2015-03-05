@@ -12,6 +12,7 @@ import com.skplanet.querycache.cli.thrift.THostInfo;
 import com.skplanet.querycache.cli.thrift.TStatusCode;
 
 public class ConnNode {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(ConnNode.class);
   
   // for debug 
@@ -93,8 +94,9 @@ public class ConnNode {
       LOG.warn("There is same statement id in StmtPool" + "(" + sConnType + 
         ":" + sId + ")");
     }
-    LOG.info("The statement is added.-Type:" + sConnType + ", -ConnId:" + 
-      this.sConnId + ", StmtId:" + sId + ", -# of Stmts:" + sStmtMap.size());
+
+    LOG.debug("The statement is added.-Type:{}, -ConnId:{}, StmtId:{}, -# of Stmts:{}",
+            sConnType, sConnId, sId, sStmtMap.size());
 
     return sStmt;
   }
@@ -108,18 +110,14 @@ public class ConnNode {
       if (sStmt.rowProducer != null)
         sStmt.rowProducer.close();
       sStmt.sHStmt.close();
-      LOG.info("The statement is closed.-Type:" + sConnType + ", -ConnId:" +
-        this.sConnId + ",StmtId:" + aStmtId + ",-# of Stmts:" + sStmtMap.size());
-    } else {
-      LOG.debug("The statement is already closed." + "(" +
-          sConnType + ":" + aStmtId + ")");
     }
+    LOG.debug("The statement is {}closed.-Type:{}, -QueryId:({}:{}), -# of Stmts:{}",
+            (sStmt == null)? "already ":"", sConnType, sConnId, aStmtId, sStmtMap.size());
     return sStmt;
   }
   
   public void closeAllStmts() throws SQLException {
-    LOG.debug("Closing all statements in ConNode Id -" + sConnType +
-        ":" + sConnId);
+    LOG.debug("Closing all statements in ConNode Id -{}:{}", sConnType, sConnId);
     String sQueryId;
 
     Iterator<ConcurrentHashMap.Entry<Long, StmtNode>> iterator =
@@ -139,8 +137,9 @@ public class ConnNode {
       }
       iterator.remove();
     }
-    LOG.info("All statements are closed.-Type:" + sConnType + ", -ConnId:"
-        + this.sConnId + ",-# of Stmts:" + sStmtMap.size());
+
+    LOG.debug("All statements are closed.-Type:{}, -ConnId:{}, -# of Stmts:{}",
+            sConnType, sConnId, sStmtMap.size());
   }
   
   public StmtNode cancelStmt(long aStmtId) throws SQLException {
@@ -162,8 +161,10 @@ public class ConnNode {
       LOG.info("The statement is canceled.-Type:" + sConnType + ", -ConnId:" +
         this.sConnId + ",StmtId:" + aStmtId);
     } else {
-      LOG.debug("The statement is already closed." + "(" +
-          sConnType + ":" + aStmtId + ")");
+      if (DEBUG) {
+        LOG.debug("The statement is already closed." + "(" +
+                sConnType + ":" + aStmtId + ")");
+      }
     }
     return sStmt;
   }

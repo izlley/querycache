@@ -12,8 +12,9 @@ CREATE EXTERNAL TABLE admin.audit_query_qc (
   start_time STRING,                                                                   
   end_time STRING,                                                                     
   time_histogram STRING,                                                                         
-  total_elapsedtime INT
-)                                                                                        
+  total_elapsedtime INT,
+  client_version STRING,
+)
 PARTITIONED BY (                                                                         
   part_date STRING                                                                      
 )                                                                                        
@@ -22,4 +23,4 @@ WITH SERDEPROPERTIES ('line.delim'='\n', 'field.delim'='\t', 'serialization.form
 STORED AS TEXTFILE                                                                       
 LOCATION 'hdfs://skpds/data/admin/tsv/qc-query-audit';                                
 
-ALTER TABLE admin.audit_query_qc ADD PARTITION (part_date='20140826');
+ALTER TABLE admin.audit_query_qc ADD PARTITION (part_date='20150305');

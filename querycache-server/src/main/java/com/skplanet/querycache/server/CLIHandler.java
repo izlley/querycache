@@ -20,19 +20,17 @@ package com.skplanet.querycache.server;
 
 import com.skplanet.querycache.cli.thrift.*;
 import com.skplanet.querycache.server.StmtNode.State;
-import com.skplanet.querycache.server.common.AnalyzerException;
 import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
-import com.skplanet.querycache.server.sqlcompiler.Analyzer;
-import com.skplanet.querycache.server.sqlcompiler.AuthorizationException;
 import com.skplanet.querycache.server.util.ObjectPool;
 import com.skplanet.querycache.server.util.RuntimeProfile;
 import com.skplanet.querycache.thrift.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.*;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -40,6 +38,7 @@ import java.util.concurrent.*;
 // Generated code
 
 public class CLIHandler implements TCLIService.Iface {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
   private static final int _defFetchSize = 1024;
   public final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
@@ -92,7 +91,7 @@ public class CLIHandler implements TCLIService.Iface {
    */
 
   public TOpenSessionResp OpenSession(TOpenSessionReq aReq) {
-    LOG.debug("OpenSession is requested.");
+    LOG.trace("OpenSession is requested.");
     long startTime = 0;
     long endTime;
     String user;
@@ -107,7 +106,15 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = null;
     
     if (aReq.clientProtocol != new TOpenSessionReq().clientProtocol) {
-      LOG.warn("Protocol version mismatched. -client: " + aReq.clientProtocol);
+      LOG.warn("Protocol version mismatched. -client: {}", aReq.clientProtocol);
+    }
+
+    // record client version
+    QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
+    if (svrCtx != null) {
+      if (aReq.isSetClientVersion()) {
+        svrCtx.clientVersion = aReq.getClientVersion();
+      }
     }
     
     // 1. trim the connection string
@@ -127,13 +134,10 @@ public class CLIHandler implements TCLIService.Iface {
     }
     
     if (sConn == null) {
-      LOG.error(
-        "Connection error : there is no connection in the pool or unknown connection type error. (url: "
-        + sUrl + " )");
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage(
-        "Connection error : there is no connection in the pool or unknown connection type error. (url: "
-        + sUrl + " )");
+              "Connection error : url is invalid or backend is not available now ( " + sUrl + " )");
+      LOG.error(sResp.status.getErrorMessage());
       THostInfo sHI = new THostInfo();
       buildHostInfo(sHI);
       sResp.setHostInfo(sHI);
@@ -159,8 +163,8 @@ public class CLIHandler implements TCLIService.Iface {
     
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("OpenSession PROFILE: UserID=" + user + ", ConnID=" + sConn.sConnId +
-        ", Url=" + sUrl + ", Connection time elapsed=" + (endTime-startTime) + "ms");
+      LOG.debug("OpenSession PROFILE: UserID={}, ConnID={}, Url={}, Connection time elapsed={}ms",
+              user, sConn.sConnId, sUrl, (endTime-startTime));
       sConn.latency[0] = endTime-startTime;
     }
     
@@ -168,11 +172,14 @@ public class CLIHandler implements TCLIService.Iface {
   }
   
   private void buildHostInfo(THostInfo aHostInfo) {
-    try {
-      aHostInfo.hostname = InetAddress.getLocalHost().getHostName();
-      aHostInfo.ipaddr = InetAddress.getLocalHost().getHostAddress();
-    } catch (UnknownHostException e) {
-      LOG.info("HostInfo can't be built properly.");
+    aHostInfo.hostname = QueryCacheServer.hostname;
+
+    QueryCacheServer.QCServerContext ctx = QueryCacheServer.QCServerContext.getSvrContext();
+    if (ctx != null) {
+      aHostInfo.ipaddr = ctx.serverIP;
+    } else {
+      LOG.error("BUG: QCServerContext not available. buildHostInfo() called from wrong thread.");
+      aHostInfo.ipaddr = "unknown";
     }
     aHostInfo.portnum = QueryCacheServer.conf.getInt(QCConfigKeys.QC_SERVER_PORT, 8655);
   }
@@ -185,7 +192,7 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TCloseSessionResp CloseSession(TCloseSessionReq aReq) {
-    LOG.debug("CloseSession is requested.");
+    LOG.trace("CloseSession is requested.");
     long startTime = 0;
     long endTime;
     ConnNode sConn = null;
@@ -211,10 +218,9 @@ public class CLIHandler implements TCLIService.Iface {
       if (profileLvl > 0) {
         endTime = System.currentTimeMillis();
         sConn.latency[1] = endTime - startTime;
-        LOG.info("CloseSession PROFILE: ConnID=" + sConn.sConnId + ", Type=" +
-                aReq.sessionHandle.sessionId.driverType +
-                ", Close time elapsed=" + (endTime - startTime) + "ms" +
-                ", OpenClose_latency={" + sConn.latency[0] + "," + sConn.latency[1] + "}");
+        LOG.debug("CloseSession PROFILE: ConnID={}, Type={}, Close time elapsed={}ms, OpenClose_latency=[{},{}]",
+                sConn.sConnId, aReq.sessionHandle.sessionId.driverType,
+                endTime - startTime, sConn.latency[0], sConn.latency[1]);
         sConn.latency[0] = sConn.latency[1] = -1;
       }
     }
@@ -297,7 +303,7 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetTypeInfoResp GetTypeInfo(TGetTypeInfoReq aReq) {
-    LOG.debug("GetTypeInfo is requested.");
+    LOG.trace("GetTypeInfo is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -319,8 +325,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetTypeInfo error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetTypeInfo error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetTypeInfo error : the connection doesn't exist.");
       return sResp;
@@ -330,17 +335,17 @@ public class CLIHandler implements TCLIService.Iface {
     // 2. alloc a fake statement
     //
     try {
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       sStmt = sConn.allocStmt(false);
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETTYPEINFO;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -373,7 +378,7 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetTypeInfo: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetTypeInfo: Removing a failed connection (connId:{})", sConn.sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
               sQueryId, State.ERROR);
@@ -383,9 +388,8 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetTypeInfo PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetTypeInfo time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetTypeInfo PROFILE: QueryID={}, Type={}, GetTypeInfo time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime - startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     
@@ -400,7 +404,7 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetCatalogsResp GetCatalogs(TGetCatalogsReq aReq) {
-    LOG.debug("GetCatalogs is requested.");
+    LOG.trace("GetCatalogs is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -422,8 +426,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetCatalogs error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetCatalogs error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetCatalogs error : the connection doesn't exist.");
       return sResp;
@@ -434,16 +437,16 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETCATALOGS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -476,19 +479,17 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetCatalogs: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetCatalogs: Removing a failed connection (connId:{})", sConn.sConnId);
       }
-      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
-        sQueryId, State.ERROR);
+      gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(sQueryId, State.ERROR);
       
       return sResp;
     }
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetCatalogs PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetCatalogs time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetCatalogs PROFILE: QueryID={}, Type={}, GetCatalogs time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime - startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     
@@ -503,7 +504,7 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetSchemasResp GetSchemas(TGetSchemasReq aReq) {
-    LOG.debug("GetSchemas is requested.");
+    LOG.trace("GetSchemas is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -525,8 +526,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetSchemas error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetSchemas error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetSchemas error : the connection doesn't exist.");
       return sResp;
@@ -537,16 +537,16 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETSCHEMAS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -581,7 +581,7 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetSchemas: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetSchemas: Removing a failed connection (connId:{})", sConn.sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -591,12 +591,11 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetSchemas PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetSchemas time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetSchemas PROFILE: QueryID={}, Type={}, GetSchemas time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime-startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
-    
+
     return sResp;
   }
 
@@ -608,7 +607,7 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TGetTablesResp GetTables(TGetTablesReq aReq) {
-    LOG.debug("GetTables is requested.");
+    LOG.trace("GetTables is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -630,8 +629,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetTables error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetTables error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetTables error : the connection doesn't exist.");
       return sResp;
@@ -642,16 +640,16 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETTABLES;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -688,7 +686,7 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetTables: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetTables: Removing a failed connection (connId:{})", sConn.sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -698,9 +696,8 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetTables PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetTables time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetTables PROFILE: QueryID={}, Type={}, GetTables time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime-startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     
@@ -715,7 +712,7 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TGetTableTypesResp GetTableTypes(TGetTableTypesReq aReq) {
-    LOG.debug("GetTableTypes is requested.");
+    LOG.trace("GetTableTypes is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -737,8 +734,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetTableTypes error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetTableTypes error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetTableTypes error : the connection doesn't exist.");
       return sResp;
@@ -749,16 +745,16 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETTABLETYPES;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -791,7 +787,7 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetTableTypes: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetTableTypes: Removing a failed connection (connId:{})", sConn.sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -801,9 +797,8 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetTableTypes PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetTableTypes time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetTableTypes PROFILE: QueryID={}, Type={}, GetTableTypes time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime-startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     
@@ -819,7 +814,7 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TGetColumnsResp GetColumns(TGetColumnsReq aReq) {
-    LOG.debug("GetColumns is requested.");
+    LOG.trace("GetColumns is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -841,8 +836,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetColumns error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetColumns error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetColumns error : the connection doesn't exist.");
       return sResp;
@@ -853,16 +847,16 @@ public class CLIHandler implements TCLIService.Iface {
     //
     try {
       sStmt = sConn.allocStmt(false);
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETCOLUMNS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -899,7 +893,7 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetColumns: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetColumns: Removing a failed connection (connId:{})", sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -909,9 +903,8 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetColumns PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetColumns time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetColumns PROFILE: QueryID={}, Type={}, GetColumns time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime-startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     
@@ -970,7 +963,7 @@ public class CLIHandler implements TCLIService.Iface {
   }
 
   public void internalCancelStatement(String sQueryId, String driverType) {
-    LOG.info("InternalCancelOperation is requested.");
+    LOG.trace("InternalCancelOperation is requested.");
     long sConnId;
     long sStmtId;
     long startTime = 0;
@@ -986,19 +979,20 @@ public class CLIHandler implements TCLIService.Iface {
       sStmtId = Long.valueOf(token[1]);
     }
     catch (Exception e) {
-      LOG.error("mal-formatted query ID (" + sQueryId + ", " + driverType + ")");
+      LOG.error("mal-formatted query ID ({}, {})", sQueryId, driverType);
       return;
     }
 
     ConnNode sConn = gConnMgr.getConn(driverType, sConnId);
     if (sConn == null) {
-      LOG.error("invalid query ID (" + sQueryId + ", " + driverType + ")");
+      LOG.error("invalid query ID ({}, {})", sQueryId, driverType);
+      // if runtime profile map really have specified query, this is a BUG!
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
               sQueryId, State.ERROR);
       return;
     }
 
-    // whatever the case is, outstanding query will be closed
+    // whatever the case is, specified query will be closed
     QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
     if (svrCtx != null) {
       // cancelling within same thread ( thrift server )
@@ -1028,9 +1022,9 @@ public class CLIHandler implements TCLIService.Iface {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("InternalCancelOperation PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
+      LOG.debug("InternalCancelOperation PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
               + driverType + ", CancelOp time elapsed="
-              + (endTime-startTime) + "ms");
+              + (endTime - startTime) + "ms");
 
       if(sStmt != null) {
         // move runtimeProfile to completeProfile Map
@@ -1048,7 +1042,7 @@ public class CLIHandler implements TCLIService.Iface {
    *
    */
   public TCancelOperationResp CancelOperation(TCancelOperationReq aReq) {
-    LOG.debug("CancelOperation is requested.");
+    LOG.trace("CancelOperation is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -1072,8 +1066,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("CancelOperation error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("CancelOperation error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("CancelOperation error : the connection doesn't exist.");
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1094,7 +1087,7 @@ public class CLIHandler implements TCLIService.Iface {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
-        LOG.warn("CancelOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("CancelOperation: Removing a failed connection (connId:{})");
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -1102,10 +1095,9 @@ public class CLIHandler implements TCLIService.Iface {
     }
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("CancelOperation PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
-        + aReq.operationHandle.operationId.driverType + ", CancelOp time elapsed="
-        + (endTime-startTime) + "ms");
-      
+      LOG.debug("CancelOperation PROFILE: QueryId={}, Type={}, CancelOp time elapsed={}ms",
+              sQueryId, aReq.operationHandle.operationId.driverType, endTime-startTime);
+
       if(sStmt != null) {
         // move runtimeProfile to completeruntimeProfile Map
         CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1123,7 +1115,7 @@ public class CLIHandler implements TCLIService.Iface {
    * 
    */
   public TCloseOperationResp CloseOperation(TCloseOperationReq aReq) {
-    LOG.debug("CloseOperation is requested.");
+    LOG.trace("CloseOperation is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -1147,8 +1139,7 @@ public class CLIHandler implements TCLIService.Iface {
     ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("CloseOperation error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("CloseOperation error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("CloseOperation error : the connection doesn't exist.");
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1172,31 +1163,27 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.errorMessage = e.getMessage();
       // remove failed ConnNode in the ConnPool
       gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
-      LOG.info("CloseOperation: Removing a failed connection (connId:" + sConn.sConnId + ")");
+      LOG.info("CloseOperation: Removing a failed connection (connId:{})", sConn.sConnId);
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
     }
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("CloseOperation PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
-        + aReq.operationHandle.operationId.driverType + ", CloseOp time elapsed="
-        + (endTime-startTime) + "ms");
-      
+      LOG.debug("CloseOperation PROFILE: QueryId={}, Type={}, CloseOp time elapsed={}ms",
+              sQueryId, sStmtId, aReq.operationHandle.operationId.driverType, (endTime-startTime));
+
       if(sStmt != null) {
         sStmt.profile.endTime = endTime;
         sStmt.profile.timeHistogram[3] = endTime - startTime;
-        // move runtimeProfile to completeruntimeProfile Map
+        // move runtimeProfile to completeProfile Map
         CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
           sQueryId, StmtNode.State.CLOSE);
-      
         long totalT = (sStmt.profile.timeHistogram[0]
             + sStmt.profile.timeHistogram[1] + sStmt.profile.timeHistogram[2] + sStmt.profile.timeHistogram[3]);
-        LOG.info("#QUERY PROFILE:QueryId=" + sConnId + ":" + sStmtId + ",User="
-            + sConn.user + "Query=\"" + sStmt.profile.queryStr + "\""
-            + ",Type=" + aReq.operationHandle.operationId.driverType
-            + ",RowCnt=" + sStmt.profile.rowCnt + ",ElapedTime=" + totalT
-            + ",State=SUCCESS");
+        LOG.debug("#QUERY PROFILE:QueryId={},User={},Query=\"{}\",Type={},RowCnt={},ElapedTime={},State=SUCCESS",
+                sQueryId, sConn.user, sStmt.profile.queryStr,
+                aReq.operationHandle.operationId.driverType, sStmt.profile.rowCnt, totalT );
 
         if (totalT >= QueryCacheServer.conf.getLong(
             QCConfigKeys.QC_QUERY_PROFILING_DETAIL_UPPER_MILLI,
@@ -1241,7 +1228,7 @@ public class CLIHandler implements TCLIService.Iface {
                     + (sStmt.profile.fetchProfile[7])
                     + "\n            - GetCols(sum)  : "
                     + (sStmt.profile.fetchProfile[8])
-                    + "\n      - #6. Build resp   : "
+                        + "\n      - #6. Build resp   : "
                     + (sStmt.profile.fetchProfile[10] - sStmt.profile.fetchProfile[9]);
                 break;
               default:
@@ -1249,7 +1236,7 @@ public class CLIHandler implements TCLIService.Iface {
             }
           }
           profile += "\n    -Stmtclose : " + sStmt.profile.timeHistogram[3];
-          LOG.info("#Detail profile: QueryID=" + sQueryId + profile);
+          LOG.debug("#Detail profile: QueryID=" + sQueryId + profile);
         }
       }
     }
@@ -1302,7 +1289,7 @@ struct TGetResultSetMetadataResp {
 }
    */
   public TGetResultSetMetadataResp GetResultSetMetadata(TGetResultSetMetadataReq aReq) {
-    LOG.debug("GetResultSetMetadata is requested.");
+    LOG.trace("GetResultSetMetadata is requested.");
     long startTime = 0;
     long endTime;
     String sQueryId = null;
@@ -1323,8 +1310,7 @@ struct TGetResultSetMetadataResp {
     ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetResultSetMetadata error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetResultSetMetadata error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "GetResultSetMetadata error : The connection doesn't exist.";
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1335,8 +1321,7 @@ struct TGetResultSetMetadataResp {
     StmtNode sStmt = sConn.sStmtMap.get(sStmtId);
     if (sStmt == null) {
       // the statement doesn't even exist, just send a error msg.
-      LOG.error("GetResultSetMetadata error : the statement doesn't exist." +
-        " (id:" + sStmtId + ")");
+      LOG.error("GetResultSetMetadata error : the statement doesn't exist. (id:{})", sStmtId);
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "GetResultSetMetadata error : The statement doesn't exist.";
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1354,8 +1339,7 @@ struct TGetResultSetMetadataResp {
     sStmt.profile.stmtState = StmtNode.State.GETMETA;
     
     if (sStmt.sHasResultSet != true) {
-      LOG.error("GetResultSetMetadata error : The statement has no ResultSet." +
-        " (id:" + sStmtId + ")");
+      LOG.error("GetResultSetMetadata error : The statement has no ResultSet. (id:{})", sStmtId);
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "GetResultSetMetadata error : The statement has no ResultSet.";
       return sResp;
@@ -1405,7 +1389,7 @@ struct TGetResultSetMetadataResp {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
-        LOG.warn("GetResultSetMetadata: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetResultSetMetadata: Removing a failed connection (connId:{})", sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -1414,9 +1398,8 @@ struct TGetResultSetMetadataResp {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetResultSetMetadata PROFILE: QueryId=" + sConnId + ":" + sStmtId + ", Type="
-        + aReq.operationHandle.operationId.driverType
-        + ", GetResultSetMetadata time elapsed=" + (endTime-startTime) + "ms");
+      LOG.debug("GetResultSetMetadata PROFILE: QueryId={}, Type={}, GetResultSetMetadata time elapsed={}ms",
+              sQueryId, aReq.operationHandle.operationId.driverType, endTime-startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     return sResp;
@@ -1463,7 +1446,7 @@ struct TGetResultSetMetadataResp {
   */
 
   public TFetchResultsResp FetchResults(TFetchResultsReq aReq) {
-    LOG.debug("FetchResults is requested.");
+    LOG.trace("FetchResults is requested.");
     long startTime = 0;
     long tmpTime = 0;
     long endTime = 0;
@@ -1488,8 +1471,7 @@ struct TGetResultSetMetadataResp {
     ConnNode sConn = gConnMgr.getConn(aReq.operationHandle.operationId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("FetchResults error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("FetchResults error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : the connection doesn't exist.";
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1505,8 +1487,7 @@ struct TGetResultSetMetadataResp {
     StmtNode sStmt = sConn.sStmtMap.get(sStmtId);
     if (sStmt == null) {
       // the statement doesn't even exist, just send a error msg.
-      LOG.error("FetchResults error : the statement doesn't exist." +
-        " (id:" + sStmtId + ")");
+      LOG.error("FetchResults error : the statement doesn't exist. (id:{})", sStmtId);
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : the statement doesn't exist.";
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1526,8 +1507,7 @@ struct TGetResultSetMetadataResp {
     sStmt.profile.stmtState = StmtNode.State.FETCH;
 
     if (sStmt.sHasResultSet != true) {
-      LOG.error("FetchResults error : The statement has no ResultSet." +
-        " (id:" + sStmtId + ")");
+      LOG.error("FetchResults error : The statement has no ResultSet. (id:{})", sStmtId);
       sResp.status.statusCode = TStatusCode.ERROR_STATUS;
       sResp.status.errorMessage = "FetchResults error : The statement has no ResultSet.";
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
@@ -1576,15 +1556,15 @@ struct TGetResultSetMetadataResp {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("Consumer fetchResults PROFILE: QueryId=" + sQueryId + ", Type="
-        + aReq.operationHandle.operationId.driverType + ", RowCnt=" + sRowSet.rows.size()
-        + ", Fetch time elapsed=" + (endTime-startTime) + "ms");
+      LOG.debug("Consumer fetchResults PROFILE: QueryId={}, Type={}, RowCnt={}, Fetch time elapsed={}ms",
+              sQueryId, aReq.operationHandle.operationId.driverType,
+              sRowSet.rows.size(),endTime-startTime);
     }
     return sResp;
   }
   
   public TGetFunctionsResp GetFunctions(TGetFunctionsReq aReq) {
-    LOG.debug("GetFunctions is requested.");
+    LOG.trace("GetFunctions is requested.");
     long startTime = 0;
     long endTime;
     StmtNode sStmt = null;
@@ -1606,8 +1586,7 @@ struct TGetResultSetMetadataResp {
     ConnNode sConn = gConnMgr.getConn(aReq.sessionHandle.sessionId.driverType, sConnId);
     if (sConn == null) {
       // the connection doesn't even exist, just send a error msg.
-      LOG.error("GetFunctions error : the connection doesn't exist." +
-        " (id:" + sConnId + ")");
+      LOG.error("GetFunctions error : the connection doesn't exist. (id:{})", sConnId);
       sResp.status.setStatusCode(TStatusCode.ERROR_STATUS);
       sResp.status.setErrorMessage("GetFunctions error : the connection doesn't exist.");
       return sResp;
@@ -1618,16 +1597,16 @@ struct TGetResultSetMetadataResp {
     //
     try {
       sStmt = sConn.allocStmt(false);
+      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "" );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
       sStmt.profile.stmtState = StmtNode.State.GETFUNCTIONS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
       sQueryId = sStmt.profile.queryId;
       gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
-      QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
       svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
       // TODO: 3. authorization
@@ -1663,7 +1642,7 @@ struct TGetResultSetMetadataResp {
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
         gConnMgr.removeConn(aReq.sessionHandle.sessionId.driverType, sConnId);
-        LOG.warn("GetFunctions: Removing a failed connection (connId:" + sConn.sConnId + ")");
+        LOG.warn("GetFunctions: Removing a failed connection (connId:{}_", sConnId);
       }
       gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
@@ -1673,9 +1652,8 @@ struct TGetResultSetMetadataResp {
 
     if (profileLvl > 0) {
       endTime = System.currentTimeMillis();
-      LOG.info("GetFunctions PROFILE: QueryID=" + sConn.sConnId + ":" + sStmtId
-        + ", Type=" +aReq.sessionHandle.sessionId.driverType + ", GetFunctions time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("GetFunctions PROFILE: QueryID={}, Type={}, GetFunctions time elapsed={}ms",
+              sQueryId, aReq.sessionHandle.sessionId.driverType, endTime-startTime);
       sStmt.profile.timeHistogram[1] = endTime - startTime;
     }
     
@@ -1755,7 +1733,7 @@ struct TGetResultSetMetadataResp {
       case java.sql.Types.SQLXML:
       case java.sql.Types.TIME:
       case java.sql.Types.VARBINARY:
-        LOG.warn("Unsupported SQL type is detected. (" + aJDBCType + ")");
+        LOG.warn("Unsupported SQL type is detected. ({})", aJDBCType);
         sInterT = TTypeId.UNSUPPORTED;
         break;
       default:

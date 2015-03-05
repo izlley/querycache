@@ -5,7 +5,7 @@
     <parent>
         <artifactId>querycache</artifactId>
         <groupId>com.skplanet.querycache</groupId>
-        <version>0.11.0-SNAPSHOT</version>
+        <version>0.12.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -16,7 +16,7 @@
 
     <artifactId>querycache-server</artifactId>
     <groupId>com.skplanet.querycache.server</groupId>
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <build>
         <!--<finalName>${project.artifactId}-${project.version}</finalName>-->
@@ -56,6 +56,18 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.thrift.tools</groupId>

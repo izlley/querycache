@@ -19,7 +19,24 @@ import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
 import com.skplanet.querycache.server.util.RuntimeProfile;
 
 public class ConnMgr {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(ConnMgr.class);
+
+  // TODO: use hashcode instead of long
+  // Long.MAX_VALUE = 9223372036854775807
+
+  // moved to here and switched to static, in order to make connection id unique.
+  // some code in qc server use [conid]:[qid] as query id
+  private static Long sConnIdGen = new Long(0L);
+  private static long getNewConnId() {
+    long id;
+    synchronized (sConnIdGen) {
+      sConnIdGen++;
+      if (sConnIdGen < 0L) sConnIdGen = 1L;
+      id = sConnIdGen;
+    }
+    return id;
+  }
 
   public class ConnMgrofOne {
     public final String connType;
@@ -43,11 +60,6 @@ public class ConnMgr {
     private ConcurrentHashMap<Long, ConnNode> sUsingMap = new ConcurrentHashMap<Long, ConnNode>(
         16, 0.9f, 1);
 
-    // TODO: use hashcode instead of long
-    // If it overflows, it goes back to the minimum value and continues from
-    // there.
-    // Long.MAX_VALUE = 9223372036854775807
-    private final AtomicLong sConnIdGen = new AtomicLong(0L);
     private float sFreelistThreshold; // def:0.2f
     private AtomicLong sFreelistMaxSize = new AtomicLong(0L); // def:16
     private long sResizingCycle; // def:15*1000
@@ -68,14 +80,12 @@ public class ConnMgr {
       // Every time builUrl is called, returns different address for distributing connections
       String url = buildUrl(isPhoenix);
       try {
-        sConn = new ConnNode(connProp,
-                sConnIdGen.addAndGet(1L),
-                url);
+        sConn = new ConnNode(connProp, getNewConnId(), url);
       } catch (SQLException e) {
         LOG.error( "newConnNode() : Connection error to (" + url + ") " + ":" + e.getMessage(), e);
         return null;
       }
-      LOG.info("newConnNode() : " + url);
+      LOG.info("newConnNode() : {}", url);
       sFreeList.add(sConn);
       sFreelistMaxSize.addAndGet(1);
       return sConn;
@@ -130,9 +140,6 @@ public class ConnMgr {
     
     // It's a checker thread running in the background to detect failed connections 
     // and remove those connections.
-    // TODO: If a client abort a connection abnormally, the qc server does not know 
-    //   whether it's a normal close case or not. Therefore, those connections are retained forever.
-    //   We also need gc for removing these zombie connections periodically.
     private Runnable sGCThread = new Runnable() {
       public void run() {
         LOG.info("ConnPool GC thread init.");
@@ -290,10 +297,9 @@ public class ConnMgr {
       if (sConn != null) {
         // O(1)
         sUsingMap.put(sConn.sConnId, sConn);
-        LOG.info("Moving ConnNode from FreeList to UsingMap. -Type: "
-            + connProp.connTypeName + "-Free size:"
-            + sFreeList.size() + ",-FreeMaxSize:" + sFreelistMaxSize
-            + ",-Using size:" + sUsingMap.size());
+        LOG.trace("Moving ConnNode from FreeList to UsingMap. -Type: {}, -Free size: {}, -FreeMaxSize:{}, -Using size:{}",
+                connProp.connTypeName, sFreeList.size(),
+                sFreelistMaxSize, sUsingMap.size());
       }
 
       return sConn;
@@ -319,9 +325,8 @@ public class ConnMgr {
 
       // add ConnNode to FreeList
       sFreeList.add(sConn);
-      LOG.info("Moving ConnNode from UsingMap to FreeList." + "-Free size:"
-          + sFreeList.size() + ",-FreeMaxSize:" + sFreelistMaxSize
-          + ",-Using size:" + sUsingMap.size());
+      LOG.trace("Moving ConnNode from UsingMap to FreeList. -Free size:{}, -FreeMaxSize:{}, -Using size:{}",
+              sFreeList.size(), sFreelistMaxSize, sUsingMap.size());
       return CORE_RESULT.CORE_SUCCESS;
     }
     

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.skplanet.querycache.server.util.RuntimeProfile.QueryProfile;
 
 public class StmtNode {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(StmtNode.class);
   public final long sStmtId;
   ConnNode conn = null;

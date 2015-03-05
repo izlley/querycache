@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RowFetcher implements Runnable {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(RowFetcher.class);
   private static int _logLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
     QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
@@ -196,9 +197,8 @@ public class RowFetcher implements Runnable {
     }
     if (_logLvl > 0) {
       endTime = System.currentTimeMillis(); // T3
-      LOG.info("Producer fetchResults PROFILE: QueryId=" + _queryId + ", Type="
-        + _stmt.conn.sConnType + ", RowCnt=" + _fetchedoffset.get() + ", Fetch time elapsed="
-        + (endTime-startTime) + "ms");
+      LOG.debug("Producer fetchResults PROFILE: QueryId={}, Type={}, RowCnt={}, Fetch time elapsed={}ms",
+              _queryId, _stmt.conn.sConnType, _fetchedoffset.get(), endTime - startTime);
       _stmt.profile.timeHistogram[2] = endTime-startTime;
       if (_logLvl > 1) {
         if (_logLvl > 2 && _fetchedoffset.get() == 0) {

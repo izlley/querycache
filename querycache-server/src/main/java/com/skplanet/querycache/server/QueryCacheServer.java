@@ -59,6 +59,7 @@ public class QueryCacheServer {
     public final TSocket socket;
     public final String clientIP;
     public final String serverIP;
+    public String clientVersion = "unknown";
 
     private QCServerContext(long threadId, TSocket socket) {
       this.connectionId = nextConnection.getAndIncrement();
@@ -166,11 +167,15 @@ public class QueryCacheServer {
   }
 
   public static String hostname = "";
+  public static String version = "none";
 
   public static void main(String [] args) {
+    CLIHandler handler = CLIHandler.getInstance();
+
     hostname = System.getProperty("HOSTNAME", "noname");
+    version = handler.getClass().getPackage().getImplementationVersion();
+
     try {
-      CLIHandler handler = CLIHandler.getInstance();
       final TCLIService.Processor processor = new TCLIService.Processor(handler);
       
       Runnable sThriftServer = new Runnable() {
@@ -259,8 +264,9 @@ public class QueryCacheServer {
       TServer server = new TThreadPoolServer(sArgs);
       server.setServerEventHandler(new QueryCacheServerEventHandler());
 
-      System.out.println("Starting the QueryCache server...");
-      LOG.info("Starting the QueryCache server...");
+      String welcome = "Starting QueryCache server (version " + version + ")";
+      System.out.println(welcome);
+      LOG.info(welcome);
       server.serve();
     } catch (Exception e) {
       LOG.error("FATAL error : ", e);

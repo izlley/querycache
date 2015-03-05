@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RuntimeProfile {
+  private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProfile.class);
   public static final Logger queryAuditLog = LoggerFactory
     .getLogger(RuntimeProfile.class.getName() + ".queryAudit");
@@ -52,15 +53,17 @@ public class RuntimeProfile {
     public long[] timeHistogram = {0,0,0,0};
     public long[] execProfile   = null;
     public long[] fetchProfile  = {0,0,0,-1,-1,-1,-1,0,0,-1,-1};
+    public final String clientVersion;
 
-    public QueryProfile(StmtNode sStmt, ConnNode sConn, THandleIdentifier sessionId, String queryStr) {
+    public QueryProfile(StmtNode sStmt, ConnNode sConn, THandleIdentifier sessionId, String queryStr, String clientVersion) {
       this.queryId = sConn.sConnId + ":" + sStmt.sStmtId;
       this.connType = sessionId.driverType;
       this.user = sConn.getUser();
-      this.queryStr = queryStr;
+      this.queryStr = (queryStr != null)? queryStr.replace('\n', ' ').replace('\r', ' ').replace('\t', ' '):"";
       THostInfo clientInfo = sConn.getClientInfo();
       this.clientIp = clientInfo.getHostname() + "/" + clientInfo.getIpaddr();
       this.startTime = System.currentTimeMillis();
+      this.clientVersion = clientVersion;
     }
   }
   
@@ -72,7 +75,7 @@ public class RuntimeProfile {
           try {
             Thread.sleep(10000);
             requestsPer10Sec = numOfRequests.getAndSet(0);
-            LOG.debug("Requests per 10sec = " + requestsPer10Sec);
+            LOG.debug("Requests per 10sec = {}", requestsPer10Sec);
           } catch (InterruptedException e) {
             // Deliberately ignore
             interrupted = true;
@@ -103,11 +106,12 @@ public class RuntimeProfile {
     QueryProfile entry = null;
     synchronized (runningQueryProfile) {
       entry = runningQueryProfile.put(key, profile);
-      LOG.debug("Add a profile obj in the runningQueryProfileMap: size="
-              + runningQueryProfile.size());
     }
+
+    LOG.debug("Added a profile obj in the runningQueryProfileMap: size={}", runningQueryProfile.size());
+
     if (entry != null) {
-      LOG.warn("There is same query-id in RunningProfileMap " + "(queryId:" + key + ")");
+      LOG.warn("There is same query-id in RunningProfileMap (queryId:{})", key);
     }
     addQueryEvent(EVENT_ADD_QUERY, profile);
     return entry;
@@ -123,13 +127,13 @@ public class RuntimeProfile {
         if (iter.hasNext()) {
           iter.next();
           iter.remove();
-          LOG.debug("Remove a profile obj in the completeQueryProfileMap: size="
-                  + completeQueryProfile.size());
+          LOG.debug("Remove a profile obj in the completeQueryProfileMap: size={}",
+                  completeQueryProfile.size());
         }
       }
       entry = completeQueryProfile.put(key, profile);
-      LOG.debug("Add a profile obj in the completeQueryProfileMap: size="
-              + completeQueryProfile.size());
+      LOG.debug("Add a profile obj in the completeQueryProfileMap: size={}",
+              completeQueryProfile.size());
     }
     return entry;
   }
@@ -151,21 +155,17 @@ public class RuntimeProfile {
         entry.endTime = System.currentTimeMillis();
 
       addCompletedQuery(qid, entry);
-      queryAuditLog.info("{\"queryid\":\"" + entry.queryId + "\"," +
-                      "\"connect_type\":\"" + entry.connType + "\"," +
-                      "\"user\":\"" + entry.user + "\"," +
-                      "\"client_host\":\"" + entry.clientIp + "\"," +
-                      "\"query_type\":\"" + ((entry.queryType != null) ? entry.queryType.toString() : "NOTQUERY") + "\"," +
-                      "\"query_str\":\"" + entry.queryStr.replace('"', '\'') + "\"," +
-                      "\"stmt_state\":\"" + entry.stmtState.toString() + "\"," +
-                      "\"rowcnt\":\"" + entry.rowCnt + "\"," +
-                      "\"start_time\":\"" + dateformat.format(new Date(entry.startTime)) + "\"," +
-                      "\"end_time\":\"" + dateformat.format(new Date(entry.endTime)) + "\"," +
-                      "\"time_histogram\":[\"" + entry.timeHistogram[0] + "\",\"" + entry.timeHistogram[1] +
-                      "\",\"" + entry.timeHistogram[2] + "\",\"" + entry.timeHistogram[3] + "\"]," +
-                      "\"total_elapsedtime\":\"" + (entry.timeHistogram[0] + entry.timeHistogram[1] +
-                      entry.timeHistogram[2] + entry.timeHistogram[3]) + "\"}"
-      );
+      queryAuditLog.info("{\"queryid\":\"{}\",\"connect_type\":\"{}\",\"user\":\"{}\",\"client_host\":\"{}\",\"query_type\":\"{}\",\"query_str\":\"{}\",\"stmt_state\":\"{}\",\"rowcnt\":\"{}\",\"start_time\":\"{}\",\"end_time\":\"{}\",\"time_histogram\":[\"{}\",\"{}\",\"{}\",\"{}\"],\"total_elapsedtime\":\"{}\",\"client_version\":\"{}\"}",
+              entry.queryId, entry.connType, entry.user, entry.clientIp,
+              (entry.queryType != null) ? entry.queryType.toString() : "NOTQUERY",
+              entry.queryStr.replace('"', '\''), entry.stmtState.toString(), entry.rowCnt,
+              dateformat.format(new Date(entry.startTime)),
+              dateformat.format(new Date(entry.endTime)),
+              entry.timeHistogram[0], entry.timeHistogram[1],
+              entry.timeHistogram[2], entry.timeHistogram[3],
+              entry.timeHistogram[0] + entry.timeHistogram[1] +
+              entry.timeHistogram[2] + entry.timeHistogram[3],
+              entry.clientVersion);
     }
   }
   

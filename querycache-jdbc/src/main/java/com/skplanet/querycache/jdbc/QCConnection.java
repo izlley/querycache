@@ -9,6 +9,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.*;
 import java.util.LinkedList;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * 
  */
 public class QCConnection implements java.sql.Connection {
+  private static final boolean QC_PERFTEST = true;
   private static final String QC_AUTH_TYPE = "auth";
   private static final String QC_AUTH_QOP = "sasl.qop";
   private static final String QC_AUTH_SIMPLE = "noSasl";
@@ -116,13 +118,22 @@ public class QCConnection implements java.sql.Connection {
     // TProtocol protocol = new TBinaryProtocol(transport);
     TProtocol protocol = new TCompactProtocol(transport);
     client = new TCLIService.Client(protocol);
-    
+
     try {
+      if (QC_PERFTEST) {
+        socket.getSocket().setSoLinger(true, 0);
+        socket.getSocket().setReuseAddress(true);
+      }
+
       transport.open();
       localAddress = socket.getSocket().getLocalAddress();
     } catch (TTransportException e) {
       throw new SQLException("Could not establish connection to " + uri + ": "
-          + e.getMessage(), " 08S01", e);
+          + e.getMessage(), "08S01", e);
+    } catch (SocketException e) {
+      // this exception might not occur in a sane world.
+      throw new SQLException("Could not establish connection to " + uri + ": "
+          + e.getMessage(), "08S01", e);
     }
   }
 
@@ -131,6 +142,7 @@ public class QCConnection implements java.sql.Connection {
     Map<String, String> sessVars = connParams.getSessionVars();
     TOpenSessionReq openReq = new TOpenSessionReq();
     openReq.setHostInfo(buildHostInfo(new THostInfo()));
+    openReq.setClientVersion("querycache-jdbc " + this.getClass().getPackage().getImplementationVersion());
 
     try {
       openReq.url = connParams.getProtocol() + ":" + connParams.getService();

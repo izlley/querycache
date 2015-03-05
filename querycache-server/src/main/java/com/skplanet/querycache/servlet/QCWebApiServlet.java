@@ -186,7 +186,7 @@ public class QCWebApiServlet extends HttpServlet {
                     final String driver = request.getParameter("driver");
 
                     if (qId != null && qId.length() > 0 && driver != null && driver.length() > 0) {
-                        LOG.info("Starting cancel async job. " + qId);
+                        LOG.debug("Starting cancel async job. " + qId);
                         final AsyncContext async = request.startAsync();
                         final Boolean asyncYes = new Boolean(true);
                         request.setAttribute(ASYNC_REQ_ATTR, asyncYes);
@@ -195,7 +195,7 @@ public class QCWebApiServlet extends HttpServlet {
                             @Override
                             public void run() {
                                 CLIHandler ch = CLIHandler.getInstance();
-                                LOG.info("calling cancel " + qId);
+                                LOG.debug("calling cancel " + qId);
                                 ch.internalCancelStatement(qId, driver);
                                 async.dispatch();
 
@@ -203,7 +203,7 @@ public class QCWebApiServlet extends HttpServlet {
                         }).start();
                     }
                     else {
-                        LOG.info("cancel finished." + qId);
+                        LOG.debug("cancel finished." + qId);
                         response.setContentType("application/json; charset=utf-8");
                         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                         writer.printf("{\"result\":\"%s\", \"msg\":\"%s\"}", "error", "invalid query specifier");
