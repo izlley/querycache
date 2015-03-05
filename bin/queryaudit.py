@@ -17,12 +17,15 @@ LOG_FILE='queryaudit.log'
 TMP_LOG_FILE='queryaudit.tmp'
 TMP_LOG_FILE2='queryaudit.tmp2'
 
+hostname = socket.gethostname()
+
 def callback(filename, lines):
+    global hostname
     if len(lines) == 0:
         return
 
-    f = open(TMP_DIR + TMP_LOG_FILE, 'w')
-    f2 = open(TMP_DIR + TMP_LOG_FILE2, 'w')
+    f = open(LOG_DIR + TMP_LOG_FILE, 'w')
+    f2 = open(LOG_DIR + TMP_LOG_FILE2, 'w')
 
     date1 = ''
     date2 = ''
@@ -39,7 +42,6 @@ def callback(filename, lines):
         logdate = line[:23]
         #escaping backslash character
         jsondata = json.loads(jsonlog.replace('\\','\\\\\\\\'))
-        hostname = socket.gethostname()
         queryid = jsondata['queryid']
         conn_type = jsondata['connect_type']
         client_host = jsondata['client_host']
@@ -56,11 +58,15 @@ def callback(filename, lines):
             client_version = jsondata['client_version']
         else:
             client_version = 'unknown'
+        if 'server' in jsondata:
+            server = jsondata['server']
+        else:
+            server = hostname
 
-        writestr = logdate + '\t' + hostname + '\t' + user + '\t' + queryid + '\t' + \
-                    query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
-                    start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\t' + \
-                    conn_type + '\t' + client_host + '\t' + client_version + '\n'
+        writestr = logdate + '\t' + server + '\t' + user + '\t' + queryid + '\t' + \
+            query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
+            start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\t' + \
+            conn_type + '\t' + client_host + '\t' + client_version + '\n'
         if date1 == '':
             date1 = line[:10]
 
@@ -81,16 +87,16 @@ def callback(filename, lines):
     if len(date1) > 0:
         print_log('INFO: write query audit log.');
         makeHDFSDir(HDFS_LOG_BASE_DIR + date1.replace('-','/'))
-        write2HDFS(TMP_DIR + TMP_LOG_FILE,
+        write2HDFS(LOG_DIR + TMP_LOG_FILE,
                    HDFS_LOG_BASE_DIR + date1.replace('-','/') + '/' + hostname + '.tsv')
-        os.remove(TMP_DIR + TMP_LOG_FILE)
+        os.remove(LOG_DIR + TMP_LOG_FILE)
 
     if len(date2) > 0:
         print_log('INFO: write next day query audit log.');
         makeHDFSDir(HDFS_LOG_BASE_DIR + date2.replace('-','/'))
-        write2HDFS(TMP_DIR + TMP_LOG_FILE2,
+        write2HDFS(LOG_DIR + TMP_LOG_FILE2,
                    HDFS_LOG_BASE_DIR + date2.replace('-','/') + '/' + hostname + '.tsv')
-        os.remove(TMP_DIR + TMP_LOG_FILE2)
+        os.remove(LOG_DIR + TMP_LOG_FILE2)
 
     print_log('INFO: Total write lines = ' + str(len(lines)))
 

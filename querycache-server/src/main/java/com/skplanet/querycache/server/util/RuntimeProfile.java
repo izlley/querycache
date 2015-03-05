@@ -155,7 +155,7 @@ public class RuntimeProfile {
         entry.endTime = System.currentTimeMillis();
 
       addCompletedQuery(qid, entry);
-      queryAuditLog.info("{\"queryid\":\"{}\",\"connect_type\":\"{}\",\"user\":\"{}\",\"client_host\":\"{}\",\"query_type\":\"{}\",\"query_str\":\"{}\",\"stmt_state\":\"{}\",\"rowcnt\":\"{}\",\"start_time\":\"{}\",\"end_time\":\"{}\",\"time_histogram\":[\"{}\",\"{}\",\"{}\",\"{}\"],\"total_elapsedtime\":\"{}\",\"client_version\":\"{}\"}",
+      queryAuditLog.info("{\"queryid\":\"{}\",\"connect_type\":\"{}\",\"user\":\"{}\",\"client_host\":\"{}\",\"query_type\":\"{}\",\"query_str\":\"{}\",\"stmt_state\":\"{}\",\"rowcnt\":\"{}\",\"start_time\":\"{}\",\"end_time\":\"{}\",\"time_histogram\":[\"{}\",\"{}\",\"{}\",\"{}\"],\"total_elapsedtime\":\"{}\",\"client_version\":\"{}\",\"server\":\"{}\"}",
               entry.queryId, entry.connType, entry.user, entry.clientIp,
               (entry.queryType != null) ? entry.queryType.toString() : "NOTQUERY",
               entry.queryStr.replace('"', '\''), entry.stmtState.toString(), entry.rowCnt,
@@ -165,7 +165,7 @@ public class RuntimeProfile {
               entry.timeHistogram[2], entry.timeHistogram[3],
               entry.timeHistogram[0] + entry.timeHistogram[1] +
               entry.timeHistogram[2] + entry.timeHistogram[3],
-              entry.clientVersion);
+              entry.clientVersion, QueryCacheServer.hostname);
     }
   }
   
