@@ -2,11 +2,7 @@ package com.skplanet.querycache.server;
 
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -143,59 +139,75 @@ public class ConnMgr {
     private Runnable sGCThread = new Runnable() {
       public void run() {
         LOG.info("ConnPool GC thread init.");
-        boolean interrupted = false;
-        try {
-          while (true) {
-            try {
-              Thread.sleep(sGCCycle);
-              LOG.info("ConnPool GC: [" + connProp.connTypeName + "] ConnPool GC activated...");
-              int currSize = sFreeList.size();
-              for (int i = currSize - 1; i >= 0; --i) {
-                // it's not good for performance, but we can avoid ConcurrentModificationException(CME)
-                ConnNode conn = sFreeList.get(i);
-                Statement stmt = null;
-                try {
-                  stmt = conn.sHConn.createStatement();
-                  String query = QueryCacheServer.conf.get(
-                    QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY,
-                    QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT);
-                  // execute call need communication with storage server.
-                  stmt.execute(query);
-                  LOG.debug("ConnPool GC: execut query, url=" + conn.getUrl() + ",query=" + query);
-                } catch (SQLException e) {
-                  // only handling the connection error
-                  if ("08S01".equals(e.getSQLState())) {
-                    // remove failed ConnNode in the ConnPool
-                    sFreeList.remove(i);
-                    sFreelistMaxSize.decrementAndGet();
-                    LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
+        while (true) {
+          try {
+            Thread.sleep(sGCCycle);
+          } catch (InterruptedException e) {
+            // thread interruption is ignored.
+            continue;
+          }
+
+          try {
+            // we might see same connection object in one iteration.
+            ArrayList<ConnNode> checkedList = new ArrayList<>(sFreeList.size());
+            for (int i = 0; i < sFreeList.size(); i++) {
+              ConnNode conn;
+              try {
+                conn = sFreeList.remove(0);
+              } catch (IndexOutOfBoundsException e) {
+                // ignore : just go out of for loop
+                break;
+              }
+
+              // check if we had checked this connNode already
+              if (checkedList.contains(conn)) {
+                LOG.info("ConnPool GC: finishing iterarion due to collision");
+                break;
+              }
+
+              checkedList.add(conn);
+
+              Statement stmt = null;
+              boolean killConnection = false;
+              try {
+                stmt = conn.sHConn.createStatement();
+                String query = QueryCacheServer.conf.get(
+                        QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY,
+                        QCConfigKeys.QC_CONNECTIONPOOL_GC_VERIFY_QUERY_DEFAULT);
+                // execute call need communication with storage server.
+                stmt.execute(query);
+                LOG.debug("ConnPool GC: execute query, url=" + conn.getUrl() + ",query=" + query);
+                stmt.close();
+              } catch (SQLException e) {
+                // only handling the connection error
+                if ("08S01".equals(e.getSQLState())) {
+                  sFreelistMaxSize.decrementAndGet();
+                  LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
+                  // do not add back to free list.
+                  killConnection = true;
+                  // next iteration
+                  continue;
+                }
+              } finally {
+                if (stmt != null) {
+                  try {
+                    stmt.close();
+                  } catch (SQLException e) {
+                    // just ignore
+                    LOG.warn("ConnPool GC: closing stmt error (connId:" + conn.sConnId + ")" +
+                            ", " + e.getMessage());
                   }
-                } finally {
-                  if (stmt != null) {
-                    try {
-                      stmt.close();
-                    } catch (SQLException e) {
-                      // just ignore
-                      LOG.warn("ConnPool GC: closing stmt error (connId:" + conn.sConnId + ")" +
-                        ", " + e.getMessage());
-                    }
+                  if (killConnection) {
+                    conn.close();
+                  } else {
+                    sFreeList.add(conn);
                   }
                 }
               }
-              LOG.info("ConnPool GC: [" + connProp.connTypeName + "] ConnPool size after GC : " + sFreeList.size());
-            } catch (InterruptedException e) {
-              // Deliberately ignore
-              interrupted = true;
-            } catch (IndexOutOfBoundsException e) {
-              // just ignore
-            } catch (Exception e) {
-              // just ignore
-              LOG.error("ConnPool GC: [" + connProp.connTypeName + "] GC thread error :" + e.getMessage(), e);
             }
-          }
-        } finally {
-          if (interrupted) {
-            Thread.currentThread().interrupt();
+            checkedList.clear();
+          } catch (Exception e) {
+            LOG.error("ConnPool GC: [" + connProp.connTypeName + "] GC thread error :" + e.getMessage(), e);
           }
         }
       }
@@ -304,7 +316,7 @@ public class ConnMgr {
 
       return sConn;
     }
-    
+
     private CORE_RESULT closeConn(long aConnId) {
       ConnNode sConn = sUsingMap.remove(aConnId);
       if (sConn == null) {
