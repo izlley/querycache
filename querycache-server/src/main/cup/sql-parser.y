@@ -299,7 +299,7 @@ nonterminal case_expr;
 nonterminal case_when_clause_list;
 nonterminal function_params;
 nonterminal column_ref;
-nonterminal from_clause, table_ref_list;
+nonterminal from_clause, fromhead_clause, table_ref_list;
 nonterminal with_table_ref_list;
 nonterminal with_clause;
 nonterminal TableName table_ref;
@@ -414,7 +414,14 @@ start with stmt;
 stmt ::=
   query_stmt
   {: RESULT = parser.queryStmt; :}
+  | fromhead_clause query_stmt
+  {: RESULT = parser.queryStmt; :}
   | insert_stmt
+  {:
+    parser.queryStmt.type = QueryStmt.QueryType.INSERT;
+    RESULT = parser.queryStmt;
+  :}
+  | fromhead_clause insert_stmt
   {:
     parser.queryStmt.type = QueryStmt.QueryType.INSERT;
     RESULT = parser.queryStmt;
@@ -1397,6 +1404,11 @@ describe_output_style ::=
 
 select_stmt ::=
   select_clause
+  where_clause
+  group_by_clause
+  having_clause
+  order_by_clause
+  opt_limit_offset_clause
   |
   select_clause
   from_clause
@@ -1468,6 +1480,10 @@ function_name ::=
 
 from_clause ::=
   KW_FROM table_ref_list
+  ;
+
+fromhead_clause ::=
+  KW_FROM inline_view_ref
   ;
 
 table_ref_list ::=
@@ -1690,6 +1706,12 @@ non_pred_expr ::=
         func, Privilege.SELECT));
   :}
   | function_name:func LPAREN function_params RPAREN
+  {:
+    parser.queryStmt.functionRefs.add(
+      new AbstractMap.SimpleEntry<FuncName, Privilege>(
+        func, Privilege.SELECT));
+  :}
+  | function_name:func LPAREN function_params RPAREN LBRACKET INTEGER_LITERAL RBRACKET
   {:
     parser.queryStmt.functionRefs.add(
       new AbstractMap.SimpleEntry<FuncName, Privilege>(
