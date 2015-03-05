@@ -150,7 +150,8 @@ public class ConnMgr {
           try {
             // we might see same connection object in one iteration.
             ArrayList<ConnNode> checkedList = new ArrayList<>(sFreeList.size());
-            for (int i = 0; i < sFreeList.size(); i++) {
+            int maxIter = sFreeList.size();
+            for (int i = 0; i < maxIter; i++) {
               ConnNode conn;
               try {
                 conn = sFreeList.remove(0);
