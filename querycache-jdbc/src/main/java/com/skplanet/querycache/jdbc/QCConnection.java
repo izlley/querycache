@@ -39,7 +39,15 @@ public class QCConnection implements java.sql.Connection {
   private static final String QC_SSL_TRUST_STORE = "sslTrustStore";
   private static final String QC_SSL_TRUST_STORE_PASSWORD = "trustStorePassword";
   private static final String QC_SO_TIMEOUT = "socketTimeout";
+  private static final String QC_VAR_PREFIX = "qcvar:";
+  private static final String QC_CONF_PREFIX = "qcconf:";
 
+  private final String jdbcURI;
+  private final String host;
+  private final int port;
+  private final Map<String, String> sessConfMap;
+  private final Map<String, String> qcConfMap;
+  private final Map<String, String> qcVarMap;
   private TTransport transport;
   private InetAddress localAddress = null;
   private TCLIService.Iface client;
@@ -54,6 +62,7 @@ public class QCConnection implements java.sql.Connection {
    * TODO: - parse uri (use java.net.URI?).
    */
   public QCConnection(String uri, Properties info) throws SQLException {
+    jdbcURI = uri;
     Utils.JdbcConnectionParams connParams;
     //TODO: This timeout should be applied to only the login process not the query process.
     //setupLoginTimeout();
@@ -63,50 +72,76 @@ public class QCConnection implements java.sql.Connection {
       throw new SQLException(e);
     }
 
+    // extract parsed connection parameters:
+    // JDBC URL: jdbc:hive2://<host>:<port>/dbName;sess_var_list?qc_conf_list#qc_var_list
+    // each list: <key1>=<val1>;<key2>=<val2> and so on
+    // sess_var_list -> sessConfMap
+    // qc_conf_list -> hiveConfMap
+    // qc_var_list -> hiveVarMap
+    host = connParams.getHost();
+    port = connParams.getPort();
+    sessConfMap = connParams.getSessionVars();
+    qcConfMap = connParams.getQCConfs();
+
+    qcVarMap = connParams.getQCVars();
+    for (Map.Entry<Object, Object> kv : info.entrySet()) {
+      if ((kv.getKey() instanceof String)) {
+        String key = (String) kv.getKey();
+        if (key.startsWith(QC_VAR_PREFIX)) {
+          qcVarMap.put(key.substring(QC_VAR_PREFIX.length()), info.getProperty(key));
+        } else if (key.startsWith(QC_CONF_PREFIX)) {
+          qcConfMap.put(key.substring(QC_CONF_PREFIX.length()), info.getProperty(key));
+        }
+      }
+    }
+
     // extract user/password from JDBC connection properties if its not
     // supplied in the connection URL
     if (info.containsKey(QC_AUTH_USER)) {
-      connParams.getSessionVars().put(QC_AUTH_USER,
+      sessConfMap.put(QC_AUTH_USER,
           info.getProperty(QC_AUTH_USER));
       if (info.containsKey(QC_AUTH_PASSWD)) {
-        connParams.getSessionVars().put(QC_AUTH_PASSWD,
+        sessConfMap.put(QC_AUTH_PASSWD,
             info.getProperty(QC_AUTH_PASSWD));
        }
     }
     if (info.containsKey(QC_AUTH_TYPE)) {
-      connParams.getSessionVars().put(QC_AUTH_TYPE,
+      sessConfMap.put(QC_AUTH_TYPE,
           info.getProperty(QC_AUTH_TYPE));
     }
     if (connParams.getQCConfs().containsKey(QC_SO_TIMEOUT)) {
-      socketTimeout = Integer.parseInt(connParams.getQCConfs().get(QC_SO_TIMEOUT));
-      connParams.getQCConfs().remove(QC_SO_TIMEOUT);
+      socketTimeout = Integer.parseInt(qcConfMap.get(QC_SO_TIMEOUT));
+      qcConfMap.remove(QC_SO_TIMEOUT);
     }
 
-    openTransport(uri, connParams.getHost(), connParams.getPort(),
-        connParams.getSessionVars());
+    openTransport();
 
     // currently only V1 is supported
     supportedProtocols.add(TProtocolVersion.QUERYCACHE_CLI_PROTOCOL_V1);
 
     // open client session
-    openSession(uri, connParams);
+    openSession(connParams);
 
-    configureConnection(connParams);
+    configureConnection(connParams.getDbName());
   }
 
-  private void configureConnection(Utils.JdbcConnectionParams connParams)
+  private void configureConnection(String dbName)
       throws SQLException {
-    // for remote JDBC client, try to set the conf var using 'set foo=bar'
-    Statement stmt = createStatement();
-    for (Entry<String, String> qcConf : connParams.getQCConfs()
-        .entrySet()) {
-      stmt.execute("set " + qcConf.getKey() + "=" + qcConf.getValue());
+    if (!qcConfMap.isEmpty() || !Utils.DEFAULT_DATABASE.equalsIgnoreCase(dbName)) {
+      // for remote JDBC client, try to set the conf var using 'set foo=bar'
+      Statement stmt = createStatement();
+      for (Entry<String, String> qcConf : qcConfMap.entrySet()) {
+        stmt.execute("set " + qcConf.getKey() + "=" + qcConf.getValue());
+      }
+      // if the client is setting a non-default db, then switch the database
+      if (!Utils.DEFAULT_DATABASE.equalsIgnoreCase(dbName)) {
+        stmt.execute("use " + dbName);
+      }
       stmt.close();
     }
   }
 
-  private void openTransport(String uri, String host, int port,
-      Map<String, String> sessConf) throws SQLException {
+  private void openTransport() throws SQLException {
     // With this socketTimeout option set to a non-zero timeout, a read() call on
     // the InputStream associated with this Socket will block for only this amount of time.
     // If the timeout expires, a java.net.SocketTimeoutException is raised,
@@ -128,18 +163,17 @@ public class QCConnection implements java.sql.Connection {
       transport.open();
       localAddress = socket.getSocket().getLocalAddress();
     } catch (TTransportException e) {
-      throw new SQLException("Could not establish connection to " + uri + ": "
+      throw new SQLException("Could not establish connection to " + jdbcURI + ": "
           + e.getMessage(), "08S01", e);
     } catch (SocketException e) {
       // this exception might not occur in a sane world.
-      throw new SQLException("Could not establish connection to " + uri + ": "
+      throw new SQLException("Could not establish connection to " + jdbcURI + ": "
           + e.getMessage(), "08S01", e);
     }
   }
 
-  private void openSession(String uri, Utils.JdbcConnectionParams connParams)
+  private void openSession(Utils.JdbcConnectionParams connParams)
       throws SQLException {
-    Map<String, String> sessVars = connParams.getSessionVars();
     TOpenSessionReq openReq = new TOpenSessionReq();
     openReq.setHostInfo(buildHostInfo(new THostInfo()));
     openReq.setClientVersion("querycache-jdbc " + this.getClass().getPackage().getImplementationVersion());
@@ -157,7 +191,7 @@ public class QCConnection implements java.sql.Connection {
       }
       sessHandle = openResp.getSessionHandle();
     } catch (TException e) {
-      throw new SQLException("Could not establish connection to " + uri + ": "
+      throw new SQLException("Could not establish connection to " + jdbcURI + ": "
           + e.getMessage(), " 08S01", e);
     }
     isClosed = false;
@@ -415,7 +449,18 @@ public class QCConnection implements java.sql.Connection {
 
   public String getSchema() throws SQLException {
     // JDK 1.7
-    throw new SQLException("Method not supported");
+    if (isClosed) {
+      throw new SQLException("Connection is closed");
+    }    
+    Statement stmt = createStatement();
+    ResultSet res = stmt.executeQuery("SELECT current_database()");
+    if (!res.next()) {
+      throw new SQLException("Failed to get schema information");
+    }    
+    String schemaName = res.getString(1);
+    res.close();
+    stmt.close();
+    return schemaName;
   }
 
   /*
@@ -727,7 +772,15 @@ public class QCConnection implements java.sql.Connection {
 
   public void setSchema(String schema) throws SQLException {
     // JDK 1.7
-    throw new SQLException("Method not supported");
+    if (isClosed) {
+      throw new SQLException("Connection is closed");
+    }
+    if (schema == null || schema.isEmpty()) {
+      throw new SQLException("Schema name is null or empty");
+    }
+    Statement stmt = createStatement();
+    stmt.execute("use " + schema);
+    stmt.close();
   }
 
   /*
