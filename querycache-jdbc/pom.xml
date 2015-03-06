@@ -5,14 +5,14 @@
     <parent>
         <artifactId>querycache</artifactId>
         <groupId>com.skplanet.querycache</groupId>
-        <version>0.12.0-SNAPSHOT</version>
+        <version>0.12.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>querycache-jdbc</artifactId>
     <groupId>com.skplanet.querycache.jdbc</groupId>
     <packaging>jar</packaging>
-    <version>0.12.0-SNAPSHOT</version>
+    <version>0.12.0</version>
 
     <build>
         <plugins>
