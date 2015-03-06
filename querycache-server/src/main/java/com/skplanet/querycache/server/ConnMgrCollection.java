@@ -60,8 +60,6 @@ public class ConnMgrCollection {
     private ConcurrentHashMap<Long, ConnNode> sUsingMap = new ConcurrentHashMap<>(
         16, 0.9f, 1);
 
-    private AtomicLong sFreelistMaxSize = new AtomicLong(0L); // def:16
-
     // below properties are used for connecting to storage system
     private ConnProperty connProp = new ConnProperty();
     // index of connection addresses for failover control in a round-robin fashion
@@ -83,7 +81,6 @@ public class ConnMgrCollection {
         return null;
       }
       LOG.info("newConnNode() : {}", url);
-      sFreelistMaxSize.addAndGet(1);
       return sConn;
     }
 
@@ -91,7 +88,6 @@ public class ConnMgrCollection {
       LOG.debug("ConnPool resizing.");
       int currFreeSize = sFreeList.size();
       int currUsingSize = sUsingMap.size();
-      long maxSize = sFreelistMaxSize.get();
 
       if (currFreeSize > sFreeListInitSize) {
         int removeCount = 0;
@@ -111,7 +107,6 @@ public class ConnMgrCollection {
             break;
           }
 
-          sFreelistMaxSize.decrementAndGet();
           try {
             sConn.close();
           } catch (Exception e) {
@@ -122,15 +117,15 @@ public class ConnMgrCollection {
         }
         LOG.info("Resizing worker: [" + connProp.connTypeName + "] Removed " + removeCount);
       }
-      else if (currFreeSize <= (int) (maxSize * sFreelistThreshold + 1)) {
+      else if (currFreeSize <= (int) (sFreeListInitSize * sFreelistThreshold + 1)) {
         try {
           int addedCnt = 0;
           LOG.info("Resizing worker: Resizing more ConnNode in the ConnPool, Type="
                   + connProp.connTypeName + ", current freesize="
                   + currFreeSize + ", current usingsize=" + currUsingSize
-                  + ", max size=" + maxSize);
+                  + ", max size=" + sFreeListInitSize);
           // resizing connpool
-          for (int i = (int) maxSize; i < ((maxSize * 3) / 2 + 1); i++) {
+          for (int i = (int) sFreeListInitSize; i < ((sFreeListInitSize * 3) / 2 + 1); i++) {
             ConnNode sConn = newConnNode();
             if (sConn == null) {
               LOG.error("Error resizing connection pool for " + connProp.connTypeName);
@@ -186,7 +181,6 @@ public class ConnMgrCollection {
           } catch (SQLException e) {
             // only handling the connection error
             if ("08S01".equals(e.getSQLState())) {
-              sFreelistMaxSize.decrementAndGet();
               LOG.info("ConnPool GC: Removing a failed connection (connId:" + conn.sConnId + ")");
               // do not add back to free list.
               killConnection = true;
@@ -250,7 +244,6 @@ public class ConnMgrCollection {
 
     private void removeConn(long aConnId) {
       ConnNode sConn = sUsingMap.remove(aConnId);
-      sFreelistMaxSize.decrementAndGet();
       if (sConn == null) {
         LOG.warn(
           "ConnMgrofOne.removeConn(): non-existent connId (" + aConnId + ")");
@@ -291,9 +284,8 @@ public class ConnMgrCollection {
       if (sConn != null) {
         // O(1)
         sUsingMap.put(sConn.sConnId, sConn);
-        LOG.trace("Moving ConnNode from FreeList to UsingMap. -Type: {}, -Free size: {}, -FreeMaxSize:{}, -Using size:{}",
-                connProp.connTypeName, sFreeList.size(),
-                sFreelistMaxSize, sUsingMap.size());
+        LOG.trace("Moving ConnNode from FreeList to UsingMap. -Type: {}, -Free size: {}, -Using size:{}",
+                connProp.connTypeName, sFreeList.size(), sUsingMap.size());
       }
 
       return sConn;
@@ -319,8 +311,8 @@ public class ConnMgrCollection {
 
       // add ConnNode to FreeList
       sFreeList.add(sConn);
-      LOG.trace("Moving ConnNode from UsingMap to FreeList. -Free size:{}, -FreeMaxSize:{}, -Using size:{}",
-              sFreeList.size(), sFreelistMaxSize, sUsingMap.size());
+      LOG.trace("Moving ConnNode from UsingMap to FreeList. -Free size:{}, -Using size:{}",
+              sFreeList.size(), sUsingMap.size());
       return CORE_RESULT.CORE_SUCCESS;
     }
     
