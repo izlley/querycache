@@ -47,12 +47,7 @@ public class CLIHandler implements TCLIService.Iface {
     QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_QUERY_SYNTAX_CHECK,
       QCConfigKeys.QC_QUERY_SYNTAX_CHECK_DEFAULT);
 
-  private static ExecutorService _threadPool = new ThreadPoolExecutor(
-    QueryCacheServer.conf.getInt(QCConfigKeys.QC_THREADPOOL_INIT_SIZE,
-      QCConfigKeys.QC_THREADPOOL_INIT_SIZE_DEFAULT),
-    QueryCacheServer.conf.getInt(QCConfigKeys.QC_THREADPOOL_MAX_SIZE,
-      QCConfigKeys.QC_THREADPOOL_MAX_SIZE_DEFAULT),
-    60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+  private static ExecutorService _threadPool;
   public static ConnMgrCollection gConnMgrs = new ConnMgrCollection();
   
   private static ObjectPool gObjPool =
@@ -80,6 +75,18 @@ public class CLIHandler implements TCLIService.Iface {
       LOG.error("Server start failed.");
       System.exit(1);
     }
+
+    int coreThreads = QueryCacheServer.conf.getInt(QCConfigKeys.QC_THREADPOOL_INIT_SIZE,
+            QCConfigKeys.QC_THREADPOOL_INIT_SIZE_DEFAULT);
+    if (coreThreads < QCConfigKeys.QC_THREADPOOL_INIT_SIZE_DEFAULT)
+      coreThreads = QCConfigKeys.QC_THREADPOOL_INIT_SIZE_DEFAULT;
+
+    LOG.info("Initializing QueryHandler Thread pool with {} coreThreads", coreThreads);
+    _threadPool = new ThreadPoolExecutor(
+            coreThreads,
+            QueryCacheServer.conf.getInt(QCConfigKeys.QC_THREADPOOL_MAX_SIZE,
+                    QCConfigKeys.QC_THREADPOOL_MAX_SIZE_DEFAULT),
+            60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
   }
   
   /**
