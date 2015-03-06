@@ -132,7 +132,7 @@ public class ConnNode {
         stmtNode.sHStmt.close();
         // move QueryProfile to completeQueryProfile Map
         sQueryId = this.sConnId + ":" + sEntry.getValue().sStmtId;
-        CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+        CLIHandler.gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
           sQueryId, StmtNode.State.CLOSE);
       }
       iterator.remove();

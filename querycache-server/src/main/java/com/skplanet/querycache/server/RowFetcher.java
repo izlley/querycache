@@ -57,7 +57,7 @@ public class RowFetcher implements Runnable {
     if (_stmt.sHasResultSet != true) {
       LOG.error("Producer fetchResults error : The statement has no ResultSet." +
         " (id:" + _queryId + ")");
-      CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+      CLIHandler.gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
         _queryId, State.ERROR);
       return;
     }
@@ -189,10 +189,10 @@ public class RowFetcher implements Runnable {
       }
       if ("08S01".equals(e.getSQLState())) {
         // remove failed ConnNode in the ConnPool
-        CLIHandler.gConnMgr.removeConn(_stmt.conn.sConnType, _stmt.conn.sConnId);
+        CLIHandler.gConnMgrs.removeConn(_stmt.conn.sConnType, _stmt.conn.sConnId);
         LOG.warn("FetchResults: Removing a failed connection (connId:" + _stmt.conn.sConnId + ")");
       }
-      CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+      CLIHandler.gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
         _queryId, State.ERROR);
     }
     if (_logLvl > 0) {

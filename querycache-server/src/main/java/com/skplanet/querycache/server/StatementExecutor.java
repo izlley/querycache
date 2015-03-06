@@ -48,7 +48,7 @@ public class StatementExecutor implements Runnable {
         statement = aReq.statement;
 
         // 1. get connection from pool
-        sConn = CLIHandler.gConnMgr.getConn(driverType, sConnId);
+        sConn = CLIHandler.gConnMgrs.getConn(driverType, sConnId);
         if (sConn == null) {
             throw new SQLException("Backend connection not available.", "08000");
         }
@@ -64,7 +64,7 @@ public class StatementExecutor implements Runnable {
         sStmt.profile.execProfile = timeArr;
         sStmtId = sStmt.sStmtId;
         sQueryId = sStmt.profile.queryId;
-        CLIHandler.gConnMgr.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
+        CLIHandler.gConnMgrs.runtimeProfile.addRunningQuery(sQueryId, sStmt.profile);
 
         svrCtx.setCurrentQuery(aReq.sessionHandle.sessionId.driverType, sQueryId);
 
@@ -78,18 +78,18 @@ public class StatementExecutor implements Runnable {
                 QCConfigKeys.QC_QUERY_SYNTAX_CHECK_DEFAULT);
         try {
             Analyzer compiler = new Analyzer(sConn.user,
-                    aReq.sessionHandle.sessionId.driverType, CLIHandler.gConnMgr);
+                    aReq.sessionHandle.sessionId.driverType, CLIHandler.gConnMgrs);
             compiler.analyzer(aReq.statement, sStmt.profile, authCheck);
         } catch (AuthorizationException e) {
             LOG.error("Authorization error:" + e.getMessage() +
                     "\n  -Error Query: " + aReq.statement, e);
-            CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+            CLIHandler.gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
                     sQueryId, StmtNode.State.ERROR);
             throw new SQLException(e.getMessage(), "28000");
         } catch (AnalyzerException e) {
             LOG.error("Query analyzer error:" + e.getMessage() +
                     "\n  -Error Query: " + aReq.statement, e);
-            CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+            CLIHandler.gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
                     sQueryId, StmtNode.State.ERROR);
             throw new SQLException(e.getMessage(), "26000");
         }
@@ -159,7 +159,7 @@ public class StatementExecutor implements Runnable {
             // remove failed ConnNode in the UsingMap
             if ("08S01".equals(e.getSQLState())) {
                 // remove failed ConnNode in the ConnPool
-                CLIHandler.gConnMgr.removeConn(driverType, sConnId);
+                CLIHandler.gConnMgrs.removeConn(driverType, sConnId);
                 LOG.warn("ExecuteStatement: Removing a failed connection (connId:" + sConn.sConnId + ")");
             }
 
@@ -169,7 +169,7 @@ public class StatementExecutor implements Runnable {
                 default:
                     sOpStatusResp.setOperationState(TOperationState.ERROR_STATE); break;
             }
-            CLIHandler.gConnMgr.runtimeProfile.moveRunToCompleteProfileMap(
+            CLIHandler.gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
                     sQueryId, StmtNode.State.ERROR);
         }
     }

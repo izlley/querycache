@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.skplanet.querycache.server.ConnMgr;
+import com.skplanet.querycache.server.ConnMgrCollection;
 import com.skplanet.querycache.server.auth.AuthorizationLoader;
 import com.skplanet.querycache.server.auth.Privilege;
 import com.skplanet.querycache.server.auth.PrivilegeRequestBuilder;
@@ -24,14 +24,14 @@ public class Analyzer {
   private String stmt_;
   private final String user_;
   private final String connType_;
-  private final ConnMgr connMgr_;
+  private final ConnMgrCollection connMgrs_;
   
   private AnalysisResult analResult;
   
-  public Analyzer(String user, String connType, ConnMgr connMgr) {
+  public Analyzer(String user, String connType, ConnMgrCollection connMgrs) {
     this.user_ = (user == null)? "" : user;
     this.connType_ = connType;
-    this.connMgr_ = connMgr;
+    this.connMgrs_ = connMgrs;
   }
   
   static public class AnalysisResult {
@@ -86,7 +86,7 @@ public class Analyzer {
     String authzlog = "";
     String auditquery = stmt_.replace('\t',' ').replace('\n',' ');
     PrivilegeRequestBuilder pb = new PrivilegeRequestBuilder();
-    AuthorizationLoader authLoader = connMgr_.getAuthLoader(connType_);
+    AuthorizationLoader authLoader = connMgrs_.getAuthLoader(connType_);
     
     try {
       // 1. check Datastore privilege

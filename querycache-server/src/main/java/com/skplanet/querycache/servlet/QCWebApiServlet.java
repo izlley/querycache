@@ -3,7 +3,7 @@ package com.skplanet.querycache.servlet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.skplanet.querycache.server.CLIHandler;
-import com.skplanet.querycache.server.ConnMgr;
+import com.skplanet.querycache.server.ConnMgrCollection;
 import com.skplanet.querycache.server.QueryCacheServer;
 import com.skplanet.querycache.server.util.ObjectPool;
 import com.skplanet.querycache.server.util.ObjectPool.Profile;
@@ -119,7 +119,7 @@ public class QCWebApiServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter writer = response.getWriter();
-        RuntimeProfile rt = CLIHandler.gConnMgr.runtimeProfile;
+        RuntimeProfile rt = CLIHandler.gConnMgrs.runtimeProfile;
 
         // path excluding prefix e.g.) http://localhost:8080/api/apitest?arg1=blah -> apitest
         String path = request.getRequestURI().substring(request.getContextPath().length());
@@ -141,9 +141,9 @@ public class QCWebApiServlet extends HttpServlet {
             }
 
             case "/connections": {
-                List<ConnMgr.ConnMgrofOne> conMgrs = new ArrayList<ConnMgr.ConnMgrofOne>(CLIHandler.gConnMgr.getConnMgrofAll().values());
+                List<ConnMgrCollection.ConnMgr> conMgrs = new ArrayList<ConnMgrCollection.ConnMgr>(CLIHandler.gConnMgrs.getConnMgrMap().values());
                 List<ConDesc> lCD = new ArrayList<ConDesc>(conMgrs.size());
-                for (ConnMgr.ConnMgrofOne mgr:conMgrs) {
+                for (ConnMgrCollection.ConnMgr mgr:conMgrs) {
                     ConDesc cd = new ConDesc(mgr.connType, mgr.getFreeConnCount(), mgr.getUsingConnCount());
                     lCD.add(cd);
                 }
