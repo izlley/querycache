@@ -31,7 +31,7 @@ if [ -z $QC_HOME ]; then
     if [ "$this" = "$shell_exec" ]; then
         # Assume we're already in QC_HOME
         interactive=1
-        export QC_HOME="$(pwd)/.."
+        QC_HOME="$(pwd)/.."
     else
         interactive=0
         while [ -h "$this" ]; do
@@ -50,9 +50,10 @@ if [ -z $QC_HOME ]; then
         bin=`cd "$bin"; pwd`
         this="$bin/$script"
 
-        export QC_HOME=`dirname "$bin"`
+        QC_HOME=`dirname "$bin"`
     fi
 fi
+export QC_HOME
 
 # explicitly change working directory to $QC_HOME
 cd $QC_HOME
@@ -77,6 +78,10 @@ done
 for jar in `find ${DRIVER_DIR} -name "*.jar" -a ! -name "querycache-jdbc*.jar"`; do
   CLASSPATH=${CLASSPATH}:$jar
 done
+builtjar=`find ${QC_HOME}/querycache-server/target -regextype sed -regex ".*/querycache-server-[0-9\.]*.jar"`
+if [ ! -z "$builtjar" ]; then
+  CLASSPATH=${CLASSPATH}:$builtjar
+fi
 export CLASSPATH
 export HOSTNAME=`hostname`
 
