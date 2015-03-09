@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.concurrent.Future;
 
 /**
@@ -59,7 +58,7 @@ public class StatementExecutor implements Runnable {
         sStmt = sConn.allocStmt(true);
 
         sStmt.profile = new RuntimeProfile.QueryProfile(sStmt, sConn, aReq.sessionHandle.sessionId,
-                aReq.statement, svrCtx.clientVersion);
+                aReq.statement, svrCtx);
         sStmt.profile.stmtState = StmtNode.State.EXEC;
         sStmt.profile.execProfile = timeArr;
         sStmtId = sStmt.sStmtId;
@@ -116,8 +115,6 @@ public class StatementExecutor implements Runnable {
         // 4. execute query
         try {
             sStmt.sHStmt.setFetchSize(_defFetchSize);
-        } catch (SQLFeatureNotSupportedException e) {
-            //ignore
         } catch (SQLException e) {
             //ignore
         }

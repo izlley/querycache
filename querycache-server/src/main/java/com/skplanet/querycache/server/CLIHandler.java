@@ -40,12 +40,8 @@ import java.util.concurrent.*;
 public class CLIHandler implements TCLIService.Iface {
   private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(CLIHandler.class);
-  private static final int _defFetchSize = 1024;
   public final int profileLvl = QueryCacheServer.conf.getInt(QCConfigKeys.QC_QUERY_PROFILING_LEVEL,
-    QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
-  private final boolean isSyntaxCheck =
-    QueryCacheServer.conf.getBoolean(QCConfigKeys.QC_QUERY_SYNTAX_CHECK,
-      QCConfigKeys.QC_QUERY_SYNTAX_CHECK_DEFAULT);
+          QCConfigKeys.QC_QUERY_PROFILING_LEVEL_DEFAULT);
 
   private static ExecutorService _threadPool;
   public static ConnMgrCollection gConnMgrs = new ConnMgrCollection();
@@ -110,8 +106,7 @@ public class CLIHandler implements TCLIService.Iface {
     
     TOpenSessionResp sResp = new TOpenSessionResp();
     sResp.setStatus(new TStatus());
-    ConnNode sConn = null;
-    
+
     if (aReq.clientProtocol != new TOpenSessionReq().clientProtocol) {
       LOG.warn("Protocol version mismatched. -client: {}", aReq.clientProtocol);
     }
@@ -133,7 +128,7 @@ public class CLIHandler implements TCLIService.Iface {
     password = aReq.password;
     
     // 3. alloc a ConnNode
-    sConn = gConnMgrs.allocConn(sUrl);
+    ConnNode sConn = gConnMgrs.allocConn(sUrl);
     int sNumRetry = 3;
     for (int i = 0 ; (sConn == null) && (i < sNumRetry) ; i++) {
       // retry to get connection to the backend
@@ -202,8 +197,7 @@ public class CLIHandler implements TCLIService.Iface {
     LOG.trace("CloseSession is requested.");
     long startTime = 0;
     long endTime;
-    ConnNode sConn = null;
-    
+
     if (profileLvl > 0) {
       startTime = System.currentTimeMillis();
     }
@@ -211,7 +205,7 @@ public class CLIHandler implements TCLIService.Iface {
     TCloseSessionResp sResp = new TCloseSessionResp();
     sResp.setStatus(new TStatus().setStatusCode(TStatusCode.SUCCESS_STATUS));
 
-    sConn = gConnMgrs.getConn(aReq.sessionHandle.sessionId.driverType,
+    ConnNode sConn = gConnMgrs.getConn(aReq.sessionHandle.sessionId.driverType,
             aReq.sessionHandle.sessionId.connid);
     if (sConn != null) {
       // 1. find the specific ConnNode by ConnId
@@ -346,7 +340,7 @@ public class CLIHandler implements TCLIService.Iface {
       sStmt = sConn.allocStmt(false);
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETTYPEINFO;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
@@ -447,7 +441,7 @@ public class CLIHandler implements TCLIService.Iface {
       QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETCATALOGS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
@@ -547,7 +541,7 @@ public class CLIHandler implements TCLIService.Iface {
       QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETSCHEMAS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
@@ -650,7 +644,7 @@ public class CLIHandler implements TCLIService.Iface {
       QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETTABLES;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
@@ -755,7 +749,7 @@ public class CLIHandler implements TCLIService.Iface {
       QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETTABLETYPES;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
@@ -857,7 +851,7 @@ public class CLIHandler implements TCLIService.Iface {
       QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETCOLUMNS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;
@@ -1607,7 +1601,7 @@ struct TGetResultSetMetadataResp {
       QueryCacheServer.QCServerContext svrCtx = QueryCacheServer.QCServerContext.getSvrContext();
 
       // set profiling data
-      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx.clientVersion );
+      sStmt.profile = new RuntimeProfile.QueryProfile( sStmt, sConn, aReq.sessionHandle.sessionId, "", svrCtx );
       sStmt.profile.stmtState = StmtNode.State.GETFUNCTIONS;
       sStmt.profile.execProfile = null;
       sStmtId = sStmt.sStmtId;

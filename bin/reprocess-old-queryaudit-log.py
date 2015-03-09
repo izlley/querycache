@@ -36,33 +36,33 @@ def process_lines(filename, lines):
         logdate = line[:23]
         #escaping backslash character
         jsondata = json.loads(jsonlog.replace('\\','\\\\\\\\'))
-        queryid = jsondata['queryid']
-        conn_type = jsondata['connect_type']
-        client_host = jsondata['client_host']
-        user = jsondata['user']
-        query_type = jsondata['query_type']
-        query_str = jsondata['query_str']
-        stmt_state = jsondata['stmt_state']
-        rowcnt = jsondata['rowcnt']
-        end_time = jsondata['end_time']
-        start_time = jsondata['start_time']
-        time_histogram = '[' + ','.join(jsondata['time_histogram']) + ']'
-        total_elapsedtime = jsondata['total_elapsedtime']
-        if 'client_version' in jsondata:
-            client_version = jsondata['client_version']
-        else:
-            client_version = jsondata['unknown']
-        if 'server' in jsondata:
-            server = jsondata['server']
-        else:
-            server = hostname
+
+        if 'client_version' not in jsondata:
+            jsondata['client_version'] = "unknown"
+        if 'client_ip' not in jsondata:
+            jsondata['client_ip'] = "unknown"
+        if 'server_ip' not in jsondata:
+            jsondata['server_ip'] = "unknown"
+
+        writestr = logdate + '\t' + \
+                   hostname + '\t' + \
+                   jsondata['user'] + '\t' + \
+                   jsondata['queryid'] + '\t' + \
+                   jsondata['query_type'] + '\t' + \
+                   jsondata['query_str'] + '\t' + \
+                   jsondata['stmt_state'] + '\t' + \
+                   jsondata['rowcnt'] + '\t' + \
+                   jsondata['start_time'] + '\t' + \
+                   jsondata['end_time'] + '\t' + \
+                   '[' + ','.join(jsondata['time_histogram']) + ']' + '\t' + \
+                   jsondata['total_elapsedtime'] + '\t' + \
+                   jsondata['connect_type'] + '\t' + \
+                   jsondata['client_host'] + '\t' + \
+                   jsondata['client_version'] + '\t' + \
+                   jsondata['client_ip'] + '\t' + \
+                   jsondata['server_ip'] + '\n'
 
         date = line[:10]
-        writestr = logdate + '\t' + server + '\t' + user + '\t' + queryid + '\t' + \
-            query_type + '\t' + query_str + '\t' + stmt_state + '\t' + rowcnt + '\t' + \
-            start_time + '\t' + end_time + '\t' + time_histogram + '\t' + total_elapsedtime + '\t' + \
-            conn_type + '\t' + client_host + '\t' + client_version + '\n'
-
         if date in files:
             f = files[date]
         else:
