@@ -2,22 +2,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <artifactId>querycache</artifactId>
         <groupId>com.skplanet.querycache</groupId>
-        <version>0.12.0-SNAPSHOT</version>
+        <version>0.12.1-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>querycache-server</artifactId>
+    <packaging>jar</packaging>
+
     <properties>
         <sentry.version>1.3.0-SNAPSHOT</sentry.version>
         <jettyVersion>9.2.6.v20141205</jettyVersion>
     </properties>
 
-
-    <artifactId>querycache-server</artifactId>
-    <groupId>com.skplanet.querycache.server</groupId>
-    <version>0.12.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
     <build>
         <!--<finalName>${project.artifactId}-${project.version}</finalName>-->
         <resources>
@@ -60,6 +60,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.2</version>
                 <configuration>
                     <archive>
                         <manifest>
