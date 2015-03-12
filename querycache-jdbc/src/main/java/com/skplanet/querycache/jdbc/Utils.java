@@ -211,30 +211,26 @@ public class Utils {
     }
 
     // key=value pattern
-    Pattern pattern = Pattern.compile("([^;]*)=([^;]*)[;]?");
-
+    Pattern pattern = Pattern.compile("([^;]*)=([^;]*)");
     // dbname and session settings
     String sessVars = jdbcURI.getPath();
-    if ((sessVars == null) || sessVars.isEmpty()) {
-      connParams.setDbName(DEFAULT_DATABASE);
-    } else {
-      // removing leading '/' returned by getPath()
-      sessVars = sessVars.substring(1);
-      if (!sessVars.contains(";")) {
-        // only dbname is provided
-        connParams.setDbName(sessVars);
-      } else {
-        // we have dbname followed by session parameters
-        connParams.setDbName(sessVars.substring(0, sessVars.indexOf(';')));
-        sessVars = sessVars.substring(sessVars.indexOf(';')+1);
-        if (sessVars != null) {
-          Matcher sessMatcher = pattern.matcher(sessVars);
+    if (sessVars != null && sessVars.length() > 0) {
+      String dbName = null;
+      String tokens[] = sessVars.split(";");
+      // split() returns original string if there's no match.
+      dbName = tokens[0];
+      for (int i = 1; i < tokens.length; i++) {
+        if (tokens[i].length() > 0) {
+          Matcher sessMatcher = pattern.matcher(tokens[i]);
           while (sessMatcher.find()) {
             if (connParams.getSessionVars().put(sessMatcher.group(1), sessMatcher.group(2)) != null) {
               throw new IllegalArgumentException("Bad URL format: Multiple values for property " + sessMatcher.group(1));
             }
           }
         }
+      }
+      if (dbName != null || dbName.length() > 0) {
+        connParams.setDbName(dbName);
       }
     }
 
