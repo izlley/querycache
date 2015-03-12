@@ -229,7 +229,7 @@ public class Utils {
           }
         }
       }
-      if (dbName != null || dbName.length() > 0) {
+      if (dbName != null && dbName.length() > 0) {
         connParams.setDbName(dbName);
       }
     }
