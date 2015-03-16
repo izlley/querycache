@@ -22,7 +22,15 @@ mkdir -p ${jdbcdistdir}/bin
 mkdir -p ${jdbcdistdir}/lib/driver
 cp -rLv bin/queryrunner.sh ${jdbcdistdir}/bin/
 cp ${deps} ${jdbcdistdir}/lib/
-cp `find querycache-jdbc -regextype sed -regex ".*/querycache-jdbc-[0-9\.]*.jar"` ${jdbcdistdir}/lib/driver/
+cp `find querycache-jdbc/target -regextype sed -regex ".*/querycache-jdbc-[0-9\.]*.jar"` ${jdbcdistdir}/lib/driver/
 cp -rLv src ${jdbcdistdir}/
 
+# qcshell
+qcshelldistdir=${distdir}/qcshell
+mkdir -p ${qcshelldistdir}/bin
+mkdir -p ${qcshelldistdir}/lib
+cp -apv bin/qcshell ${qcshelldistdir}/bin
+cp `find querycache-shell/target -regextype sed -regex ".*/querycache-shell-[0-9\.]*.*-jar-with-dependencies.jar"` ${qcshelldistdir}/lib/
+
 tar cvzf ${distdir}.tgz ${distdir}
+
