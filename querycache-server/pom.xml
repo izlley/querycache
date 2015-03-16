@@ -10,6 +10,7 @@
         <version>0.12.1-SNAPSHOT</version>
     </parent>
 
+    <groupId>com.skplanet.querycache.server</groupId>
     <artifactId>querycache-server</artifactId>
     <packaging>jar</packaging>
 
