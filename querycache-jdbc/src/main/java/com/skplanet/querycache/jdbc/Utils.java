@@ -216,7 +216,8 @@ public class Utils {
     String sessVars = jdbcURI.getPath();
     if (sessVars != null && sessVars.length() > 0) {
       String dbName = null;
-      String tokens[] = sessVars.split(";");
+      // filter first "/" and tokenize by semi-colon
+      String tokens[] = sessVars.substring(1).split(";");
       // split() returns original string if there's no match.
       dbName = tokens[0];
       for (int i = 1; i < tokens.length; i++) {
