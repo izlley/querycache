@@ -45,13 +45,13 @@ public class PrettyWriter {
             Iterator<String> iterator = record.iterator();
             int col = 0;
             while (iterator.hasNext()) {
-                String str = iterator.next();
-                if (str == null) {
-                    str = "null";
+                String colStr = iterator.next();
+                if (colStr == null) {
+                    colStr = "null";
                 } else {
-                    str = str.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "  ");
+                    colStr = colStr.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "  ");
                 }
-                int lenCol = str.length();
+                int lenCol = ConsoleWidthUtils.getConsoleWidth(colStr);
                 if (lenCol > maxColumnWidth[col]) {
                     maxColumnWidth[col] = lenCol;
                 }
@@ -79,7 +79,7 @@ public class PrettyWriter {
             String colStr = iterator.next();
             rowBuilder.append("| ");
             rowBuilder.append(colStr);
-            for (int j = colStr.length(); j < maxColumnWidth[col] + 1; j++) rowBuilder.append(' ');
+            for (int j = ConsoleWidthUtils.getConsoleWidth(colStr); j < maxColumnWidth[col] + 1; j++) rowBuilder.append(' ');
             col++;
         }
         rowBuilder.append('|');
@@ -97,7 +97,7 @@ public class PrettyWriter {
                 if (colStr == null) colStr = "null";
                 rowBuilder.append("| ");
                 rowBuilder.append(colStr);
-                for (int j = colStr.length(); j < maxColumnWidth[col] + 1; j++) rowBuilder.append(' ');
+                for (int j = ConsoleWidthUtils.getConsoleWidth(colStr); j < maxColumnWidth[col] + 1; j++) rowBuilder.append(' ');
                 col++;
             }
             rowBuilder.append('|');
@@ -124,7 +124,9 @@ public class PrettyWriter {
         iterator = header.iterator();
         int col = 0;
         while(iterator.hasNext()) {
-            maxColumnWidth[col] = iterator.next().length();
+            String colStr = iterator.next();
+            if (colStr == null) colStr = "null";
+            maxColumnWidth[col] = ConsoleWidthUtils.getConsoleWidth(colStr);
             col++;
         }
     }
