@@ -32,7 +32,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 
 // Generated code
@@ -1524,34 +1523,29 @@ struct TGetResultSetMetadataResp {
         timeArr[j-1] = tmpTime; // index-3
     }
     
-    RowFetcher rowFetcher = sStmt.allocRowProducer(sQueryId, this);
-    try {
-      //if (rowFetcher.getAndSetIfInit(FetchState.FETCHING) == FetchState.INIT) {
-      if (rowFetcher._isFetching.compareAndSet(false, true)) {
+    RowFetcher rowFetcher = sStmt.getRowProducer();
+    if (rowFetcher == null) {
+      rowFetcher = sStmt.allocRowProducer(sQueryId, this);
+      try {
         _threadPool.execute(rowFetcher);
+      } catch (RejectedExecutionException e) {
+        LOG.error("FetchResults error : Producer thread unable to be executed.");
+        sResp.status.statusCode = TStatusCode.ERROR_STATUS;
+        sResp.status.errorMessage = "FetchResults error : Producer thread unable to be executed.";
+        gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
+                sQueryId, State.ERROR);
+        return sResp;
       }
-    } catch (RejectedExecutionException e) {
-      LOG.error("FetchResults error : Producer thread unable to be executed.");
-      sResp.status.statusCode = TStatusCode.ERROR_STATUS;
-      sResp.status.errorMessage = "FetchResults error : Producer thread unable to be executed.";
-      gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
-        sQueryId, State.ERROR);
-      return sResp;
     }
-    List<TRow> rowsFromProducer = rowFetcher.getRows(fetchSize);
+
     TRowSet sRowSet = (TRowSet)gObjPool.getObject(ObjectPool.POOL_TROWSET);
-    rowFetcher.addRowSet(sRowSet); // for object recycling
 
     // 0-based
     sRowSet.clear();
-    if (rowsFromProducer == null) {
-      // to cope with no rows returned case
-      sRowSet.rows = new ArrayList<TRow>();
-    } else {
-      sRowSet.rows = rowsFromProducer;
-    }
-    
-    sResp.setHasMoreRows(rowFetcher._hasMoreRows.get());
+    sRowSet.rows = new ArrayList<TRow>();
+    rowFetcher.getRows(sRowSet.rows, fetchSize);
+
+    sResp.setHasMoreRows(rowFetcher.hasMoreRows());
     sResp.setResults(sRowSet);
     sResp.status.statusCode = TStatusCode.SUCCESS_STATUS;
 
@@ -1561,6 +1555,10 @@ struct TGetResultSetMetadataResp {
               sQueryId, aReq.operationHandle.operationId.driverType,
               sRowSet.rows.size(),endTime-startTime);
     }
+
+    // recycle old rows and then queue current rowset for recycling
+    rowFetcher.queueRowsToBeRecycled(sRowSet.rows);
+    rowFetcher.queueRowSetToBeRecycled(sRowSet); // for object recycling
     return sResp;
   }
   

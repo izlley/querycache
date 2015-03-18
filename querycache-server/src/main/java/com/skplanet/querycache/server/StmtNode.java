@@ -47,11 +47,17 @@ public class StmtNode {
     this.sRS = null;
   }
   
-  synchronized public RowFetcher allocRowProducer(String queryId,
-    CLIHandler cliHandler) {
-    if (rowProducer == null){
-      rowProducer = new RowFetcher(queryId, this, cliHandler);
+  public RowFetcher getRowProducer() {
+    return rowProducer;
+  }
+
+  public RowFetcher allocRowProducer(String queryId, CLIHandler cliHandler) {
+    if (rowProducer != null) {
+      LOG.error("BUGBUG!! RowFetcher allocated allocated again.");
+      rowProducer.close();
     }
+
+    rowProducer = new RowFetcher(queryId, this, cliHandler);
     return rowProducer;
   }
 }
