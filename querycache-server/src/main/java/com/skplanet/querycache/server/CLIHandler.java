@@ -1161,9 +1161,11 @@ public class CLIHandler implements TCLIService.Iface {
       sResp.status.sqlState = e.getSQLState();
       sResp.status.errorCode = e.getErrorCode();
       sResp.status.errorMessage = e.getMessage();
-      // remove failed ConnNode in the ConnPool
-      gConnMgrs.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
-      LOG.info("CloseOperation: Removing a failed connection (connId:{})", sConn.sConnId);
+      if ("08S01".equals(e.getSQLState())) {
+        // remove failed ConnNode in the ConnPool
+        gConnMgrs.removeConn(aReq.operationHandle.operationId.driverType, sConnId);
+        LOG.warn("CloseOperation: Removing a failed connection (connId:{})", sConn.sConnId);
+      }
       gConnMgrs.runtimeProfile.moveRunToCompleteProfileMap(
         sQueryId, State.ERROR);
       return sResp;
