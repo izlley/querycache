@@ -11,7 +11,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,8 +34,7 @@ public class RowFetcher implements Runnable {
 
   // Queue for fetched rows getting from the Database
   private final ArrayDeque<TRow> _rowQ = new ArrayDeque<>(_maxRowsInQueue);
-  private final ArrayDeque<TRow> _rowQToBeRecycled = new ArrayDeque<>(_maxRowsInQueue);
-  private final List<Object> _rowSetToBeRecycled = new ArrayList<Object>();
+  private final ArrayDeque<TRowSet> _rowSetToBeRecycled = new ArrayDeque<>();
 
   private ResultSet sRS = null;
   private ResultSetMetaData sMeta = null;
@@ -258,10 +256,7 @@ public class RowFetcher implements Runnable {
       _objPool.recycleRows(_rowQ);
       _rowQ.notifyAll();
     }
-    synchronized (_rowSetToBeRecycled) {
-      _objPool.recycleObjects(_rowSetToBeRecycled, ObjectPool.POOL_TROWSET);
-    }
-    queueRowsToBeRecycled(null);
+    queueRowSetToBeRecycled(null);
   }
   
   public long getRows(List<TRow> dest, long fetchSize) {
@@ -313,20 +308,17 @@ public class RowFetcher implements Runnable {
     return count;
   }
 
-  public void queueRowsToBeRecycled(List<TRow> rowList) {
-    synchronized (_rowQToBeRecycled) {
-      _objPool.recycleRows(_rowQToBeRecycled);
-      if (rowList != null) {
-        _rowQToBeRecycled.addAll(rowList);
-      }
-    }
-  }
-
-  // for object recycling.
-  // in close(), TRowSet instances will be recycled by ObjectPool
+  // Recycles rowset and associated objects those are queued prior to this call
+  // after queueing all rowsets, be sure to call this function with (null) argument
+  // to recycle all objects
   public void queueRowSetToBeRecycled(TRowSet rowSet) {
     synchronized (_rowSetToBeRecycled) {
-      _rowSetToBeRecycled.add(rowSet);
+      if (_rowSetToBeRecycled.size() > 0) {
+        _objPool.queueRowSetsToBeRecycled(_rowSetToBeRecycled);
+      }
+      if (rowSet != null) {
+        _rowSetToBeRecycled.add(rowSet);
+      }
     }
   }
 

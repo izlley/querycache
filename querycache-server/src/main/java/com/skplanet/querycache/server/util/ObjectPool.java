@@ -33,46 +33,7 @@ public class ObjectPool {
   private int  sMaxPoolSize = 0;
   private float sReloadingThreshold = 0.f;
   private int sCellCoeff = 0;
-  
-  private Runnable sReloadThread = new Runnable() {
-    public void run() {
-      LOG.info("ObjectPool reloading thread init.");
-      boolean interrupted = false;
-      try {
-        while (true) {
-          try {
-            Thread.sleep(sReloadCycle);
-            LOG.debug("ObjectPool: checking each object count.");
-            for (int i = 0; i < POOLS_COUNT; i++) {
-              LOG.debug("  ObjList[{}].size()={}", i, sObjPools.get(i).size());
-              if (i == POOL_TCOLUMNVALUE || i == POOL_TSTRINGVALUE) {
-                if (sObjPools.get(i).size() < (int)((sMaxPoolSize*sCellCoeff) *
-                    sReloadingThreshold)) {
-                  LOG.info("Reloading more objects in the ObjectPool[{}].size()={}",
-                          i, sObjPools.get(i).size());
-                  initObjPool(i);
-                }
-              } else {
-                if (sObjPools.get(i).size() < (int)(sMaxPoolSize * sReloadingThreshold)) {
-                  LOG.info("Reloading more objects in the ObjectPool[{}].size()={}",
-                          i, sObjPools.get(i).size());
-                  initObjPool(i);
-                }
-              }
-            }
-          } catch (InterruptedException e) {
-            // Deliberately ignore
-            interrupted = true;
-          }
-        }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
-  };
-  
+
   public ObjectPool(int aPoolSize, int aCellCoeff, long aReloadCycle, float aReloadF) {
     sMaxPoolSize = aPoolSize;
     sCellCoeff   = aCellCoeff;
@@ -90,7 +51,48 @@ public class ObjectPool {
     sObjPools.add(POOL_TSTRINGVALUE, new ArrayDeque<Object>(sMaxPoolSize * sCellCoeff));
     initObjPool(POOL_TSTRINGVALUE);
 
-//    new Thread(sReloadThread).start();
+    new Thread(new RecycleThread(), "ObjPool-Recycle-Thread").start();
+  }
+
+  // object recycling thread
+  private final ArrayDeque<TRowSet> rowSetsToBeRecycled = new ArrayDeque<>();
+  private class RecycleThread implements Runnable {
+    @Override
+    public void run() {
+      boolean bInterrupted = false;
+      LOG.info("Starting object recycling thread");
+      ArrayDeque<TRowSet> rowSets;
+      while (!bInterrupted) {
+        synchronized (rowSetsToBeRecycled) {
+          if (rowSetsToBeRecycled.size() == 0) {
+            try {
+              rowSetsToBeRecycled.wait(1000);
+            } catch (InterruptedException e) {
+              bInterrupted = true;
+              continue;
+            }
+          }
+          // clone and go out of synchronized block for responsiveness
+          rowSets = rowSetsToBeRecycled.clone();
+          rowSetsToBeRecycled.clear();
+        }
+        recycleRowSets(rowSets);
+      }
+      LOG.warn("Object recycle thread is terminating.");
+    }
+  }
+  public void queueRowSetToBeRecycled(TRowSet rowSet) {
+    synchronized (rowSetsToBeRecycled) {
+      rowSetsToBeRecycled.add(rowSet);
+      rowSetsToBeRecycled.notifyAll();
+    }
+  }
+  public void queueRowSetsToBeRecycled(Collection<TRowSet> rowSets) {
+    synchronized (rowSetsToBeRecycled) {
+      rowSetsToBeRecycled.addAll(rowSets);
+      rowSetsToBeRecycled.notifyAll();
+    }
+    rowSets.clear();
   }
 
   private void initObjPool(int aInd) {
@@ -213,9 +215,9 @@ public class ObjectPool {
 
   public void recycleRows(Collection<TRow> rows) {
     // to minimize use of synchronized {} block, use local collections
-    ArrayDeque<Object> lRows = new ArrayDeque<Object>(64);
-    ArrayDeque<Object> lCols = new ArrayDeque<Object>(256);
-    ArrayDeque<Object> lStrs = new ArrayDeque<Object>(256);
+    ArrayDeque<Object> lRows = new ArrayDeque<Object>(1024);
+    ArrayDeque<Object> lCols = new ArrayDeque<Object>(4096);
+    ArrayDeque<Object> lStrs = new ArrayDeque<Object>(4096);
 
     for (TRow row: rows) {
       List<TColumnValue> cols = row.getColVals();
@@ -241,6 +243,22 @@ public class ObjectPool {
     recycleObjects(lRows, POOL_TROW);
     recycleObjects(lCols, POOL_TCOLUMNVALUE);
     recycleObjects(lStrs, POOL_TSTRINGVALUE);
+  }
+
+  public void recycleRowSets(Collection<TRowSet> rowSets) {
+    if (rowSets == null)
+      return;
+
+    for (TRowSet rowSet: rowSets) {
+      List<TRow> rows = rowSet.getRows();
+      if (rows == null)
+        break;
+
+      recycleRows(rows);
+      rowSet.clear();
+    }
+
+    rowSets.clear();
   }
 
   public class Profile {

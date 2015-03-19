@@ -1558,9 +1558,8 @@ struct TGetResultSetMetadataResp {
               sRowSet.rows.size(),endTime-startTime);
     }
 
-    // recycle old rows and then queue current rowset for recycling
-    rowFetcher.queueRowsToBeRecycled(sRowSet.rows);
-    rowFetcher.queueRowSetToBeRecycled(sRowSet); // for object recycling
+    // for object recycling
+    rowFetcher.queueRowSetToBeRecycled(sRowSet);
     return sResp;
   }
   
