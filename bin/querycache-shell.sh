@@ -47,8 +47,12 @@ export PATH=$QC_HOME/bin:$PATH
 
 shelljar=`find ${QC_LIB_DIR} -name 'querycache-shell*.jar'`
 if [ -z "$shelljar" ]; then
-    echo "ERROR: Can't find querycache-shell*.jar in ${QC_LIB_DIR}"
-    exit 1
+    shelljar=`find ${QC_HOME}/querycache-shell/target -regextype sed -regex ".*/querycache-shell-.*-jar-with-dependencies.jar" 2>/dev/null`
+    echo $builtjar
+    if [ -z "$shelljar" ]; then
+        echo "ERROR: Can't find querycache-shell*.jar in ${QC_LIB_DIR} and ${QC_HOME}/querycache-shell/target"
+        exit 1
+    fi
 fi
 
 # error if many first occurrance

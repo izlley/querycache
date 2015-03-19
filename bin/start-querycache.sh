@@ -72,16 +72,23 @@ echo "$QC_LIB_DIR"
 
 CLASSPATH=$QC_HOME/lib:$CLASSPATH
 CLASSPATH=$QC_HOME/conf:$CLASSPATH
-for jar in `ls ${QC_LIB_DIR}/*.jar`; do
-  CLASSPATH=${CLASSPATH}:$jar
-done
+if [ -e ${QC_HOME}/pom.xml ]; then
+  version=`mvn -o org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -pl querycache-server | egrep '^[0-9]*\.[0-9]*\.[0-9]'`
+  builtjar=`find ${QC_HOME}/querycache-server/target -regextype sed -regex ".*/querycache-server-${version}.jar" 2>/dev/null`
+  if [ ! -z "$builtjar" ]; then
+    CLASSPATH=${CLASSPATH}:$builtjar
+    for jar in `find ${QC_LIB_DIR} -name "*.jar" -a ! -name "querycache-*.jar"`; do
+      CLASSPATH=${CLASSPATH}:$jar
+    done
+  fi
+else
+  for jar in `ls ${QC_LIB_DIR}/*.jar`; do
+    CLASSPATH=${CLASSPATH}:$jar
+  done
+fi
 for jar in `find ${DRIVER_DIR} -name "*.jar" -a ! -name "querycache-jdbc*.jar"`; do
   CLASSPATH=${CLASSPATH}:$jar
 done
-builtjar=`find ${QC_HOME}/querycache-server/target -regextype sed -regex ".*/querycache-server-[0-9\.]*.jar"`
-if [ ! -z "$builtjar" ]; then
-  CLASSPATH=${CLASSPATH}:$builtjar
-fi
 export CLASSPATH
 export HOSTNAME=`hostname`
 
