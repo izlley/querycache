@@ -61,36 +61,36 @@ public class ObjectPool {
     public void run() {
       boolean bInterrupted = false;
       LOG.info("Starting object recycling thread");
-      ArrayDeque<TRowSet> rowSets;
+      ArrayDeque<TRowSet> rowSets = null;
       while (!bInterrupted) {
         synchronized (rowSetsToBeRecycled) {
-          if (rowSetsToBeRecycled.size() == 0) {
-            try {
-              rowSetsToBeRecycled.wait(1000);
-            } catch (InterruptedException e) {
-              bInterrupted = true;
-              continue;
-            }
+          if (rowSetsToBeRecycled.size() > 0) {
+            // clone and go out of synchronized block for responsiveness
+            rowSets = rowSetsToBeRecycled.clone();
+            rowSetsToBeRecycled.clear();
           }
-          // clone and go out of synchronized block for responsiveness
-          rowSets = rowSetsToBeRecycled.clone();
-          rowSetsToBeRecycled.clear();
         }
-        recycleRowSets(rowSets);
+
+        if (rowSets != null) {
+          recycleRowSets(rowSets);
+          rowSets = null;
+        } else {
+          // nothing to recycle. sleep a little bit and retry
+          try {
+            Thread.sleep(200);
+          } catch (InterruptedException e) {
+            bInterrupted = true;
+            continue;
+          }
+        }
       }
       LOG.warn("Object recycle thread is terminating.");
     }
   }
-  public void queueRowSetToBeRecycled(TRowSet rowSet) {
-    synchronized (rowSetsToBeRecycled) {
-      rowSetsToBeRecycled.add(rowSet);
-      rowSetsToBeRecycled.notifyAll();
-    }
-  }
+
   public void queueRowSetsToBeRecycled(Collection<TRowSet> rowSets) {
     synchronized (rowSetsToBeRecycled) {
       rowSetsToBeRecycled.addAll(rowSets);
-      rowSetsToBeRecycled.notifyAll();
     }
     rowSets.clear();
   }
