@@ -258,6 +258,10 @@ public class ObjectPool {
       rowSet.clear();
     }
 
+    ArrayDeque<Object> pool = sObjPools.get(POOL_TROWSET);
+    synchronized (pool) {
+      pool.addAll(rowSets);
+    }
     rowSets.clear();
   }
 
