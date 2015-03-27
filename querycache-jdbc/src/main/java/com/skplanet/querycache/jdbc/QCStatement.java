@@ -119,10 +119,10 @@ public class QCStatement implements java.sql.Statement {
   private void closeClientOperation() throws SQLException {
     try {
       clearWarnings();
+      transportLock.lock();
       if (stmtHandle != null) {
         TCloseOperationReq closeReq = new TCloseOperationReq();
         closeReq.setOperationHandle(stmtHandle);
-        transportLock.lock();
         TCloseOperationResp closeResp = client.CloseOperation(closeReq);
       }
     } catch (SQLException e) {
