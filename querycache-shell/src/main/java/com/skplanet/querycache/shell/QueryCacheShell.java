@@ -8,8 +8,6 @@ import java.io.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by nazgul33 on 15. 3. 6.
@@ -26,6 +24,7 @@ public class QueryCacheShell {
         public List<String> query_list;
         public String outputFile = null;
         public int outputType = QueryExec.OUTPUT_PRETTY;
+        public boolean verbose = false;
     }
 
     public static Options initOptions() {
@@ -37,6 +36,8 @@ public class QueryCacheShell {
         options.addOption("f", "file", true, "sql file to run : non-interactive session. Lines starting with # are ignored. (e.g. comments)");
         options.addOption("t", "output-type", true, "one of { csv, tsv, default }");
         options.addOption("o", "output-file", true, "path to a file where query result should be stored");
+        options.addOption("h", "help", false, "prints this help messages");
+        options.addOption("v", "verbose", false, "prints detailed error messages");
         return options;
     }
 
@@ -101,30 +102,36 @@ public class QueryCacheShell {
         CommandLineParser parser = new BasicParser();
         CommandLine line = null;
         boolean interactive = false;
+        boolean needHelp = false;
 
         try {
             String oVal;
             line = parser.parse(o, argv);
 
-            opts.url = line.getOptionValue("url");
-            opts.user = line.getOptionValue("username");
-            opts.passwd = line.getOptionValue("password");
-            opts.query = line.getOptionValue("query");
-            opts.file = line.getOptionValue("file");
-            opts.outputFile = line.getOptionValue("output-file");
+            if (line.hasOption("help")) {
+                needHelp = true;
+            } else {
+                opts.url = line.getOptionValue("url");
+                opts.user = line.getOptionValue("username");
+                opts.passwd = line.getOptionValue("password");
+                opts.query = line.getOptionValue("query");
+                opts.file = line.getOptionValue("file");
+                opts.outputFile = line.getOptionValue("output-file");
+                opts.verbose = line.hasOption("verbose");
 
-            oVal = line.getOptionValue("output-type");
-            if (oVal != null) {
-                opts.outputType = QueryExec.getOutputTypeFromString(oVal);
+                oVal = line.getOptionValue("output-type");
+                if (oVal != null) {
+                    opts.outputType = QueryExec.getOutputTypeFromString(oVal);
+                }
             }
         } catch (ParseException e) {
             LOG.error("parsing command line options", e);
-        } finally {
-            boolean needHelp = false;
-            if (opts.query == null && opts.file == null) {
-                interactive = true;
-            }
+        }
+        if (opts.query == null && opts.file == null) {
+            interactive = true;
+        }
 
+        if (!needHelp) {
             if (opts.url == null || opts.user == null) {
                 LOG.error("-u and -n options are mandatory");
                 needHelp = true;
@@ -135,12 +142,12 @@ public class QueryCacheShell {
                 LOG.error("-t : specify one of {tsv, csv, default}");
                 needHelp = true;
             }
+        }
 
-            if (needHelp) {
-                HelpFormatter fmt = new HelpFormatter();
-                fmt.printHelp("qcshell", o);
-                System.exit(1);
-            }
+        if (needHelp) {
+            HelpFormatter fmt = new HelpFormatter();
+            fmt.printHelp("qcshell", o);
+            System.exit(1);
         }
 
         // load jdbc driver

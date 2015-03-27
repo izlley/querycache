@@ -164,7 +164,7 @@ public class QueryExec {
             this.output.flush();
             LOG.info("{} rows fetched.", rowCount);
         } catch (SQLException e) {
-            LOG.error("executing query : {}", query, e);
+            handleSQLException(e);
             bRet = false;
         } catch (IOException e) {
             LOG.error("writing output", e);
@@ -176,7 +176,7 @@ public class QueryExec {
                 stmt.close();
             }
         } catch (SQLException e) {
-            // ignore
+            handleSQLException(e);
         }
 
         try {
@@ -205,6 +205,33 @@ public class QueryExec {
         }
 
         return true;
+    }
+
+
+    void handleSQLException(SQLException e) {
+        if (e instanceof SQLWarning && !options.verbose) {
+            return;
+        }
+
+        if (e instanceof SQLWarning) {
+            if (options.verbose) {
+                LOG.warn("state:{}, code:{}\n{}", e.getSQLState(), e.getErrorCode(), e.getMessage().trim(), e);
+            } else {
+                LOG.warn("state:{}, code:{}\n{}", e.getSQLState(), e.getErrorCode(), e.getMessage().trim());
+            }
+        } else {
+            if (options.verbose) {
+                LOG.error("state:{}, code:{}\n{}", e.getSQLState(), e.getErrorCode(), e.getMessage().trim(), e);
+            } else {
+                LOG.error("state:{}, code:{}\n{}", e.getSQLState(), e.getErrorCode(), e.getMessage().trim());
+            }
+        }
+
+        if (options.verbose) {
+            for (SQLException nested = e.getNextException(); nested != null && nested != e; nested = nested.getNextException()) {
+                handleSQLException(nested);
+            }
+        }
     }
 
     public boolean close() {
