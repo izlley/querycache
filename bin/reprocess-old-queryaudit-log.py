@@ -27,50 +27,53 @@ def process_lines(filename, lines):
     print "processing ..."
 
     for line in lines:
-        writestr = ''
-        jsonlog = re.search('{.*}',line).group(0)
-        if len(jsonlog) == 0:
-            print_log('ERROR: Incompatible format of line is received');
-            continue
+        try:
+            writestr = ''
+            jsonlog = re.search('{.*}',line).group(0)
 
-        logdate = line[:23]
-        #escaping backslash character
-        jsondata = json.loads(jsonlog.replace('\\','\\\\\\\\'))
+            logdate = line[:23]
+            #escaping backslash character
+            jsondata = json.loads(jsonlog.replace('\\','\\\\\\\\'))
 
-        if 'client_version' not in jsondata:
-            jsondata['client_version'] = "unknown"
-        if 'client_ip' not in jsondata:
-            jsondata['client_ip'] = "unknown"
-        if 'server_ip' not in jsondata:
-            jsondata['server_ip'] = "unknown"
+            if 'client_version' not in jsondata:
+                jsondata['client_version'] = "unknown"
+            if 'client_ip' not in jsondata:
+                jsondata['client_ip'] = "unknown"
+            if 'server_ip' not in jsondata:
+                jsondata['server_ip'] = "unknown"
 
-        writestr = logdate + '\t' + \
-                   hostname + '\t' + \
-                   jsondata['user'] + '\t' + \
-                   jsondata['queryid'] + '\t' + \
-                   jsondata['query_type'] + '\t' + \
-                   jsondata['query_str'] + '\t' + \
-                   jsondata['stmt_state'] + '\t' + \
-                   jsondata['rowcnt'] + '\t' + \
-                   jsondata['start_time'] + '\t' + \
-                   jsondata['end_time'] + '\t' + \
-                   '[' + ','.join(jsondata['time_histogram']) + ']' + '\t' + \
-                   jsondata['total_elapsedtime'] + '\t' + \
-                   jsondata['connect_type'] + '\t' + \
-                   jsondata['client_host'] + '\t' + \
-                   jsondata['client_version'] + '\t' + \
-                   jsondata['client_ip'] + '\t' + \
-                   jsondata['server_ip'] + '\n'
+            writestr = logdate + '\t' + \
+                       hostname + '\t' + \
+                       jsondata['user'] + '\t' + \
+                       jsondata['queryid'] + '\t' + \
+                       jsondata['query_type'] + '\t' + \
+                       jsondata['query_str'] + '\t' + \
+                       jsondata['stmt_state'] + '\t' + \
+                       jsondata['rowcnt'] + '\t' + \
+                       jsondata['start_time'] + '\t' + \
+                       jsondata['end_time'] + '\t' + \
+                       '[' + ','.join(jsondata['time_histogram']) + ']' + '\t' + \
+                       jsondata['total_elapsedtime'] + '\t' + \
+                       jsondata['connect_type'] + '\t' + \
+                       jsondata['client_host'] + '\t' + \
+                       jsondata['client_version'] + '\t' + \
+                       jsondata['client_ip'] + '\t' + \
+                       jsondata['server_ip'] + '\n'
 
-        date = line[:10]
-        if date in files:
-            f = files[date]
-        else:
-            f = open(TMP_DIR + date, 'w')
-            print_log('new date ' + date)
-            files[date] = f
+            date = line[:10]
+            if date in files:
+                f = files[date]
+            else:
+                f = open(TMP_DIR + date, 'w')
+                print_log('new date ' + date)
+                files[date] = f
 
-        f.write(writestr.encode('utf-8'))
+            f.write(writestr.encode('utf-8'))
+        except (ValueError, AttributeError, KeyError) as e:
+            print_log('ERROR: Can\'t parse line.\n%s\n%s' % (line, str(e)));
+        except Error as e:
+            print_log('ERROR: Can\'t parse line. (Unexpected Error)\n%s\n%s' % (line, str(e)));
+
         processed_lines += 1
         if processed_lines % 10000 == 0:
             print 'processed %d lines' % processed_lines
@@ -114,7 +117,7 @@ if __name__ == '__main__':
             lines = []
             while line != '' and len(lines) < 100000:
                 lines.append(line)
-            line = fh.readline()
+                line = fh.readline()
             print 'read %d lines' % len(lines)
             process_lines(f, lines)
 
