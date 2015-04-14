@@ -7,7 +7,7 @@
     <parent>
         <artifactId>querycache</artifactId>
         <groupId>com.skplanet.querycache</groupId>
-        <version>0.12.1</version>
+        <version>0.12.2</version>
     </parent>
 
     <groupId>com.skplanet.querycache.shell</groupId>
