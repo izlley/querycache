@@ -56,7 +56,7 @@ public class QueryCacheShell {
     }
 
     public static List<String> queryTokenizer(String str) {
-        ArrayList<String> tokens = new ArrayList<>();
+        ArrayList<String> tokens = new ArrayList<String>();
         int len = str.length();
         int start=0;
         int end=-1;

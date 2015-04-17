@@ -77,7 +77,7 @@ public class QueryExec {
             LOG.info("Fetching results...");
             ResultSet rs = stmt.getResultSet();
             ResultSetMetaData rsmd = rs.getMetaData();
-            ArrayList<String> row = new ArrayList<>();
+            ArrayList<String> row = new ArrayList<String>();
             int columnCount = rsmd.getColumnCount();
             for (int i = 1; i <= columnCount; i++) {
                 row.add(rsmd.getColumnName(i));

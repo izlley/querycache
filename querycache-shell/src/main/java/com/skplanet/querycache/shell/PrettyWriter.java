@@ -12,7 +12,7 @@ public class PrettyWriter {
     public static final int MAX_QUEUE = 30;
     private String recordDelimiter = "\n";
     private Appendable output;
-    private ArrayList<Collection<String>> recordList = new ArrayList<>(MAX_QUEUE);
+    private ArrayList<Collection<String>> recordList = new ArrayList<Collection<String>>(MAX_QUEUE);
     private Collection<String> header = null;
 
     public PrettyWriter(Appendable output) {
@@ -26,7 +26,7 @@ public class PrettyWriter {
 
     private boolean queueRecord(Collection<String> record) {
         if ( recordList.size() < MAX_QUEUE ) {
-            ArrayList<String> newR = new ArrayList<>();
+            ArrayList<String> newR = new ArrayList<String>();
             newR.addAll(record);
             recordList.add(newR);
             return true;
@@ -110,7 +110,7 @@ public class PrettyWriter {
     }
 
     public void setHeader(Collection<String> header) {
-        this.header = new ArrayList<>();
+        this.header = new ArrayList<String>();
         this.header.addAll(header);
         // count
         int count = 0;
