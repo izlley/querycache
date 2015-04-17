@@ -54,11 +54,21 @@ CLASSPATH=$QC_HOME/src/test/java:$CLASSPATH
 CLASSPATH=${QC_LIB_DIR}/slf4j-api-1.7.10.jar:${QC_LIB_DIR}/commons-logging-1.0.4.jar:${QC_LIB_DIR}/slf4j-simple-1.7.10.jar:${CLASSPATH}
 CLASSPATH=${QC_LIB_DIR}/commons-lang3-3.1.jar:${QC_LIB_DIR}/libthrift-0.9.1.jar:${CLASSPATH}
 
+DRVPATH=
 for jar in `ls ${DRIVER_DIR}/querycache-jdbc*.jar`; do
-      CLASSPATH=${CLASSPATH}:$jar
+      DRVPATH=$jar
 done
+if [ -z "$DRVPATH" ]; then
+    version=`mvn -o org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -pl querycache-jdbc -Dexpression=project.version | egrep '^[0-9]*\.[0-9]*\.[0-9]'`
+    DRVPATH=${QC_HOME}/querycache-jdbc/target/querycache-jdbc-${version}.jar
+fi
 
-export CLASSPATH
+if [ ! -e $DRVPATH ]; then
+    echo "$DRVPATH doesn't exist"
+    exit 1
+fi
+
+export CLASSPATH=${DRVPATH}:${CLASSPATH}
 
 echo "----------------ENV----------------" 
 echo "QC_HOME                = $QC_HOME"
