@@ -18,12 +18,16 @@
  */
 package com.skplanet.querycache.server;
 
+import com.skplanet.bosphorus.client.api.LoggerAPI;
 import com.skplanet.querycache.cli.thrift.TCLIService;
 import com.skplanet.querycache.servlet.QCWebApiServlet;
 import com.skplanet.querycache.servlet.QCWebSocketServlet;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.server.*;
+import org.apache.thrift.server.ServerContext;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServerEventHandler;
+import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.eclipse.jetty.server.Handler;
@@ -36,7 +40,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Socket;
+import java.security.MessageDigest;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -58,15 +63,43 @@ public class QueryCacheServer {
     public final long threadId;
     public final TSocket socket;
     public final String clientIP;
+    public final int clientPort;
     public final String serverIP;
+    public final int serverPort;
     public String clientVersion = "unknown";
+
+    public final String sessionID;
 
     private QCServerContext(long threadId, TSocket socket) {
       this.connectionId = nextConnection.getAndIncrement();
       this.threadId = threadId;
       this.socket = socket;
+
       this.clientIP = socket.getSocket().getInetAddress().getHostAddress();
+      this.clientPort = socket.getSocket().getPort();
       this.serverIP = socket.getSocket().getLocalAddress().getHostAddress();
+      this.serverPort = socket.getSocket().getLocalPort();
+
+      /* make session id string */
+      StringBuffer sb = new StringBuffer();
+      sb.append(this.clientIP); sb.append('-');
+      sb.append(this.clientPort); sb.append('-');
+      sb.append(this.serverIP); sb.append('-');
+      sb.append(this.serverPort); sb.append('-');
+      sb.append(System.currentTimeMillis());
+
+      try {
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        byte[] mdbytes = md5.digest(sb.toString().getBytes());
+
+        sb = new StringBuffer();
+        for (int i = 0; i < mdbytes.length; i++) {
+          sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+        }
+      } catch (Exception e) {
+        LOG.error("MD5 not available?");
+      }
+      this.sessionID = sb.toString();
       svrCtxMap.put(threadId, this);
     }
 
@@ -168,6 +201,7 @@ public class QueryCacheServer {
 
   public static String hostname = "";
   public static String version = "none";
+  public static LoggerAPI loggerApi = null;
 
   public static void main(String [] args) {
     CLIHandler handler = CLIHandler.getInstance();
@@ -176,6 +210,18 @@ public class QueryCacheServer {
     version = handler.getClass().getPackage().getImplementationVersion();
 
     try {
+      // Initialize RakeAPI
+      Properties properties = new Properties();
+      properties.setProperty("logger.type", "Async");
+      properties.setProperty("sender.num_threads", "3");
+      properties.setProperty("sender.class", "com.skplanet.bosphorus.client.sender.KafkaSender");
+      properties.setProperty("sender.kafka.broker_list", "dicc-broker01-172.cm.skp:9092,dicc-broker02-172.cm.skp:9092,dicc-broker03-172.cm.skp:9092,dicc-broker04-172.cm.skp:9092,dicc-broker05-172.cm.skp:9092,dicc-broker06-172.cm.skp:9092");
+      properties.setProperty("queue.class", "com.skplanet.bosphorus.client.queue.FileQueue");
+      properties.setProperty("queue.file.path", "/tmp/qcRakeLiveQueueDir");
+      // properties.setProperty("queue.file.path", "/app/bdb/querycache/logs/rakeQueue");
+      properties.setProperty("queue.file.name", "LiveQueue");
+      loggerApi = LoggerAPI.getInstance(properties);
+
       final TCLIService.Processor processor = new TCLIService.Processor(handler);
       
       Runnable sThriftServer = new Runnable() {
@@ -197,6 +243,8 @@ public class QueryCacheServer {
         public void run() {
           String shutdownMsg = "Shutting down querycache.";
           LOG.info(shutdownMsg);
+          if (loggerApi != null)
+            loggerApi.close();
         }
       });
 

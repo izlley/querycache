@@ -70,6 +70,7 @@ public class StatementExecutor implements Runnable {
         timeArr[2] = System.currentTimeMillis();
 
         // 3. Analyze SQL stmt
+        // TODO : remove string concatenation by pre-loading authconfig when making connections?
         authCheck = !QueryCacheServer.conf.get(QCConfigKeys.QC_AUTHORIZATION_PREFIX + "." +
                 aReq.sessionHandle.sessionId.driverType.split(":")[1], QCConfigKeys.QC_AUTHORIZATION_DEFAULT).
                 equalsIgnoreCase("NONE");

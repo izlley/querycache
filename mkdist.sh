@@ -13,6 +13,7 @@ cp -rLv conf-dist ${distdir}/conf
 cp querycache-server/target/querycache-server-${version}-jar-with-dependencies.jar ${distdir}/lib/
 cp -rLv `find lib/driver -name *.jar -a ! -name querycache-jdbc*.jar` ${distdir}/lib/driver
 rm -f ${distdir}/bin/queryrunner.sh
+cp -rLv lib/QueryCacheAuditSentinelShuttle-0.1.4.jar ${distdir}/lib/
 
 # jdbc + test
 jdbcdistdir=${distdir}/jdbc

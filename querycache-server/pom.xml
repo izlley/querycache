@@ -342,5 +342,28 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.skplanet.bosphorus</groupId>
+            <artifactId>bosphorus-core</artifactId>
+            <version>0.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skplanet.pdp.sentinel</groupId>
+            <artifactId>shuttle</artifactId>
+            <version>0.1.4</version>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/../lib/QueryCacheAuditSentinelShuttle-0.1.4.jar</systemPath>
+        </dependency>
+        <!-- dependency of sentinel -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20140107</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skplanet.pdp.cryptoutils</groupId>
+            <artifactId>crypto-dic</artifactId>
+            <version>0.5</version>
+        </dependency>
     </dependencies>
 </project>

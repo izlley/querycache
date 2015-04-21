@@ -1,5 +1,6 @@
 package com.skplanet.querycache.server;
 
+import com.google.common.base.Joiner;
 import com.skplanet.querycache.server.auth.AuthorizationConfig;
 import com.skplanet.querycache.server.auth.AuthorizationLoader;
 import com.skplanet.querycache.server.common.InternalType.CORE_RESULT;
@@ -63,17 +64,18 @@ public class ConnMgrCollection {
     // below properties are used for connecting to storage system
     private ConnProperty connProp = new ConnProperty();
     // index of connection addresses for failover control in a round-robin fashion
-    private short connAddrIndex = -1;
+    private Short connAddrIndex = -1;
 
     // managing authorization control
     private AuthorizationLoader authLoader = null;
 
+    // is pheonix?
+    private boolean isPhoenix = false;
+
     // It's a checker thread running in the background to extend the size of the ConnPool.
     private ConnNode newConnNode() throws LinkageError, ClassNotFoundException {
       ConnNode sConn;
-      boolean isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
-      // Every time builUrl is called, returns different address for distributing connections
-      String url = buildUrl(isPhoenix);
+      String url = buildUrl();
       try {
         sConn = new ConnNode(connProp, getNewConnId(), url);
       } catch (SQLException e) {
@@ -212,6 +214,9 @@ public class ConnMgrCollection {
                                   ConnProperty.protocolType aProtoType) {
       if (connProp.setConnProperties(aConnType, aProtoType) != CORE_RESULT.CORE_SUCCESS)
         return CORE_RESULT.CORE_FAILURE;
+
+      isPhoenix = connProp.connPkgPath.equalsIgnoreCase("org.apache.phoenix.jdbc.PhoenixDriver");
+
       LOG.info("Initializing the connection pool of " + aConnType + "...");
       // TODO: How can we handle url kv options? just ignore these?
       int numofRealConn = 0;
@@ -316,9 +321,15 @@ public class ConnMgrCollection {
       return CORE_RESULT.CORE_SUCCESS;
     }
     
-    private String buildUrl(boolean isPhoenix) {
-      String sUrl;
+    private String buildUrl() {
+      // Every time builUrl is called, returns different address for distributing connections
+      StringBuffer sb = new StringBuffer();
       if (isPhoenix) {
+        sb.append(connProp.connUrlPrefix)
+                .append(Joiner.on(",").join(connProp.connAddr))
+                .append(':')
+                .append(connProp.connPort);
+        /*
         sUrl = connProp.connUrlPrefix;
         for (short i = 0; i < connProp.connAddr.length; i++) {
           sUrl += connProp.connAddr[i];
@@ -326,18 +337,33 @@ public class ConnMgrCollection {
             sUrl += ',';
         }
         sUrl += ":" + connProp.connPort;
+        */
       } else {
         short sInd;
-        synchronized (this) {
+        synchronized (connAddrIndex) {
+          sInd = connAddrIndex = (short)((++connAddrIndex) % connProp.connAddr.length);
+          /*
           sInd = (connProp.connAddr.length - 1 <= connAddrIndex) ? connAddrIndex = 0
               : ++connAddrIndex;
+              */
         }
+        sb.append(connProp.connUrlPrefix)
+          .append(connProp.connAddr[sInd])
+          .append(':')
+          .append(connProp.connPort);
+
+        /*
         sUrl = connProp.connUrlPrefix + connProp.connAddr[sInd] + ":"
             + connProp.connPort;
+            */
       }
-      if (!connProp.connUrlSuffix.isEmpty())
-        sUrl += "/" + connProp.connUrlSuffix;
-      return sUrl;
+      if (!connProp.connUrlSuffix.isEmpty()) {
+        sb.append('/')
+          .append(connProp.connUrlSuffix);
+        // sUrl += "/" + connProp.connUrlSuffix;
+      }
+
+      return sb.toString();
     }
 
     public int getFreeConnCount() {

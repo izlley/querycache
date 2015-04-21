@@ -1,6 +1,7 @@
 package com.skplanet.querycache.server.util;
 
 import com.google.gson.Gson;
+import com.skplanet.pdp.sentinel.shuttle.QueryCacheAuditSentinelShuttle;
 import com.skplanet.querycache.cli.thrift.THandleIdentifier;
 import com.skplanet.querycache.cli.thrift.THostInfo;
 import com.skplanet.querycache.server.ConnNode;
@@ -20,8 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RuntimeProfile {
   private static final boolean DEBUG = false;
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProfile.class);
-  public static final Logger queryAuditLog = LoggerFactory
-    .getLogger(RuntimeProfile.class.getName() + ".queryAudit");
+  public static final Logger queryAuditLog = LoggerFactory.getLogger("queryAudit");
   
   private static AtomicInteger numOfRequests = new AtomicInteger(0);
   private static AtomicInteger numOfRequestsTotal = new AtomicInteger(0);
@@ -36,7 +36,8 @@ public class RuntimeProfile {
     .synchronizedMap(new LinkedHashMap<String, QueryProfile>(completeQueryMaxCnt));
   
   private static SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-  
+  private static SimpleDateFormat dateformatRake = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+
   public static class QueryProfile {
     public final String queryId;
     public final String connType;
@@ -50,12 +51,16 @@ public class RuntimeProfile {
     public long endTime = 0;
     // 0:exec/1:getmeta/2:fetch/3:stmtclose or
     // 1:getschemas/2:fetch
-    public long[] timeHistogram = {0,0,0,0};
+    public Long[] timeHistogram = {0L,0L,0L,0L};
     public long[] execProfile   = null;
     public long[] fetchProfile  = {0,0,0,-1,-1,-1,-1,0,0,-1,-1};
     public final String clientVersion;
     public final String clientIp;
+    public final int clientPort;
     public final String serverIp;
+    public final int serverPort;
+    public final String sessionID;
+    public final String backendUrl;
 
     public QueryProfile(StmtNode sStmt, ConnNode sConn, THandleIdentifier sessionId, String queryStr, QueryCacheServer.QCServerContext svrCtx) {
       this.queryId = sConn.sConnId + ":" + sStmt.sStmtId;
@@ -67,7 +72,31 @@ public class RuntimeProfile {
       this.startTime = System.currentTimeMillis();
       this.clientVersion = svrCtx.clientVersion;
       this.clientIp = svrCtx.clientIP;
+      this.clientPort = svrCtx.clientPort;
       this.serverIp = svrCtx.serverIP;
+      this.serverPort = svrCtx.serverPort;
+      this.sessionID = svrCtx.sessionID;
+      this.backendUrl = sConn.getUrl();
+    }
+
+    public void fillShuttleHeader(QueryCacheAuditSentinelShuttle shuttle) {
+      shuttle.log_time(dateformatRake.format(new Date(System.currentTimeMillis())));
+      shuttle.session_id(this.sessionID);
+      shuttle.query_id(this.queryId);
+      shuttle.server_hostname(QueryCacheServer.hostname);
+      shuttle.server_ip(this.serverIp);
+      shuttle.server_port((long)this.serverPort);
+      // clientIpReported : "BDBc-t1if010/172.22.213.30""
+      shuttle.client_hostname(this.clientIpReported.split("/")[0]);
+      shuttle.client_ip(this.clientIp);
+      shuttle.client_port((long)this.clientPort);
+      shuttle.user_id(this.user);
+      try {
+        // "jdbc:daas-impala://172.22.224.36:8655"
+        shuttle.backend(this.connType.split(":")[1]);
+      } catch (Exception e) {
+        shuttle.backend(this.connType);
+      }
     }
   }
   
@@ -141,7 +170,7 @@ public class RuntimeProfile {
     }
     return entry;
   }
-  
+
   public void moveRunToCompleteProfileMap(String qid, State state) {
     if (qid == null) return;
 
@@ -159,20 +188,30 @@ public class RuntimeProfile {
         entry.endTime = System.currentTimeMillis();
 
       addCompletedQuery(qid, entry);
-      queryAuditLog.info("{\"queryid\":\"{}\",\"connect_type\":\"{}\",\"user\":\"{}\",\"client_host\":\"{}\",\"query_type\":\"{}\",\"query_str\":\"{}\",\"stmt_state\":\"{}\",\"rowcnt\":\"{}\",\"start_time\":\"{}\",\"end_time\":\"{}\",\"time_histogram\":[\"{}\",\"{}\",\"{}\",\"{}\"],\"total_elapsedtime\":\"{}\",\"client_version\":\"{}\",\"client_ip\":\"{}\",\"server_ip\":\"{}\"}",
-              entry.queryId, entry.connType, entry.user, entry.clientIpReported,
-              (entry.queryType != null) ? entry.queryType.toString() : "NOTQUERY",
-              entry.queryStr.replace('"', '\''), entry.stmtState.toString(), entry.rowCnt,
-              dateformat.format(new Date(entry.startTime)),
-              dateformat.format(new Date(entry.endTime)),
-              entry.timeHistogram[0], entry.timeHistogram[1],
-              entry.timeHistogram[2], entry.timeHistogram[3],
-              entry.timeHistogram[0] + entry.timeHistogram[1] +
-              entry.timeHistogram[2] + entry.timeHistogram[3],
-              entry.clientVersion, entry.clientIp, entry.serverIp);
+
+      QueryCacheAuditSentinelShuttle shuttle = new QueryCacheAuditSentinelShuttle();
+      entry.fillShuttleHeader(shuttle);
+
+      shuttle.result((entry.stmtState == State.CLOSE) ? "OK" : "FAIL");
+      shuttle.setBodyOfquery_exec(
+              entry.queryType.toString(),
+              entry.queryStr,
+              "querycache", // TODO: use string constant defined elsewhere
+              entry.stmtState.toString(),
+              entry.rowCnt,
+              dateformatRake.format(new Date(entry.startTime)),
+              dateformatRake.format(new Date(entry.endTime)),
+              Arrays.asList(entry.timeHistogram),
+              entry.endTime - entry.startTime,
+              entry.backendUrl
+              );
+
+      String logStr = shuttle.toString();
+      queryAuditLog.info(logStr);
+      QueryCacheServer.loggerApi.log("bos-di-admin-querycache-audit", logStr);
     }
   }
-  
+
   public void increaseNumReq() {
     numOfRequests.incrementAndGet();
     numOfRequestsTotal.incrementAndGet();
